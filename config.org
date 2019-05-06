@@ -93,7 +93,7 @@ Install =use-package=.
 #+END_SRC
 
 Install missing packages automatically if not already present on the system and
-less verbose.
+be less verbose.
 
 #+BEGIN_SRC emacs-lisp
 (setq
@@ -588,7 +588,7 @@ Turn-off tooltips on cursor hover-over.
  (display-time-mode t))
 #+END_SRC
 
-** Editor.
+** Editor
 *** Customizations
 
 I don't use the customizations UI. Lets keep those automated
@@ -980,7 +980,7 @@ Emacs minor mode that keeps your code always indented. More reliable than
 
 Save buffers when they lose focus.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package super-save
  :config
  (super-save-mode +1)
@@ -1596,13 +1596,11 @@ This only works with the =company-capf= backend.
   flyspell-use-meta-tab nil
   flyspell-mode-line-string ""
   flyspell-auto-correct-binding (kbd ""))
- :hook
- ;; Enable spellcheck on the fly for all text modes for programming modes
- ;; flyspell-prog-mode is useful for spell checking in comments and strings
- ((text-mode . flyspell-mode)
-  ;; Too annoying
-  ;; (prog-mode . flyspell-prog-mode)
-  )
+ ;; Uncomment to enable spellcheck on the fly for all text modes or just for programming modes
+ ;; :hook
+ ;; ((text-mode . flyspell-mode)
+  ;; flyspell-prog-mode is useful for spell checking in comments and strings
+  ;; (prog-mode . flyspell-prog-mode))
  :config
  (unbind-key "C-." flyspell-mode-map)
  (nmap
@@ -1927,6 +1925,8 @@ Most of key bindings are provided by the =evil-collection=.
 #+BEGIN_SRC emacs-lisp
 (use-package neotree
  :after general
+ :functions
+ (visual-line-mode)
  :preface
  (defvar my/neotree/open-app
    (if (eq system-type 'darwin)
@@ -2319,8 +2319,8 @@ Projectile replacements.
  :init
  (setq evil-magit-state 'normal)
  :config
- (fullframe magit-log-all quit-window)
- (fullframe magit-log-current quit-window)
+ ;; (fullframe magit-log-all quit-window)
+ ;; (fullframe magit-log-current quit-window)
  ;; When commiting, start in evil-insert state
  (with-eval-after-load 'evil
    (add-hook 'git-commit-mode-hook 'evil-insert-state)
@@ -2351,6 +2351,8 @@ Projectile replacements.
 #+BEGIN_SRC emacs-lisp
 (use-package magit-todos
  :after (magit general)
+ :commands
+ (magit-todos-mode)
  :config
  (magit-todos-mode)
  (nmap
@@ -2369,6 +2371,8 @@ Projectile replacements.
 #+BEGIN_SRC emacs-lisp
 (use-package git-gutter
  :after general
+ :commands
+ (global-git-gutter-mode)
  :config
  (global-git-gutter-mode t)
  ;; (git-gutter:linum-setup)
@@ -2475,7 +2479,7 @@ Projectile replacements.
 
 ** Undo
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package undo-propose
  :after general
  :config
@@ -2490,20 +2494,19 @@ Projectile replacements.
    [escape] 'undo-propose-cancel))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package undo-tree
- :disabled
- :requires (init-quelpa init-general)
  :after general
  ;; :quelpa
  ;; (undo-tree :url "https://www.lawlist.com/lisp/undo-tree.el" :fetcher url)
+ :commands
+ (global-undo-tree-mode)
  :init
  (setq
   undo-tree-visualizer-timestamps t
   undo-tree-enable-undo-in-region nil
   ;; Attempt to fix the "unrecognized entry in undo list" error
   undo-tree-auto-save-history nil
-
   undo-tree-history-directory-alist
   `(("." . ,(expand-file-name "undo" user-emacs-directory))))
  ;; Diff is slow as hell and it doesn't destroy the diff buffer automatically.
@@ -2611,7 +2614,7 @@ Setup =tramp=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package smartparens
- :commands (smartparens-mode sp-with-modes sp-local-pairs)
+ :commands (smartparens-mode sp-with-modes sp-local-pair sp-pair)
  :hook
  ((conf-mode text-mode prog-mode) . smartparens-mode)
  :init
@@ -2665,8 +2668,167 @@ Setup =tramp=.
 #+END_SRC
 
 ** Org
+*** Main
 
 #+BEGIN_SRC emacs-lisp
+(use-package org
+ :after (general counsel)
+ ;; to be sure we have latest Org version
+ ;; :ensure org-plus-contrib
+ :mode ("\\.org\\'" . org-mode)
+ :init
+ (setq
+  ;; Forces to mark all child tasks as DONE before
+  ;; you can mark the parent as DONE
+  org-enforce-todo-dependencies t
+  ;; Insert an annotation in a task when
+  ;; it is marked as done including a
+  ;; timestamp of when exactly that happened
+  org-log-done (quote time)
+  ;; Insert annotations when you change
+  ;; the deadline of a task, which will note
+  ;; the previous deadline date and when it was changed
+  org-log-redeadline (quote time)
+  ;; Same as above, but for the scheduled dates
+  org-log-reschedule (quote time)
+  ;; Hide leading stars
+  org-hide-leading-stars t
+  ;; Use syntax highlighting in
+  ;; source blocks while editing
+  org-src-fontify-natively t
+  ;; Noticeable ellipsis.
+  ;; Others: ▼,↴,⬎,⤷,…,⤵,⋱,•
+  org-ellipsis "…"
+  ;; Keep org files in Dropbox
+  org-directory "~/Dropbox/org"
+  org-agenda-files '("~/Dropbox/org/")
+  org-highest-priority ?A
+  org-lowest-priority ?C
+  org-default-priority ?B
+  ;; Default task sequence/lifecycle
+  org-todo-keywords
+  '((sequence "TODO" "IN-PROGRESS" "WAITING" "HOLD" "|" "DONE" "CANCELLED"))
+  org-todo-keyword-faces
+  '(("TODO" :foreground "magenta2" :weight bold)
+    ("IN-PROGRESS" :foreground "dodger blue" :weight bold)
+    ("WAITING" :foreground "orange" :weight bold)
+    ("DONE" :foreground "forest green" :weight bold)
+    ("HOLD" :foreground "magenta" :weight bold)
+    ("CANCELLED" :foreground "forest green" :weight bold)
+    ("BUG" :foreground "red" :weight bold)
+    ("UNTESTED" . "purple"))
+  org-todo-state-tags-triggers
+  '(("CANCELLED" ("CANCELLED" . t))
+    ("WAITING" ("WAITING" . t))
+    ("HOLD" ("WAITING") ("HOLD" . t))
+    (done ("WAITING") ("HOLD"))
+    ("TODO" ("WAITING") ("CANCELLED") ("HOLD"))
+    ("IN-PROGRESS" ("WAITING") ("CANCELLED") ("HOLD"))
+    ("DONE" ("WAITING") ("CANCELLED") ("HOLD")))
+  ;; Custom templates
+  org-capture-templates
+  '(("t" "todo" entry (file "todos.org")
+     "* TODO %?\n%U\n%a\n")
+    ("n" "note" entry (file "notes.org")
+     "* %?\n:NOTE:\n%U\n%a\n")
+    ("i" "idea" entry (file "ideas.org")
+     "* %?\n:IDEA:\n%U\n%a\n")
+    ("j" "journal" entry (file+datetree "diary.org")
+     "* %?\n%U\n")
+    ("h" "habit" entry (file "habits.org")
+     "* TODO %?\n%U\n%a\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: TODO\n:END:\n"))
+  ;; Do not dim blocked tasks
+  org-agenda-dim-blocked-tasks nil
+  ;; Compact the block agenda view
+  org-agenda-compact-blocks t)
+ :config
+ (nmap
+   :prefix my/leader
+   "o" 'org-todo-list
+   "O" 'counsel-org-goto-all
+   "c" 'counsel-org-capture
+   "A" 'my/org/agenda-list)
+ (mmap 'org-agenda-mode-map
+   "C-c C-l" 'org-agenda-log-mode)
+ :delight "org")
+#+END_SRC
+
+*** Evil
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-org
+ :after (general org)
+ :commands
+ (evil-org-set-key-theme)
+ :preface
+ (defun my/evil-org/setup ()
+   (evil-org-set-key-theme)
+   (evil-org-agenda-set-keys))
+ :hook
+ ((org-mode . evil-org-mode)
+  (evil-org-mode . my/evil-org/setup))
+ :init
+ (setq
+  evil-org-key-theme
+  '(textobjects
+    insert
+    navigation
+    additional
+    shift
+    todo
+    heading))
+ :config
+ (require 'evil-org-agenda)
+ :diminish evil-org-mode)
+#+END_SRC
+
+*** Bullets
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-bullets
+ :after org
+ :hook
+ (org-mode . org-bullets-mode))
+#+END_SRC
+
+** LSP
+*** Mode
+
+Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
+
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-mode
+ :after (general projectile)
+ :commands (lsp))
+#+END_SRC
+
+*** LSP UI
+
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-ui
+ :after (lsp-mode)
+ :commands (lsp-ui-mode)
+ :config
+ (add-hook 'lsp-mode-hook 'lsp-ui-mode))
+#+END_SRC
+
+*** Company LSP
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-lsp
+ :after (lsp-mode company)
+ ;; :quelpa
+ ;; (company-lsp :fetcher github :repo "tigersoldier/company-lsp")
+ :commands (company-lsp)
+ :init
+ (setq
+  ;; Don't filter results on the client side
+  company-transformers nil
+  company-lsp-cache-candidates 'auto
+  company-lsp-async t
+  company-lsp-enable-snippet t)
+ :config
+ (push 'company-lsp company-backends))
 #+END_SRC
 
 ** Languages
@@ -2720,6 +2882,212 @@ Setup =tramp=.
    "m e" 'macrostep-expand))
 #+END_SRC
 
+*** Haskell
+**** Mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package haskell-mode
+ :after
+ (general company eldoc)
+ :quelpa
+ (haskell-mode :fetcher github :repo "haskell/haskell-mode")
+ :mode
+ (("\\.hs\\(c\\|-boot\\)?\\'" . haskell-mode)
+  ("\\.lhs\\'" . literate-haskell-mode)
+  ("\\.cabal\\'" . haskell-cabal-mode))
+ :preface
+ (defun my/haskell-mode/setup ()
+   ;; Treat symbol (e.g. "_") as a word
+   (defalias 'forward-evil-word 'forward-evil-symbol)
+   ;; (subword-mode 1)
+   ;; (eldoc-overlay-mode)       ; annoying
+   ;; (haskell-indentation-mode) ; hi2 ftw
+   ;; There are some tools that dont't work with unicode symbols
+   ;; (turn-on-haskell-unicode-input-method)
+   ;; Affects haskell-indentation-mode
+   (setq-local evil-auto-indent nil)
+   (face-remap-add-relative
+    'font-lock-doc-face
+    'font-lock-comment-face)
+   (flymake-mode-off))
+ (defvar haskell-process-use-ghci nil)
+ (defun my/haskell-mode/toggle-process-type ()
+   "Toggle GHCi process between cabal and ghci"
+   (interactive)
+   (if haskell-process-use-ghci
+       (progn
+         ;; You could set it to "cabal-repl" if
+         ;; you're using the old cabal workflow
+         (setq haskell-process-type 'cabal-new-repl)
+         (setq haskell-process-use-ghci nil)
+         (message "Using cabal new-repl"))
+     (progn
+       (setq haskell-process-type 'stack-ghci)
+       (setq haskell-process-use-ghci t)
+       (message "Using stack ghci"))))
+ (defun my/haskell-mode/show-process-log ()
+   "Display *haskell-process-log* buffer in other window"
+   (interactive)
+   (switch-to-buffer-other-window "*haskell-process-log*"))
+ :hook
+ (haskell-mode . my/haskell-mode/setup)
+ :init
+ (setq
+  ;; Enable debug logging to *haskell-process-log* buffer
+  haskell-process-log t
+  ;; Don't generate tags via hasktags after saving
+  haskell-tags-on-save nil
+  ;; Don't run stylish-haskell on the buffer before saving
+  ;; something it just inserts a bunch of spaces at the end of the line for no reason
+  haskell-stylish-on-save nil
+  ;; Don't show debugging tips when starting the process
+  haskell-process-show-debug-tips nil
+  ;; Don't suggest removing import lines as warned by GHC
+  haskell-process-suggest-remove-import-lines nil
+  ;; Don't suggest adding packages to .cabal file
+  haskell-process-suggest-add-package nil
+  ;; Don't suggest restarting the f*****g process
+  haskell-process-suggest-restart nil
+  ;; Don't suggest adding the OverloadedStrings extensions
+  haskell-process-suggest-overloaded-strings nil
+
+  ;; Auto import the modules reported by GHC to have been loaded
+  haskell-process-auto-import-loaded-modules t
+  ;; Don't popup errors in a separate buffer
+  haskell-interactive-popup-errors nil
+  ;; Use "cabal new-repl" as the inferior haskell process
+  haskell-process-type 'cabal-new-repl
+  ;; haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans")
+  ;; Use "stack build" as the default build command
+  ;; haskell-compile-cabal-build-command "stack build --no-library-profiling"
+  haskell-compile-cabal-build-command "cd %s && make build")
+ :config
+ ;; Common key bindings
+ (nmap '(haskell-mode-map haskell-cabal-mode-map haskell-interactive-mode-map)
+   "C-c C-b" 'haskell-compile
+   "C-c C-k" 'haskell-interactive-mode-kill
+   "C-c C-r" 'haskell-process-restart
+   "C-c C-d" 'haskell-cabal-add-dependency
+   "C-c C-l" 'haskell-interactive-mode-clear
+   "C-c C-h" 'haskell-hoogle
+   "C-c SPC" 'haskell-session-change-target
+   "C-c C-c" 'my/haskell-mode/show-process-log)
+ (nmap '(haskell-mode-map haskell-cabal-mode-map)
+   "C-c C-j" 'haskell-interactive-switch)
+ (nmap '(haskell-mode-map haskell-interactive-mode-map)
+   "C-c c v" 'haskell-cabal-visit-file
+   "C-c c b" 'haskell-process-cabal-build
+   "C-c c r" 'haskell-process-cabal)
+ (nmap 'haskell-compilation-mode-map
+   "C-k" 'windmove-up ;; bind it back
+   "M-k" 'compilation-previous-error
+   "M-j" 'compilation-next-error)
+ (nmap 'haskell-mode-map
+   "C-c T" 'my/haskell-mode/toggle-process-type
+   "C-c H" 'haskell-hayoo
+   "C-c C-m" 'haskell-auto-insert-module-template
+   "C-c ." 'haskell-hide-toggle
+   "C-c C-o" 'haskell-process-load-file
+   "C-c C-SPC" 'haskell-interactive-copy-to-prompt
+   "C-c C-f" 'haskell-mode-stylish-buffer
+   "C-c C-t" 'haskell-process-do-type
+   "C-c C-i" 'haskell-process-do-info
+   ;; Hit it repeatedly to jump between groups of imports
+   "C-c C-u" 'haskell-navigate-imports)
+ (require 'haskell-interactive-mode)
+ (unbind-key "C-j" haskell-interactive-mode-map)
+ (nmap 'haskell-interactive-mode-map
+   "C-c C-j" 'haskell-interactive-switch-back)
+ (imap 'haskell-interactive-mode-map
+   "C-c C-l" 'haskell-interactive-mode-clear)
+ :delight "hs")
+#+END_SRC
+
+**** Hi2
+
+#+BEGIN_SRC emacs-lisp
+(use-package hi2
+ :after haskell-mode
+ :init
+ (setq
+  hi2-layout-offset 2
+  hi2-left-offset 2
+  hi2-where-post-offset 2)
+ :config
+ (put 'hi2-where-post-offset 'safe-local-variable 'numberp)
+ (put 'hi2-left-offset 'safe-local-variable 'numberp)
+ (put 'hi2-layout-offset 'safe-local-variable 'numberp)
+ (imap
+   'hi2-mode-map
+   "<tab>" 'hi2-indent-line)
+ :diminish hi2-mode)
+#+END_SRC
+
+**** Hindent
+
+Bear in mind that it doesn't support unicode syntax so all your cool unicode
+operators will be replaced.
+
+#+BEGIN_SRC emacs-lisp
+(use-package hindent
+ :after (general haskell-mode)
+ :hook
+ (haskell-mode . hindent-mode)
+ :config
+ ;; "r" - reformat
+ (vmap 'haskell-mode-map
+   "C-c r" 'hindent-reformat-region)
+ (nmap 'haskell-mode-map
+   "C-c r" 'hindent-reformat-buffer
+   "C-c R" 'hindent-reformat-decl)
+ :diminish hindent-mode)
+#+END_SRC
+
+**** Company-cabal
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-cabal
+ :after haskell-mode
+ :config
+ (add-to-list 'company-backends 'company-cabal))
+#+END_SRC
+
+**** Hasky-stack
+
+#+BEGIN_SRC emacs-lisp
+(use-package hasky-stack
+ :after (general haskell-mode)
+ :config
+ (nmap 'haskell-mode-map
+   :prefix my/leader
+   "h s" 'hasky-stack-execute
+   "h n" 'hasky-stack-new))
+#+END_SRC
+
+**** Hasky-extensions
+
+#+BEGIN_SRC emacs-lisp
+(use-package hasky-extensions
+ :after (general haskell-mode)
+ :config
+ (nmap 'haskell-mode-map
+   :prefix my/leader
+   "h e" 'hasky-extensions
+   "h d" 'hasky-extensions-browse-docs))
+#+END_SRC
+
+**** LSP
+
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-haskell
+ :init
+ (setq
+  lsp-haskell-process-path-hie "hie-wrapper"
+  lsp-haskell-set-completion-snippets-on t)
+ :config
+ (add-hook 'haskell-mode-hook #'lsp))
+#+END_SRC
+
 *** Nix
 
 #+BEGIN_SRC emacs-lisp
@@ -2750,6 +3118,22 @@ Other JSON-related packages.
 (use-package json-reformat)
 #+END_SRC
 
+*** Yaml
+
+#+BEGIN_SRC emacs-lisp
+(use-package yaml-mode
+ :config
+ :delight "yaml")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-yamllint
+ :after (flycheck yaml-mode)
+ :if (executable-find "yamllint")
+ :config
+ (flycheck-yamllint-setup))
+#+END_SRC
+
 *** Markdown
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -2762,7 +3146,6 @@ Other JSON-related packages.
   ("\\.markdown\\'" . markdown-mode))
  :init
  (setq markdown-command "multimarkdown")
- :config
  :delight "md")
 #+END_SRC
 
@@ -2817,10 +3200,87 @@ Other JSON-related packages.
 
 #+END_SRC
 
+*** Web
+**** Mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package web-mode
+ :mode
+ (("\\.html?\\'" . web-mode)
+  ("\\.html\\.erb\\'" . web-mode)
+  ("\\.erb\\'" . web-mode)
+  ("\\.djhtml\\'" . web-mode)
+  ("\\.tsx\\'" . web-mode)
+  ("\\.jsx\\'" . web-mode)
+  ("\\.mustache\\'" . web-mode)
+  ("\\.jinja\\'" . web-mode)
+
+  ("\\.css\\'" . web-mode)
+  ("\\.scss\\'" . web-mode)
+
+  ("\\.[agj]sp\\'" . web-mode)
+  ("\\.as[cp]x\\'" . web-mode)
+  ("\\.as\\'" . web-mode)
+
+  ("\\.phtml\\'" . web-mode)
+  ("\\.tpl\\.php\\'" . web-mode)
+  ("\\.php\\'" . web-mode))
+
+ :init
+ (setq
+  ;; indent HTML automatically
+  web-mode-indent-style 2
+  ;; offsets
+  web-mode-markup-indent-offset 2
+  web-mode-css-indent-offset 2
+  web-mode-code-indent-offset 2
+
+  web-mode-engines-alist
+  '(("\\.jinja\\'"  . "django")
+    ("php" . "\\.php[3-5]?"))
+
+  web-mode-enable-auto-pairing t
+  web-mode-enable-css-colorization t
+  web-mode-enable-current-element-highlight t
+  web-mode-enable-current-column-highlight nil))
+#+END_SRC
+
+**** Company
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-web
+ :after company
+ :demand t)
+#+END_SRC
+
 *** Styling
+**** CSS mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package css-mode)
+#+END_SRC
+
+**** LSP-CSS
 
 #+BEGIN_SRC emacs-lisp
 
+#+END_SRC
+
+**** SCSS mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package scss-mode
+ :config
+ :delight "scss")
+#+END_SRC
+
+**** Flycheck CSS colorguard
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-css-colorguard
+ :after flycheck
+ :config
+ (flycheck-css-colorguard-setup))
 #+END_SRC
 
 *** TypeScript
@@ -2839,6 +3299,167 @@ Other JSON-related packages.
 
 #+BEGIN_SRC emacs-lisp
 
+#+END_SRC
+
+*** Dhall
+
+Idk how to prevent its popup to show up.
+Also, it fails to validate =spago= dhall files for some reason.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package dhall-mode
+ :custom
+ (dhall-command (substitute-in-file-name "$HOME/.local/bin/dhall"))
+ (dhall-format-command nil)
+ (dhall-format-at-save t)
+ :mode "\\.dhall\\'")
+#+END_SRC
+
+*** Nginx
+
+#+BEGIN_SRC emacs-lisp
+(use-package nginx-mode)
+#+END_SRC
+
+*** D
+
+#+BEGIN_SRC emacs-lisp
+(use-package d-mode)
+#+END_SRC
+
+*** Toml
+
+#+BEGIN_SRC emacs-lisp
+(use-package toml-mode)
+#+END_SRC
+
+*** Bison
+
+#+BEGIN_SRC emacs-lisp
+(use-package bison-mode)
+#+END_SRC
+
+*** Pug
+
+#+BEGIN_SRC emacs-lisp
+(use-package pug-mode)
+#+END_SRC
+
+*** Jade
+
+#+BEGIN_SRC emacs-lisp
+(use-package jade-mode)
+#+END_SRC
+
+*** Lua
+
+#+BEGIN_SRC emacs-lisp
+(use-package lua-mode
+ :if (executable-find "lua")
+ :mode "\\.lua\\'"
+ :init
+ (setq lua-indent-level 2))
+
+(use-package lua-block
+ :after lua-mode
+ :quelpa
+ (lua-block
+  :fetcher url
+  :url "http://www.emacswiki.org/emacs/download/lua-block.el")
+ :init
+ (autoload 'lua-block-mode "lua-block" nil t))
+#+END_SRC
+
+*** Haml
+
+#+BEGIN_SRC emacs-lisp
+(use-package haml-mode)
+#+END_SRC
+
+*** Slim
+
+#+BEGIN_SRC emacs-lisp
+(use-package slim-mode
+ :delight "slim")
+#+END_SRC
+
+*** Robots.txt
+
+#+BEGIN_SRC emacs-lisp
+(use-package robots-txt-mode)
+#+END_SRC
+
+*** Dotenv
+
+#+BEGIN_SRC emacs-lisp
+(use-package dotenv-mode
+ :config
+ (add-to-list 'auto-mode-alist '("\\.env\\..*\\'" . dotenv-mode)))
+#+END_SRC
+
+*** CSV
+
+#+BEGIN_SRC emacs-lisp
+(use-package csv-mode
+ :mode "\\.[Cc][Ss][Vv]$"
+ :init
+ (setq
+  ;; default separators for CSV files.
+  csv-separators '("," ";" "|" " " "\t")
+  ;; number of lines to consider part of header.
+  csv-header-lines 1))
+#+END_SRC
+
+*** Api blueprint
+
+#+BEGIN_SRC emacs-lisp
+(use-package apib-mode
+ :after general
+ :config
+ (nmap 'apib-mode-map
+   :prefix my/leader
+   "z p" 'apib-parse           ; Parse the API Blueprint
+   "z v" 'apib-validate        ; Validate the API Blueprint
+   "z j" 'apib-get-json        ; Print all generated JSON bodies
+   "z s" 'apib-get-json-schema ; Print all generated JSON Schemas
+   ))
+#+END_SRC
+
+*** NASM
+
+#+BEGIN_SRC emacs-lisp
+(use-package nasm-mode)
+#+END_SRC
+
+*** IASM
+
+#+BEGIN_SRC emacs-lisp
+(use-package iasm-mode)
+#+END_SRC
+
+*** BNF
+
+#+BEGIN_SRC emacs-lisp
+(use-package bnf-mode
+ :mode "\\.bnf\\'")
+#+END_SRC
+
+*** Ansible
+
+#+BEGIN_SRC emacs-lisp
+(use-package ansible)
+#+END_SRC
+
+*** Arduino
+
+#+BEGIN_SRC emacs-lisp
+(use-package arduino-mode)
+#+END_SRC
+
+*** GLSL
+
+#+BEGIN_SRC emacs-lisp
+(use-package glsl-mode)
 #+END_SRC
 
 ** GDB
@@ -2927,16 +3548,33 @@ _SPC_ cancel   _o_nly this
   "M-w" 'hydra-window/body)
 #+END_SRC
 
+** Infrastructure
+*** IX
+
+#+BEGIN_SRC emacs-lisp
+(use-package ix
+ :after general
+ :config
+ (nmap
+   :prefix my/leader
+   "G i i" 'ix
+   "G i b" 'ix-browse
+   "G i d" 'ix-delete))
+#+END_SRC
+
 ** Translation
+
+This package allows to translate the strings using Google Translate service
+directly from Emacs.
 
 #+BEGIN_SRC emacs-lisp
 (use-package google-translate
- :after (general paradox)
+ :after (general)
  :init
  (setq google-translate-default-source-language "en")
  (setq google-translate-default-target-language "ru")
  :config
- (paradox-require 'google-translate-default-ui)
+ (require 'google-translate-default-ui)
  (nmap
   :prefix "C-c"
   "t" 'google-translate-at-point

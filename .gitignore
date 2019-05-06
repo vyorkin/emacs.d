@@ -17,5 +17,7 @@ request/
 magithub/
 lisp/
 transient/
+.lsp-session-v1
+forge-database.sqlite
 custom.el
 config.el
