@@ -437,10 +437,8 @@ Hide toolbar and scrollbars.
   (horizontal-scroll-bar-mode -1))
 #+END_SRC
 
-
-I generally prefer to hide the menu bar,
-but doing this on OS X simply makes it update unreliably in GUI frames,
-so we make an exception.
+I generally prefer to hide the menu bar, but doing this on OS X simply makes it
+update unreliably in GUI frames, so we make an exception.
 
 #+BEGIN_SRC emacs-lisp
 (if (eq system-type 'darwin)
@@ -862,35 +860,35 @@ sunset.
    (general-define-key
     "s-<backspace>" 'kill-whole-line
     "M-S-<backspace>" 'kill-word
-    ;; use super for movement and selection just like in macOS
+    ;; Use Super for movement and selection just like in macOS
     "s-<right>" (kbd "C-e")
     "S-s-<right>" (kbd "C-S-e")
     "s-<left>" (kbd "M-m")
     "S-s-<left>" (kbd "M-S-m")
     "s-<up>" 'beginning-of-buffer
     "s-<down>" 'end-of-buffer
-    ;; basic things you should expect from macOS
+    ;; Basic things you should expect from macOS
     "s-a" 'mark-whole-buffer       ; select all
     "s-s" 'save-buffer             ; save
     "s-S" 'write-file              ; save as
     "s-q" 'save-buffers-kill-emacs ; quit
-    ;; go to other windows easily with one keystroke
+    ;; Go to other windows easily with one keystroke
     ;; s-something instead of C-x something
     "s-o" (kbd "C-x o")
     "s-w" (kbd "C-x 0") ; just like close tab in a web browser
     "s-W" (kbd "C-x 1") ; close others with shift
-    ;; move between windows with Control-Command-Arrow and
+    ;; Move between windows with Control-Command-Arrow and
     ;; with Cmd just like in iTerm
     "s-[" 'windmove-left   ; Cmd+[ go to left window
     "s-]" 'windmove-right  ; Cmd+] go to right window
     "s-{" 'windmove-up     ; Cmd+Shift+[ go to upper window
     "<s-}>" 'windmove-down ; Ctrl+Shift+[ go to down window
-    ;; prev/next buffer
+    ;; Prev/next buffer
     "s-<" 'previous-buffer
     "s->" 'next-buffer))
  (general-evil-setup t)
  (nmap
-   ;; swap : and ; to make colon commands
+   ;; Swap : and ; to make colon commands
    ;; easier to type in Emacs
    ";" 'evil-ex
    ":" 'evil-repeat-find-char)
@@ -1004,6 +1002,26 @@ Goto last change in current buffer.
    (nmap
      "s-." 'goto-last-change
      "s-," 'goto-last-change-reverse)))
+#+END_SRC
+
+*** Folding
+
+Vim-like [[https://github.com/mrkkrp/vimish-fold][text folding]] for Emacs.
+
+#+BEGIN_SRC emacs-lisp
+(use-package vimish-fold
+ :after evil
+ :commands
+ (vimish-fold-global-mode)
+ :init
+ (setq
+  vimish-fold-blank-fold-header "<...>"
+  vimish-fold-indication-mode 'right-fringe)
+ :config
+ (custom-set-faces
+  '(vimish-fold-mouse-face ((t (:box (:line-width 1 :color "#555")))))
+  '(vimish-fold-overlay ((t (:box (:line-width 1 :color "#222"))))))
+ (vimish-fold-global-mode 1))
 #+END_SRC
 
 *** Which key
@@ -1280,6 +1298,7 @@ Emacs.
 #+END_SRC
 
 ** Evil
+*** Main
 
 #+BEGIN_SRC emacs-lisp
 (use-package evil
@@ -1292,10 +1311,10 @@ Emacs.
    (run-hook-with-args-until-success 'my/evil/esc-hook))
  :init
  (setq
-  ;; required by evil-collection
+  ;; Required by evil-collection
   evil-want-keybinding nil
   evil-want-integration t
-  ;; to restore missing C-u in evil
+  ;; To restore missing C-u in evil
   evil-want-C-u-scroll t
   evil-want-C-w-delete t
   evil-want-fine-undo "No"
@@ -1308,32 +1327,32 @@ Emacs.
   evil-ex-search-vim-style-regexp t
   evil-overriding-maps nil
   evil-ex-substitute-global t
-  ;; column range for ex commands
+  ;; Column range for ex commands
   evil-ex-visual-char-range t
   evil-insert-skip-empty-lines t
   evil-search-module 'evil-search
   evil-mode-line-format 'nil
-  ;; more vim-like behavior
+  ;; More vim-like behavior
   evil-symbol-word-search t
-  ;; cursors
+  ;; Cursors
   evil-default-cursor (face-background 'cursor nil t)
   evil-normal-state-cursor 'box
   evil-emacs-state-cursor `(,(face-foreground 'warning) box)
   evil-insert-state-cursor 'bar
   evil-visual-state-cursor 'box)
  :config
- ;; enable evil-mode globally,
+ ;; Enable evil-mode globally,
  ;; good for ex-vimmers like me
  (evil-mode t)
- ;; special
+ ;; Special
  (evil-make-overriding-map special-mode-map 'normal)
- ;; compilation
+ ;; Compilation
  (evil-set-initial-state 'compilation-mode 'normal)
- ;; occur
+ ;; Occur
  (evil-make-overriding-map occur-mode-map 'normal)
  (evil-set-initial-state 'occur-mode 'normal)
  (advice-add 'evil-force-normal-state :after 'my/evil/attach-esc-hook)
- ;; unbind  evil-paste-pop and evil-paste-pop-next
+ ;; Unbind  evil-paste-pop and evil-paste-pop-next
  ;; which breaks evil-mc
  (with-eval-after-load 'evil-maps
    (define-key evil-normal-state-map (kbd "C-n") nil)
@@ -1345,26 +1364,234 @@ Emacs.
    "C-M-j" 'evil-window-decrease-height))
 #+END_SRC
 
+*** Evil collection
+
 #+BEGIN_SRC emacs-lisp
 (use-package evil-collection
  :init
  (setq
-  ;; don't enable vim key bindings in minibuffer
-  ;; its a default setting,
-  ;; just want it to be explicitly stated here
+  ;; Don't enable vim key bindings in minibuffer
+  ;; its a default setting, just want it to be explicitly stated here
   evil-collection-setup-minibuffer nil
-  ;; if you don't need everything -
-  ;; uncomment and add everything you want
+  ;; If you don't need everything - uncomment and add everything you want
   ;; evil-collection-mode-list '()
   evil-collection-company-use-tgn nil)
  :config
  (evil-collection-init))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
+*** Alignment
+
+This package provides =gl= and =gL= align operators:
+- =gl MOTION CHAR= - left alignment.
+- =gL MOTION CHAR= - right alignment.
+
+Go to the [[https://github.com/edkolev/evil-lion][package repo]] for more info.
 
 #+BEGIN_SRC emacs-lisp
+(use-package evil-lion
+ :after evil
+ :init
+ (setq evil-lion-squeeze-spaces t)
+ :commands (evil-lion-mode evil-lion-left evil-lion-right))
+#+END_SRC
+
+*** Sentence navigation
+
+Provides alternatives to ~forward-sentence~, ~backward-sentence~, and ~sentence~
+text objects that work with sentences separated by one (or two) space(s) and is
+aware of abbreviations.
+
+See the [[https://github.com/noctuid/emacs-sentence-navigation][package repo]] for more info.
+
+#+BEGIN_SRC emacs-lisp
+(use-package sentence-navigation
+ :after evil
+ :config
+ (mmap
+   ")" 'sentence-nav-evil-forward
+   "(" 'sentence-nav-evil-backward
+   "g)" 'sentence-nav-evil-forward-end
+   "g(" 'sentence-nav-evil-backward-end)
+ (mmap evil-outer-text-objects-map
+   "s" 'sentence-nav-evil-outer-sentence)
+ (mmap evil-inner-text-objects-map
+   "s" 'sentence-nav-evil-inner-sentence))
+#+END_SRC
+
+*** Multiple cursors
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-mc
+ :after (general evil)
+ :commands
+ (global-evil-mc-mode)
+ :preface
+ (defun my/evil-mc/esc ()
+   "Clear evil-mc cursors and restore state."
+   (when (evil-mc-has-cursors-p)
+     (evil-mc-undo-all-cursors)
+     (evil-mc-resume-cursors)
+     t))
+ :demand t
+ :config
+ (global-evil-mc-mode 1)
+ (add-hook 'my/evil/esc-hook 'my/evil-mc/esc)
+ (mmap
+   "C-n" 'evil-mc-make-and-goto-next-match)
+ (when (eq system-type 'darwin)
+   ;; unbind isearch commands
+   (unbind-key "s-d")
+   (unbind-key "s-g")
+   (mmap
+     "s-d" 'evil-mc-make-and-goto-next-match
+     "s-D" 'evil-mc-make-all-cursors))
+ :diminish evil-mc-mode)
+#+END_SRC
+
+*** Ediff
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-ediff
+ :demand t)
+#+END_SRC
+
+*** Matchit
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-matchit
+ :after evil
+ :demand t
+ :commands
+ (evilmi-jump-items
+  evilmi-text-object
+  global-evil-matchit-mode)
+ :config
+ (global-evil-matchit-mode 1))
+#+END_SRC
+
+*** Surround
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-surround
+ :after evil
+ :demand t
+ :commands
+ (global-evil-surround-mode
+   evil-surround-edit
+   evil-Surround-edit
+   evil-surround-region)
+ :config
+ (global-evil-surround-mode 1))
+#+END_SRC
+
+*** Args
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-args
+ :after evil
+ :config
+ (add-to-list 'evil-args-delimiters " ")
+ ;; Bind evil-args text objects
+ (define-key evil-inner-text-objects-map "a" 'evil-inner-arg)
+ (define-key evil-outer-text-objects-map "a" 'evil-outer-arg)
+ ;; Bind evil-forward/backward-args
+ (define-key evil-normal-state-map "L" 'evil-forward-arg)
+ (define-key evil-normal-state-map "H" 'evil-backward-arg)
+ (define-key evil-motion-state-map "L" 'evil-forward-arg)
+ (define-key evil-motion-state-map "H" 'evil-backward-arg)
+ ;; Bind evil-jump-out-args
+ (define-key evil-normal-state-map "K" 'evil-jump-out-args))
+#+END_SRC
+
+*** Embrace
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-embrace
+ :after evil
+ :commands
+ (evil-embrace-enable-evil-surround-integration)
+ :demand t
+ :init
+ (setq evil-embrace-show-help-p nil)
+ :config
+ (evil-embrace-enable-evil-surround-integration))
+#+END_SRC
+
+*** Visualstar
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-visualstar
+ :after evil
+ :commands
+ (global-evil-visualstar-mode
+   evil-visualstar/begin-search
+   evil-visualstar/begin-search-forward
+   evil-visualstar/begin-search-backward)
+ :config
+ (global-evil-visualstar-mode))
+#+END_SRC
+
+*** Vimish fold
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-vimish-fold
+  :after (evil vimish-fold)
+  :commands
+  (evil-vimish-fold-mode)
+  :config
+  (evil-vimish-fold-mode 1)
+  :diminish evil-vimish-fold-mode)
+#+END_SRC
+
+*** Indent plus
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-indent-plus
+ :after evil
+ :demand t
+ :commands
+ (evil-indent-plus-i-indent
+  evil-indent-plus-a-indent
+  evil-indent-plus-i-indent-up
+  evil-indent-plus-a-indent-up
+  evil-indent-plus-i-indent-up-down
+  evil-indent-plus-a-indent-up-down))
+#+END_SRC
+
+*** Commentary
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-commentary
+ :after evil
+ :demand t
+ :commands
+ (evil-commentary-mode
+  evil-commentary-yank
+  evil-commentary-line)
+ :config (evil-commentary-mode)
+ :diminish evil-commentary-mode)
+#+END_SRC
+
+*** Exchange
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-exchange
+ :after evil
+ :demand t
+ :commands
+ (evil-exchange
+  evil-exchange-install)
+ :config
+ (evil-exchange-install))
+#+END_SRC
+
+*** Numbers
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-numbers
+ :demand t
+ :after evil)
 #+END_SRC
 
 ** Diff
@@ -1434,10 +1661,9 @@ Some of the key bindings are provided by the =evil-collection=.
  (company-dabbrev-code-ignore-case nil)
  (company-dabbrev-downcase nil)
  (company-idle-delay 0.2 "adjust this setting according to your typing speed")
- (company-minimum-prefix-length 3)
+ (company-minimum-prefix-length 1)
  :config
  (custom-set-faces
-  ;; company
   '(company-preview ((t (:foreground "#171717" :underline t))))
   '(company-preview-common ((t (:inherit company-preview))))
   '(company-tooltip ((t (:background "#171717" :foreground "#ddd"))))
@@ -1452,8 +1678,8 @@ Some of the key bindings are provided by the =evil-collection=.
   '(company-scrollbar-fg ((t (:background "#1a1a1a")))))
  (unbind-key "C-SPC")
  (imap
-   "C-SPC" 'company-complete
-   "M-SPC" 'company-complete)
+  "C-SPC" 'company-complete
+  "M-SPC" 'company-complete)
  (general-define-key
   :keymaps 'company-active-map
   "C-j" 'company-select-next-or-abort
@@ -2478,6 +2704,7 @@ Projectile replacements.
 #+END_SRC
 
 ** Undo
+*** Propose
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package undo-propose
@@ -2493,6 +2720,8 @@ Projectile replacements.
    "RET" 'undo-propose-finish
    [escape] 'undo-propose-cancel))
 #+END_SRC
+
+*** Tree
 
 #+BEGIN_SRC emacs-lisp
 (use-package undo-tree
@@ -2614,7 +2843,11 @@ Setup =tramp=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package smartparens
- :commands (smartparens-mode sp-with-modes sp-local-pair sp-pair)
+ :commands
+ (smartparens-mode
+  sp-with-modes
+  sp-local-pair
+  sp-pair)
  :hook
  ((conf-mode text-mode prog-mode) . smartparens-mode)
  :init
@@ -2624,26 +2857,22 @@ Setup =tramp=.
   sp-hybrid-kill-entire-symbol nil)
  :config
  (use-package smartparens-config
-   :ensure nil
-   :demand t)
+  :ensure nil
+  :demand t)
  (general-define-key
   :keymaps 'sp-keymap
-  "M-F"   'sp-forward-symbol
-  "M-B"   'sp-backward-symbol
+  "M-F" 'sp-forward-symbol
+  "M-B" 'sp-backward-symbol
   "C-M-k" 'sp-kill-sexp
   "C-M-w" 'sp-copy-sexp
   "C-M-t" 'sp-transpose-sexp
-
-  "M-<left>"    'sp-forward-slurp-sexp
-  "C-M-<left>"  'sp-forward-barf-sexp
-  "M-<right>"   'sp-backward-slurp-sexp
+  "M-<left>" 'sp-forward-slurp-sexp
+  "C-M-<left>" 'sp-forward-barf-sexp
+  "M-<right>" 'sp-backward-slurp-sexp
   "C-M-<right>" 'sp-backward-barf-sexp
-
   "M-D" 'sp-splice-sexp
-
   "C-M-[" 'sp-select-previous-thing
   "C-M-]" 'sp-select-next-thing
-
   "C-c s u" 'sp-up-sexp
   "C-c s d" 'sp-down-sexp
   "C-c s t" 'sp-prefix-tag-object
@@ -2799,7 +3028,11 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-mode
  :after (general projectile)
- :commands (lsp))
+ :commands (lsp)
+ :config
+ (nmap
+  :prefix my/leader
+  "l r" 'lsp-restart-workspace))
 #+END_SRC
 
 *** LSP UI
@@ -2807,9 +3040,14 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-ui
  :after (lsp-mode)
- :commands (lsp-ui-mode)
+ :commands (lsp-ui-mode general)
  :config
- (add-hook 'lsp-mode-hook 'lsp-ui-mode))
+ (add-hook 'lsp-mode-hook 'lsp-ui-mode)
+ (general-def 'lsp-ui-peek-mode-map
+   "h" 'lsp-ui-peek--select-next-file
+   "l" 'lsp-ui-peek--select-prev-file
+   "j" 'lsp-ui-peek--select-next
+   "k" 'lsp-ui-peek--select-prev))
 #+END_SRC
 
 *** Company LSP
@@ -2835,8 +3073,11 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 *** Lisp
 
 #+BEGIN_SRC emacs-lisp
-(put 'use-package 'lisp-indent-function 1)
-(put 'add-hook 'lisp-indent-function 1)
+(use-package lisp-mode
+  :ensure nil
+  :config
+  (put 'use-package 'lisp-indent-function 1)
+  (put 'add-hook 'lisp-indent-function 1))
 #+END_SRC
 
 *** Emacs Lisp
@@ -3129,7 +3370,8 @@ Other JSON-related packages.
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck-yamllint
  :after (flycheck yaml-mode)
- :if (executable-find "yamllint")
+ :commands
+ (flycheck-yamllint-setup)
  :config
  (flycheck-yamllint-setup))
 #+END_SRC
@@ -3274,15 +3516,6 @@ Other JSON-related packages.
  :delight "scss")
 #+END_SRC
 
-**** Flycheck CSS colorguard
-
-#+BEGIN_SRC emacs-lisp
-(use-package flycheck-css-colorguard
- :after flycheck
- :config
- (flycheck-css-colorguard-setup))
-#+END_SRC
-
 *** TypeScript
 
 #+BEGIN_SRC emacs-lisp
@@ -3355,7 +3588,6 @@ Also, it fails to validate =spago= dhall files for some reason.
 
 #+BEGIN_SRC emacs-lisp
 (use-package lua-mode
- :if (executable-find "lua")
  :mode "\\.lua\\'"
  :init
  (setq lua-indent-level 2))
@@ -3549,6 +3781,24 @@ _SPC_ cancel   _o_nly this
 #+END_SRC
 
 ** Infrastructure
+*** Net utils
+
+#+BEGIN_SRC emacs-lisp
+(use-package net-utils
+ :config
+ (nmap
+   :prefix my/leader
+   "n p" 'ping
+   "n i" 'ifconfig
+   "n w" 'iwconfig
+   "n n" 'netstat
+   "n a" 'arp
+   "n r" 'route
+   "n h" 'nslookup-host
+   "n d" 'dig
+   "n s" 'smbclient))
+#+END_SRC
+
 *** IX
 
 #+BEGIN_SRC emacs-lisp
