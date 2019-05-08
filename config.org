@@ -943,6 +943,51 @@ See the [[https://github.com/rranelli/auto-package-update.el][package repo]] for
  (auto-package-update-at-time "05:30"))     ; Update at =5:30=
 #+END_SRC
 
+*** Clipboard
+
+Make emacs kill ring and system clipboard independent.
+Currenly untangled.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package simpleclip
+ :disabled
+ :after general
+ :config
+ (simpleclip-mode 1)
+ (nmap
+   "s-c" 'simpleclip-copy
+   "s-v" 'simpleclip-paste)
+ (imap
+   "s-c" 'simpleclip-copy
+   "s-v" 'simpleclip-paste))
+#+END_SRC
+
+*** Copy as
+
+Allows to copy buffer locations as GitHub/Slack/JIRA/HipChat/... formatted code.
+
+#+BEGIN_SRC emacs-lisp
+(use-package copy-as-format
+ :after general
+ :config
+ (vmap
+   :prefix "C-c f"
+   "f" 'copy-as-format
+   "a" 'copy-as-format-asciidoc
+   "b" 'copy-as-format-bitbucket
+   "d" 'copy-as-format-disqus
+   "g" 'copy-as-format-github
+   "l" 'copy-as-format-gitlab
+   "h" 'copy-as-format-html
+   "j" 'copy-as-format-jira
+   "m" 'copy-as-format-markdown
+   "w" 'copy-as-format-mediawiki
+   "o" 'copy-as-format-org-mode
+   "p" 'copy-as-format-pod
+   "r" 'copy-as-format-rst
+   "s" 'copy-as-format-slack))
+#+END_SRC
+
 *** Extra whitespace trimming
 
 Unobtrusively trim extraneous whitespace only in lines edited.
@@ -985,6 +1030,46 @@ Save buffers when they lose focus.
  :diminish)
 #+END_SRC
 
+*** Zoom
+
+~text-scale-increase~ and ~text-scale-decrease~ doesn't play well with
+=company-mode= (suggestions popup alignment issue)
+more info: https://github.com/company-mode/company-mode/issues/299#issuecomment-115056397
+
+=frame-fns= and =frame-cmds= are dependencies of =zoom-frm=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package frame-fns
+ :demand t
+ :quelpa (frame-fns :fetcher github :repo "emacsmirror/frame-fns"))
+(use-package frame-cmds
+ :demand t
+ :quelpa (frame-cmds :fetcher github :repo "emacsmirror/frame-cmds"))
+
+(use-package zoom-frm
+ :after (frame-fns frame-cmds)
+ :quelpa (zoom-frm :fetcher github :repo "emacsmirror/zoom-frm")
+ :config
+ (nmap
+   "C-=" 'zoom-frm-in
+   "C--" 'zoom-frm-out
+   "<s-triple-wheel-up>" 'zoom-frm-in
+   "<s-triple-wheel-down>" 'zoom-frm-out))
+#+END_SRC
+
+*** Transparency
+
+Allows easily change Emacs transparency.
+See the [[https://github.com/Benaiah/seethru][package repo]] for more info.
+
+#+BEGIN_SRC emacs-lisp
+(use-package seethru
+ :config
+ (seethru 100)
+ ;; C-c 8, C-c 9
+ (seethru-recommended-keybinds))
+#+END_SRC
+
 *** Go to last change
 
 Goto last change in current buffer.
@@ -1002,6 +1087,18 @@ Goto last change in current buffer.
    (nmap
      "s-." 'goto-last-change
      "s-," 'goto-last-change-reverse)))
+#+END_SRC
+
+*** Fullframe
+
+Makes it possible to advice commands to execute fullscreen, restoring the window
+setup when exiting.
+
+#+BEGIN_SRC emacs-lisp
+(use-package fullframe
+ :config
+ (fullframe list-packages quit-window)
+ (fullframe package-list-packages quit-window))
 #+END_SRC
 
 *** Folding
@@ -1391,9 +1488,12 @@ Go to the [[https://github.com/edkolev/evil-lion][package repo]] for more info.
 #+BEGIN_SRC emacs-lisp
 (use-package evil-lion
  :after evil
+ :commands
+ (evil-lion-mode
+  evil-lion-left
+  evil-lion-right)
  :init
- (setq evil-lion-squeeze-spaces t)
- :commands (evil-lion-mode evil-lion-left evil-lion-right))
+ (setq evil-lion-squeeze-spaces t))
 #+END_SRC
 
 *** Sentence navigation
@@ -1710,10 +1810,12 @@ FLX fuzzy matching for =company=.
 This only works with the =company-capf= backend.
 
 #+BEGIN_SRC emacs-lisp
+(use-package flx)
+
 (use-package company-flx
  :after (company flx)
  :commands
- company-flx-mode
+ (company-flx-mode)
  :demand t
  :config
  ;; use C-o to switch backend and
@@ -2195,6 +2297,76 @@ Most of key bindings are provided by the =evil-collection=.
 #+END_SRC
 
 ** Navigation
+*** Ace window
+
+Quickly switch between windows (splits).
+
+When there are two windows, =ace-window= will call ~other-window~. If there are
+more, each window will have the first character of its window label highlighted
+at the upper left of the window.
+
+See the [[https://github.com/abo-abo/ace-window][package repo]] for more info.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ace-window
+ :custom
+ (aw-keys '(?a ?s ?d ?f ?g ?h ?j ?k ?l) "Use home row for selecting.")
+ (aw-scope 'frame "Highlight only current frame.")
+ :config
+ (nmap
+   :prefix my/leader
+   "w" 'ace-window))
+#+END_SRC
+
+*** Winner
+
+Undo/redo window layout (split pane) config.
+
+#+BEGIN_SRC emacs-lisp
+(use-package winner
+ :demand t
+ :init
+ (setq
+  winner-dont-bind-my-keys t
+  winner-boring-buffers
+  '("*Completions*"
+    "*Compile-Log*"
+    "*inferior-lisp*"
+    "*Fuzzy Completions*"
+    "*Apropos*"
+    "*Help*"
+    "*cvs*"
+    "*Buffer List*"
+    "*Ibuffer*"
+    "*esh command on file*"))
+ :config
+ (winner-mode 1)
+ :config
+ (nmap
+   :prefix my/leader
+   "U" 'winner-undo
+   "R" 'winner-redo)
+ (when (eq system-type 'darwin)
+   (general-define-key
+    "C-s-[" 'winner-undo
+    "C-s-]" 'winner-redo)))
+#+END_SRC
+
+*** Expand region
+
+Increases the selected region by semantic units.
+
+#+BEGIN_SRC emacs-lisp
+(use-package expand-region
+ :after general
+ :config
+ (vmap
+   "v" 'er/expand-region)
+ (when (eq system-type 'darwin)
+   (vmap
+     "s-'" 'er/expand-region)))
+#+END_SRC
+
 *** Ivy
 
 Setup [[https://github.com/abo-abo/swiper][ivy]].
@@ -2382,6 +2554,22 @@ Setup counsel.
    "J" 'counsel-bookmark))
 #+END_SRC
 
+*** Ace link
+
+Package for selecting a link to jump to.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ace-link
+ :after (counsel)
+ :commands
+ (ace-link-setup-default)
+ :config
+ (nmap
+   "C-c C-l" 'counsel-ace-link)
+ :config
+ (ace-link-setup-default))
+#+END_SRC
+
 *** Counsel etags
 
 #+BEGIN_SRC emacs-lisp
@@ -2531,10 +2719,29 @@ Projectile replacements.
 #+END_SRC
 
 ** Git
+*** With editor
+
+Makes it easy to use the Emacsclient as the =$EDITOR= of child processes, making
+sure they know how to call home. For remote processes a substitute is provided,
+which communicates with Emacs on standard output instead of using a socket as
+the Emacsclient does.
+
+#+BEGIN_SRC emacs-lisp
+(use-package with-editor
+ :config
+ (nmap 'with-editor-mode-map
+   ;; it closes the Magit's git-commit window
+   ;; instead of switching to evil-normal-state
+   ;; [escape] 'with-editor-cancel
+   "RET" 'with-editor-finish)
+ (evil-set-initial-state 'with-editor-mode 'insert))
+#+END_SRC
+
 *** Magit
 
 #+BEGIN_SRC emacs-lisp
-(use-package magit)
+(use-package magit
+ :demand t)
 #+END_SRC
 
 *** Evil-Magit
@@ -2840,6 +3047,7 @@ Setup =tramp=.
 #+END_SRC
 
 ** Smartparens
+*** Main
 
 #+BEGIN_SRC emacs-lisp
 (use-package smartparens
@@ -2850,11 +3058,6 @@ Setup =tramp=.
   sp-pair)
  :hook
  ((conf-mode text-mode prog-mode) . smartparens-mode)
- :init
- (setq
-  sp-autoinsert-if-followed-by-word t
-  sp-autoskip-closing-pair 'always-end
-  sp-hybrid-kill-entire-symbol nil)
  :config
  (use-package smartparens-config
   :ensure nil
@@ -2883,12 +3086,19 @@ Setup =tramp=.
   "C-c s p" 'sp-add-to-previous-sexp
   "C-c s n" 'sp-add-to-next-sexp
   "C-c s j" 'sp-join-sexp
-  "C-c s s" 'sp-split-sexp)
- (sp-pair "(" ")" :wrap "C-(")
- (sp-pair "[" "]" :wrap "s-[")
- (sp-pair "\"" "\"" :wrap "C-\"")
- (sp-pair "{" "}" :wrap "C-{")
+  "C-c s s" 'sp-split-sexp
+  "C-c s (" 'sp-wrap-round
+  "C-c s [" 'sp-wrap-square
+  "C-c s {" 'sp-wrap-curly)
  :diminish smartparens-mode)
+#+END_SRC
+
+*** Evil
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-smartparens
+ :config
+ (add-hook 'smartparens-enabled-hook #'evil-smartparens-mode))
 #+END_SRC
 
 ** Snippets
@@ -3329,11 +3539,129 @@ operators will be replaced.
  (add-hook 'haskell-mode-hook #'lsp))
 #+END_SRC
 
+*** Ocaml
+**** Utop
+
+https://github.com/diml/utop#integration-with-emacs
+
+#+BEGIN_SRC emacs-lisp
+(use-package utop
+ :config
+ (setq utop-command "opam config exec utop -- -emacs")
+ :hook
+ ((tuareg-mode reason-mode) . utop-minor-mode))
+#+END_SRC
+
+**** Merlin
+
+Context sensitive completion for OCaml. Provides modern IDE features.
+Implements a minor-mode that is supposed to be used on top of =tuareg-mode=.
+
+See the [[https://github.com/ocaml/merlin][package repo]] for more info.
+
+#+BEGIN_SRC emacs-lisp
+(use-package merlin
+ :after (company)
+ :init
+ ;; Disable merlin's own error checking
+ ;; We'll use flycheck-ocaml for that
+ (setq merlin-error-after-save nil)
+ :config
+ (add-to-list 'company-backends 'merlin-company-backend)
+ :hook
+ ((tuareg-mode caml-mode) . merlin-mode))
+#+END_SRC
+
+**** Tuareg
+
+[[https://github.com/ocaml/tuareg][Tuareg]] is an Emacs OCaml mode.
+
+Provides:
+- Syntax highlighting.
+- REPL (aka =toplevel=).
+- Ocaml debugger within Emacs.
+
+Usage:
+- Start the OCaml REPL with ~M-x run-ocaml~.
+- Run the OCaml debugger with ~M-x ocamldebug FILE~.
+
+#+BEGIN_SRC emacs-lisp
+(use-package tuareg
+ :init
+ (setq tuareg-match-patterns-aligned t)
+ :delight "ocaml")
+#+END_SRC
+
+**** Dune
+
+A [[https://github.com/ocaml/dune][composable build system]] for OCaml.
+
+#+BEGIN_SRC emacs-lisp
+(use-package dune)
+#+END_SRC
+
+**** Flycheck
+
+OCaml support for Flycheck using Merlin.
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-ocaml
+ :after (flycheck merlin)
+ :commands
+ (flycheck-ocaml-setup)
+ :config
+ (with-eval-after-load 'merlin
+   ;; Enable flycheck checker
+   (flycheck-ocaml-setup)))
+#+END_SRC
+
+*** Merlin eldoc
+
+Automatically (without using keybindings) provide information for the value
+under point in OCaml and ReasonML files.
+
+#+BEGIN_SRC emacs-lisp
+(use-package merlin-eldoc
+ :after merlin
+ :custom
+ (eldoc-echo-area-use-multiline-p t)   ; Use multiple lines when necessary
+ (merlin-eldoc-max-lines 8)            ; But not more than 8
+ (merlin-eldoc-type-verbosity 'min)    ; Don't display verbose types
+ (merlin-eldoc-function-arguments nil) ; Don't show function arguments
+ (merlin-eldoc-doc nil)                ; Don't show the documentation
+ :config
+ (nmap 'merlin-mode-map
+   :prefix my/leader
+   "m p" 'merlin-eldoc-jump-to-prev-occurrence
+   "m n" 'merlin-eldoc-jump-to-next-occurrence)
+ :hook
+ ((tuareg-mode reason-mode) . merlin-eldoc-setup))
+#+END_SRC
+
+*** Reason
+
+#+BEGIN_SRC emacs-lisp
+(use-package reason-mode
+ :quelpa
+ (reason-mode :repo "reasonml-editor/reason-mode" :fetcher github :stable t)
+ :config
+ (add-hook
+  'reason-mode-hook
+  (lambda ()
+    (setq utop-command "opam config exec -- rtop -emacs")
+    (add-hook 'before-save-hook 'refmt-before-save)))
+    (add-hook 'reason-mode-hook 'merlin-mode)
+    (add-hook 'reason-mode-hook 'utop-minor-mode)
+    (add-hook 'reason-mode-hook 'flycheck-mode)
+    :delight "re")
+#+END_SRC
+
 *** Nix
 
 #+BEGIN_SRC emacs-lisp
 (use-package nix-mode
-  :mode ("\\.nix\\'" "\\.nix.in\\'"))
+  :mode ("\\.nix\\'" "\\.nix.in\\'")
+  :delight "nix")
 (use-package nix-drv-mode
   :ensure nix-mode
   :mode "\\.drv\\'")
@@ -3343,6 +3671,20 @@ operators will be replaced.
 (use-package nix-repl
   :ensure nix-mode
   :commands (nix-repl))
+#+END_SRC
+
+*** Dhall
+
+Idk how to prevent its popup to show up.
+Also, it fails to validate =spago= dhall files for some reason.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package dhall-mode
+ :custom
+ (dhall-command (substitute-in-file-name "$HOME/.local/bin/dhall"))
+ (dhall-format-command nil)
+ (dhall-format-at-save t)
+ :mode "\\.dhall\\'")
 #+END_SRC
 
 *** Json
@@ -3532,20 +3874,6 @@ Other JSON-related packages.
 
 #+BEGIN_SRC emacs-lisp
 
-#+END_SRC
-
-*** Dhall
-
-Idk how to prevent its popup to show up.
-Also, it fails to validate =spago= dhall files for some reason.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package dhall-mode
- :custom
- (dhall-command (substitute-in-file-name "$HOME/.local/bin/dhall"))
- (dhall-format-command nil)
- (dhall-format-at-save t)
- :mode "\\.dhall\\'")
 #+END_SRC
 
 *** Nginx
@@ -3778,6 +4106,23 @@ _SPC_ cancel   _o_nly this
 (nmap
   "M-t" 'hydra-zoom/body
   "M-w" 'hydra-window/body)
+#+END_SRC
+
+** Help
+
+See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
+
+#+BEGIN_SRC emacs-lisp
+(use-package helpful
+ :config
+ (nmap
+   :prefix my/leader
+   "H h" 'helpful-at-point
+   "H f" 'helpful-callable
+   "H F" 'helpful-function
+   "H v" 'helpful-variable
+   "H c" 'helpful-command
+   "H k" 'helpful-key))
 #+END_SRC
 
 ** Infrastructure
