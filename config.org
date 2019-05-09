@@ -3695,6 +3695,24 @@ Also, it fails to validate =spago= dhall files for some reason.
  :mode "\\.dhall\\'")
 #+END_SRC
 
+
+*** Terraform
+**** Mode
+
+#+BEGIN_SRC emacs-lisp
+ (use-package terraform-mode
+  :hook (terraform-mode . terraform-format-on-save-mode))
+#+END_SRC
+
+**** Company
+
+#+BEGIN_SRC emacs-lisp
+ (use-package company-terraform
+  :after (terraform company)
+  :config
+  (company-terraform-init))
+#+END_SRC
+
 *** Json
 
 #+BEGIN_SRC emacs-lisp
