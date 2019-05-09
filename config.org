@@ -3565,7 +3565,9 @@ See the [[https://github.com/ocaml/merlin][package repo]] for more info.
  :init
  ;; Disable merlin's own error checking
  ;; We'll use flycheck-ocaml for that
- (setq merlin-error-after-save nil)
+ (setq
+  merlin-error-after-save nil
+  merlin-command "/run/current-system/sw/bin/ocamlmerlin")
  :config
  (add-to-list 'company-backends 'merlin-company-backend)
  :hook
@@ -3590,6 +3592,12 @@ Usage:
  :init
  (setq tuareg-match-patterns-aligned t)
  :delight "ocaml")
+#+END_SRC
+
+**** Indentation
+
+#+BEGIN_SRC emacs-lisp
+(use-package ocp-indent)
 #+END_SRC
 
 **** Dune
