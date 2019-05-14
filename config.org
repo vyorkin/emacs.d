@@ -3539,13 +3539,56 @@ operators will be replaced.
  (add-hook 'haskell-mode-hook #'lsp))
 #+END_SRC
 
+*** Nix
+
+#+BEGIN_SRC emacs-lisp
+(use-package nix-mode
+  :mode ("\\.nix\\'" "\\.nix.in\\'")
+  :delight "nix")
+(use-package nix-drv-mode
+  :ensure nix-mode
+  :mode "\\.drv\\'")
+(use-package nix-shell
+  :ensure nix-mode
+  :commands (nix-shell-unpack nix-shell-configure nix-shell-build))
+(use-package nix-repl
+  :ensure nix-mode
+  :commands (nix-repl))
+#+END_SRC
+
+**** Helpers
+
+Predicate function that checks if we inside a =nix-shell=.
+
+#+BEGIN_SRC emacs-lisp
+(defun my/in-nix-shell-p ()
+  (string-equal (getenv "IN_NIX_SHELL") "1"))
+#+END_SRC
+
+#+RESULTS:
+: in-nix-shell-p
+
 *** Ocaml
+
+Nix(OS)-specific.
+The main idea is [[https://blog.jethro.dev/blog/ocaml_with_nix/][described here.]]
+
+**** Variables
+
+#+BEGIN_SRC emacs-lisp
+(defconst my/merlin-site-elisp (getenv "MERLIN_SITE_LISP"))
+(defconst my/utop-site-elisp (getenv "UTOP_SITE_LISP"))
+(defconst my/ocp-site-elisp (getenv "OCP_INDENT_SITE_LISP"))
+#+END_SRC
+
 **** Utop
 
 https://github.com/diml/utop#integration-with-emacs
 
 #+BEGIN_SRC emacs-lisp
 (use-package utop
+ :if (and my/utop-site-elisp (my/in-nix-shell-p))
+ :load-path my/utop-site-elisp
  :config
  (setq utop-command "opam config exec utop -- -emacs")
  :hook
@@ -3562,6 +3605,8 @@ See the [[https://github.com/ocaml/merlin][package repo]] for more info.
 #+BEGIN_SRC emacs-lisp
 (use-package merlin
  :after (company)
+ :if (and my/merlin-site-elisp (my/in-nix-shell-p))
+ :load-path my/merlin-site-elisp
  :init
  ;; Disable merlin's own error checking
  ;; We'll use flycheck-ocaml for that
@@ -3597,7 +3642,9 @@ Usage:
 **** Indentation
 
 #+BEGIN_SRC emacs-lisp
-(use-package ocp-indent)
+(use-package ocp-indent
+ :if (and my/ocp-site-elisp (my/in-nix-shell-p))
+ :load-path my/ocp-site-elisp)
 #+END_SRC
 
 **** Dune
@@ -3664,23 +3711,6 @@ under point in OCaml and ReasonML files.
     :delight "re")
 #+END_SRC
 
-*** Nix
-
-#+BEGIN_SRC emacs-lisp
-(use-package nix-mode
-  :mode ("\\.nix\\'" "\\.nix.in\\'")
-  :delight "nix")
-(use-package nix-drv-mode
-  :ensure nix-mode
-  :mode "\\.drv\\'")
-(use-package nix-shell
-  :ensure nix-mode
-  :commands (nix-shell-unpack nix-shell-configure nix-shell-build))
-(use-package nix-repl
-  :ensure nix-mode
-  :commands (nix-repl))
-#+END_SRC
-
 *** Dhall
 
 Idk how to prevent its popup to show up.
@@ -3709,6 +3739,8 @@ Also, it fails to validate =spago= dhall files for some reason.
 #+BEGIN_SRC emacs-lisp
  (use-package company-terraform
   :after (terraform company)
+  :commands
+  (company-terraform-init)
   :config
   (company-terraform-init))
 #+END_SRC
