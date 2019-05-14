@@ -2166,7 +2166,7 @@ First, we need to install some =dired hacks= dependencies.
       (extension
        "c" "cc" "cpp" "cxx" "c++"
        "h" "hpp" "hxx" "h++"))
-     ("oRG" (extension "org"))
+     ("org" (extension "org"))
      ("lisp" (extension "el"))
      ("word" (extension "docx" "doc"))
      ("excel" (extension "xlsx" "xls"))
@@ -3102,8 +3102,47 @@ Setup =tramp=.
 #+END_SRC
 
 ** Snippets
+*** Yasnippet
 
 #+BEGIN_SRC emacs-lisp
+(use-package yasnippet
+ :preface
+ (defvar my/yasnippet/snippets
+  (my/emacs-path "yasnippet-snippets/snippets"))
+ :init
+ (setq
+  yas-wrap-around-region t
+  yas-indent-line t
+  yas-snippet-dirs `(,my/yasnippet/snippets))
+ :config
+ (yas-global-mode 1)
+ (nmap
+   :prefix my/leader
+   "y i" 'yas-insert-snippet
+   "y n" 'yas-new-snippet
+   "y v" 'yas-visit-snippet-file
+   "y r" 'yas-reload-all)
+ (imap
+   "C-l" 'yas-insert-snippet)
+ :diminish yas-minor-mode)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package ivy-yasnippet
+ :config
+ (imap
+   "C-s" 'ivy-yasnippet))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package auto-yasnippet
+ :after (general yasnippet)
+ :config
+ (nmap
+   :prefix my/leader
+   "y c" 'aya-create
+   "y e" 'aya-expand
+   "y o" 'aya-open-line))
 #+END_SRC
 
 ** Org
