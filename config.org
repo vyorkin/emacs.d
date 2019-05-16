@@ -88,8 +88,7 @@ Install =use-package=.
   (package-refresh-contents)
   (package-install 'use-package))
 
-(eval-when-compile
-  (require 'use-package))
+(eval-when-compile (require 'use-package))
 #+END_SRC
 
 Install missing packages automatically if not already present on the system and
@@ -123,6 +122,9 @@ Also this is required for [[https://github.com/jwiegley/use-package#use-package-
 
 #+BEGIN_SRC emacs-lisp
 (use-package exec-path-from-shell
+ :commands
+ (exec-path-from-shell-copy-envs
+  exec-path-from-shell-initialize)
  :init
  (setq exec-path-from-shell-check-startup-files nil)
  :config
@@ -336,6 +338,8 @@ Global minor mode which makes mouse-wheel scroll a line smoothly.
 #+BEGIN_SRC emacs-lisp
 (use-package pixel-scroll
  :ensure nil
+ :commands
+ (pixel-scroll-mode)
  :config
  (pixel-scroll-mode 1))
 #+END_SRC
@@ -345,6 +349,8 @@ Global minor mode which makes mouse-wheel scroll a line smoothly.
 #+BEGIN_SRC emacs-lisp
 (use-package prog-mode
  :ensure nil
+ :commands
+ (global-prettify-symbols-mode)
  :init
  (setq prettify-symbols-unprettify-at-point 'right-edge)
  :config
@@ -365,6 +371,8 @@ Global minor mode which makes mouse-wheel scroll a line smoothly.
 
 #+BEGIN_SRC emacs-lisp
 (use-package mule
+ :commands
+ (set-terminal-coding-system)
  :ensure nil
  :config
  (prefer-coding-system 'utf-8)
@@ -1064,6 +1072,8 @@ See the [[https://github.com/Benaiah/seethru][package repo]] for more info.
 
 #+BEGIN_SRC emacs-lisp
 (use-package seethru
+ :commands
+ (seethru)
  :config
  (seethru 100)
  ;; C-c 8, C-c 9
@@ -3582,7 +3592,11 @@ operators will be replaced.
 
 #+BEGIN_SRC emacs-lisp
 (use-package nix-mode
+  :after (general)
   :mode ("\\.nix\\'" "\\.nix.in\\'")
+  :config
+  (nmap 'nix-mode-map
+   "C-c r" 'nix-format-buffer)
   :delight "nix")
 (use-package nix-drv-mode
   :ensure nix-mode
@@ -3598,6 +3612,7 @@ operators will be replaced.
 **** Helpers
 
 Predicate function that checks if we inside a =nix-shell=.
+See my config for Ocaml for the usage example.
 
 #+BEGIN_SRC emacs-lisp
 (defun my/in-nix-shell-p ()
@@ -4402,6 +4417,8 @@ this in details]].
 
 #+BEGIN_SRC emacs-lisp
 (use-package keyfreq
+ :commands
+ (keyfreq-mode keyfreq-autosave-mode)
  :config
  (keyfreq-mode 1)
  (keyfreq-autosave-mode 1))
