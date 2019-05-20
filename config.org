@@ -752,7 +752,8 @@ Base-16 themes.
 #+BEGIN_SRC emacs-lisp
 (use-package base16-theme
   :config
-  (load-theme 'base16-chalk t)
+  ;; (load-theme 'base16-chalk t)
+  (load-theme 'base16-black-metal t)
   ;; (load-theme 'base16-default-dark t)
   ;; (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
@@ -1868,7 +1869,7 @@ This only works with the =company-capf= backend.
 (use-package flycheck
  :after general
  :commands
- global-flycheck-mode
+ (global-flycheck-mode)
  :init
  (setq-default
   flycheck-disabled-checkers
@@ -3119,6 +3120,8 @@ Setup =tramp=.
  :preface
  (defvar my/yasnippet/snippets
   (my/emacs-path "yasnippet-snippets/snippets"))
+ :load-path (lambda () (my/emacs-path "yasnippet-snippets"))
+ :ensure nil
  :init
  (setq
   yas-wrap-around-region t
@@ -3588,6 +3591,88 @@ operators will be replaced.
  (add-hook 'haskell-mode-hook #'lsp))
 #+END_SRC
 
+*** PureScript
+**** Mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package purescript-mode
+ :after general
+ :if (executable-find "purs")
+ :load-path (lambda () (my/emacs-path "purescript-mode"))
+ :ensure nil
+ :preface
+ (defvar my/purescript/path
+  (my/emacs-path "purescript-mode"))
+ (defun my/purescript-emmet ()
+   (interactive)
+   (let ((start (point))
+         (end (save-excursion (beginning-of-line-text) (point))))
+     (call-process-region start end "purescript-emmet" t t)))
+ :config
+ (require 'purescript-mode-autoloads)
+ (add-to-list 'Info-default-directory-list my/purescript/path)
+ (imap 'purescript-mode-map
+   "C-c C-e" 'my/purescript-emmet))
+#+END_SRC
+
+**** PSC IDE
+
+#+BEGIN_SRC emacs-lisp
+(use-package psc-ide
+ :after (general purescript-mode)
+ :preface
+ (defun my/psc-ide/setup ()
+   (setq-local evil-auto-indent nil)
+   (psc-ide-mode)
+   (turn-on-purescript-unicode-input-method)
+   (turn-on-purescript-indentation))
+ :hook
+ (purescript-mode . my/psc-ide/setup)
+ :init
+ ;; use the psc-ide server that is
+ ;; relative to npm bin directory
+ (setq psc-ide-use-npm-bin t)
+ :config
+ (general-define-key
+  :states 'normal
+  :keymaps 'psc-ide-mode-map
+  "C-t" 'psc-ide-goto-definition
+  "C-]" 'psc-ide-goto-definition
+  "g d" 'psc-ide-goto-definition)
+ :delight "psc-ide")
+#+END_SRC
+
+**** PSCI
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package psci
+ :disabled
+ :after purescript-mode
+ :hook
+ (purescript-mode . inferior-psci-mode)
+ :delight "psci")
+#+END_SRC
+
+**** Flycheck
+
+Should be superseeded by psc-ide-mode's flycheck integration
+https://github.com/dysinger/purescript-mode/pull/8
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package flycheck-purescript
+ :after flycheck
+ :disabled
+ :preface
+ (defun my/flycheck-purescript/setup ()
+   (setq default-directory (locate-dominating-file default-directory "node_modules")))
+ :after purescript-mode
+ :init
+ (eval-after-load 'flycheck
+   '(add-hook 'flycheck-mode-hook 'flycheck-purescript-setup))
+ :hook
+ (purescript-mode . my/flycheck-purescript/setup))
+#+END_SRC
+
 *** Nix
 
 #+BEGIN_SRC emacs-lisp
@@ -3982,9 +4067,170 @@ Other JSON-related packages.
 #+END_SRC
 
 *** JavaScript
+**** tern
 
 #+BEGIN_SRC emacs-lisp
+(use-package tern
+ :commands
+ (tern-mode)
+ :config
+ ;; enable js completion between <script>...</script> etc
+ (defadvice company-tern (before web-mode-set-up-ac-sources activate)
+   "Set `tern-mode' based on current language before running company-tern."
+   (message "advice")
+   (if (equal major-mode 'web-mode)
+       (let ((web-mode-cur-language (web-mode-language-at-pos)))
+         (if (or (string= web-mode-cur-language "javascript")
+                 (string= web-mode-cur-language "jsx"))
+             (unless tern-mode (tern-mode))
+           (if tern-mode (tern-mode -1)))))))
+#+END_SRC
 
+**** npm
+
+#+BEGIN_SRC emacs-lisp
+(use-package npm-mode
+ :commands
+ (npm-mode npm-global-mode)
+ :config
+ (npm-global-mode)
+ :diminish npm-mode)
+#+END_SRC
+
+**** js2
+
+#+BEGIN_SRC emacs-lisp
+(use-package js2-mode
+ :init
+ ;; indent step is 2 spaces
+ (setq-default js2-basic-offset 2)
+ (setq-default js-indent-level 2)
+ (setq
+  ;; configure indentation
+  js2-enter-indents-newline t
+  js2-auto-indent-p t
+  ;; Idle timeout before reparsing buffer
+  js2-idle-timer-delay 0.5
+  ;; disable error parsing in favor of Flycheck
+  js2-strict-missing-semi-warning nil)
+ :commands js2-mode
+ :config
+ (add-to-list 'auto-mode-alist '("\\.js\\'" . js2-mode))
+ :delight "js2")
+#+END_SRC
+
+**** eslintd-fix
+
+A very fast JS linter and fixer.
+
+#+BEGIN_SRC emacs-lisp
+(use-package eslintd-fix
+ :hook
+ (tide-mode . eslintd-fix-mode))
+#+END_SRC
+
+**** xref-js2
+
+Jump to references/definitions using ag & js2-mode's AST.
+See the [[https://github.com/NicolasPetton/xref-js2][repo]] for details.
+
+#+BEGIN_SRC emacs-lisp
+(use-package xref-js2
+ :preface
+ (defun my/xref-js2/add-backend ()
+   (add-hook 'xref-backend-functions
+             'xref-js2-xref-backend nil t))
+ :hook
+ (js2-mode . my/xref-js2/add-backend)
+ :config
+ (unbind-key "M-." js2-mode-map))
+#+END_SRC
+
+**** js2-refactor
+
+A JavaScript refactoring library.
+
+#+BEGIN_SRC emacs-lisp
+(use-package js2-refactor
+ :hook
+ (js2-mode . js2-refactor-mode)
+ :config
+ ;; enable minor mode for js refactoring
+ ;; see: https://github.com/magnars/js2-refactor.el#refactorings
+ (js2r-add-keybindings-with-prefix "C-c C-j"))
+#+END_SRC
+
+**** rjxs-mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package rjsx-mode
+ :commands rjsx-mode
+ :config
+ (add-to-list 'auto-mode-alist '("\\.jsx\\'" . rjsx-mode)))
+#+END_SRC
+
+**** LSP
+
+Typescript LSP support.
+
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-javascript-typescript
+ :after lsp-mode
+ :preface
+ (defun my/lsp-js-ts/company-transformer (candidates)
+   (let ((completion-ignore-case t))
+     (all-completions (company-grab-symbol) candidates)))
+  (defun my/lsp-js-ts/setup nil
+    (make-local-variable 'company-transformers)
+    (push my/lsp-js-ts/company-transformer company-transformers))
+  :hook
+  (js-mode . my/lsp-js-ts/setup)
+  (js2-mode . my/lsp-js-ts/setup)        ; for js2-mode support
+  (js3-mode . my/lsp-js-ts/setup)        ; for js3-mode support
+  (typescript-mode . my/lsp-js-ts/setup) ; for typescript support
+  (rjsx-mode . my/lsp-js-ts/setup))      ; for rjsx-mode support
+#+END_SRC
+
+Flow LSP support.
+
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-javascript-flow
+ :after lsp-mode
+ :hook
+ (js-mode . lsp-javascript-flow-enable)
+ (js2-mode . lsp-javascript-flow-enable)   ; for js2-mode support
+ (js3-mode . lsp-javascript-flow-enable)   ; for js3-mode support
+ (rjsx-mode . lsp-javascript-flow-enable)) ; for rjsx-mode support
+#+END_SRC
+
+**** prettier
+
+#+BEGIN_SRC emacs-lisp
+(use-package prettier-js
+ :hook
+ ((js2-mode-hook web-mode-hook) . prettier-js-mode)
+ :delight "pr")
+#+END_SRC
+
+**** GraphQL
+
+#+BEGIN_SRC emacs-lisp
+(use-package graphql-mode
+ :mode "\\.graphql\\'"
+ :custom
+ (graphql-url "http://localhost:8000/api/graphql/query"))
+#+END_SRC
+
+**** company-tern
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-tern
+ :after (company tern)
+ :demand t
+ :custom
+ (company-tern-meta-as-single-line t)
+ :config
+ (add-to-list 'company-backends 'company-tern))
 #+END_SRC
 
 *** Nginx
