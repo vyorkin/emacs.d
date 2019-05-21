@@ -14,36 +14,32 @@ This config is not intended to be used by anyone other than me.
 
 * Config
 
+** Setup
+
+#+BEGIN_SRC sh :tangle no
+$ emacs --load ~/.emacs.d/setup.el
+#+END_SRC
+
+When this configuration is loaded, the =init.el= the with the actual configuration is generated.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+;; We can't tangle without org!
+(require 'org)
+;; Open the configuration
+(find-file (concat user-emacs-directory "init.org"))
+;; tangle it
+(org-babel-tangle)
+;; load it
+(load-file (concat user-emacs-directory "init.el"))
+;; finally byte-compile it
+(byte-compile-file (concat user-emacs-directory "init.el"))
+#+END_SRC
+
 [[https://www.emacswiki.org/emacs/LexicalBinding][Lexical binding]] for the init-file is needed, it can be specified in the header.
 This is the first line of the actual configuration.
 
 #+BEGIN_SRC emacs-lisp
 ;;; -*- lexical-binding: t -*-
-#+END_SRC
-
-** Tangle
-
-Tangle and compile this file on save automatically:
-
-#+BEGIN_SRC emacs-lisp
-(defun tangle-init ()
-  "If the current buffer is 'init.org' the code-blocks are tangled, and the tangled file is compiled."
-  (when (equal (buffer-file-name)
-               (expand-file-name (concat user-emacs-directory "config.org")))
-    ;; Avoid running hooks when tangling.
-    (let ((prog-mode-hook nil))
-      (org-babel-tangle)
-      (byte-compile-file (concat user-emacs-directory "config.el")))))
-
-(add-hook 'after-save-hook 'tangle-init)
-#+END_SRC
-
-This helps to get rid of =functions might not be defined at runtime= warnings.
-See [[https://github.com/jwiegley/use-package/issues/590][this issue]] for details.
-
-#+BEGIN_SRC emacs-lisp
-(eval-when-compile
-  (setq use-package-expand-minimally byte-compile-current-file))
 #+END_SRC
 
 ** Use package
@@ -138,6 +134,14 @@ Decrease the =obsolete= warnings annoyance level.
 
 #+BEGIN_SRC emacs-lisp
 (setq byte-compile-warnings '(not obsolete))
+#+END_SRC
+
+This helps to get rid of =functions might not be defined at runtime= warnings.
+See [[https://github.com/jwiegley/use-package/issues/590][this issue]] for details.
+
+#+BEGIN_SRC emacs-lisp
+(eval-when-compile
+  (setq use-package-expand-minimally byte-compile-current-file))
 #+END_SRC
 
 Suppress ~ad-handle-definition~ warnings.
