@@ -3572,6 +3572,8 @@ operators will be replaced.
 *** PureScript
 **** Mode
 
+The PureScript mode.
+
 #+BEGIN_SRC emacs-lisp
 (use-package purescript-mode
  :after general
@@ -3591,6 +3593,13 @@ operators will be replaced.
  (add-to-list 'Info-default-directory-list my/purescript/path)
  (imap 'purescript-mode-map
    "C-c C-e" 'my/purescript-emmet))
+#+END_SRC
+
+A new, simple purescript mode for cheap syntax highlighting.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package purescript-mode
+ :quelpa (purescript-mode :fetcher github :repo "justinwoo/new-purescript-mode"))
 #+END_SRC
 
 **** PSC IDE
