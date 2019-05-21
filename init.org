@@ -727,14 +727,6 @@ Advice setting ~:ensure nil~ for =use-package= + =quelpa=.
    (font-spec :registry "iso10646-1" :script 'cyrillic)))
 #+END_SRC
 
-*** Font lock +
-
-#+BEGIN_SRC emacs-lisp
-(use-package font-lock+
-  :quelpa
-  (font-lock+ :repo "emacsmirror/font-lock-plus" :fetcher github))
-#+END_SRC
-
 ** Theme
 
 Base-16 themes.
