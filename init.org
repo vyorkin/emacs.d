@@ -83,29 +83,19 @@ functions selected by the package author.
 
 Install =use-package=.
 
+Install missing packages automatically if not already present on the system and
+be less verbose.
+
 #+BEGIN_SRC emacs-lisp
 (unless (package-installed-p 'use-package)
   (package-refresh-contents)
   (package-install 'use-package))
 
 (eval-when-compile (require 'use-package))
-#+END_SRC
 
-Install missing packages automatically if not already present on the system and
-be less verbose.
-
-#+BEGIN_SRC emacs-lisp
 (setq
  use-package-always-ensure t
  use-package-verbose nil)
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-(use-package system-packages
- :custom
- (system-packages-noconfirm t))
-
-(use-package use-package-ensure-system-package)
 #+END_SRC
 
 Statistics gathering. Run the ~M-x use-package-report~ command to see the
@@ -1865,11 +1855,12 @@ This only works with the =company-capf= backend.
 
 ** Flycheck
 
+On-the-fly syntax checking for GNU Emacs.
+See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more info.
+
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck
- :after general
- :commands
- (global-flycheck-mode)
+ :after (exec-path-from-shell general)
  :init
  (setq-default
   flycheck-disabled-checkers
@@ -1884,18 +1875,7 @@ This only works with the =company-capf= backend.
   flycheck-mode-line-prefix "fly"
   flycheck-javascript-eslint-executable "eslint_d")
  :config
- ;; make the error list display like similar lists in contemporary IDEs
- ;; like VisualStudio, Eclipse, etc.
- (add-to-list
-  'display-buffer-alist
-  `(,(rx bos "*fucking errors*" eos)
-    ;; (display-buffer-reuse-window
-    ;;  display-buffer-in-side-window)
-    (side            . bottom)
-    (reusable-frames . visible)
-    (window-height   . 0.33)))
  (global-flycheck-mode 1)
- (unbind-key "C-j" flycheck-error-list-mode-map)
  (nmap
    :prefix my/leader
    "e e" 'flycheck-list-errors
@@ -1907,16 +1887,18 @@ This only works with the =company-capf= backend.
    "e b" 'flycheck-buffer
    "e v" 'flycheck-verify-setup
    "e V" 'flycheck-verify-checker)
+ ;; Make the error list display like similar lists in contemporary IDEs
+ ;; like VisualStudio, Eclipse, etc.
+ (add-to-list
+  'display-buffer-alist
+  `(,(rx bos "*fucking errors*" eos)
+    ;; (display-buffer-reuse-window
+    ;;  display-buffer-in-side-window)
+    (side . bottom)
+    (reusable-frames . visible)
+    (window-height . 0.33)))
+ (unbind-key "C-j" flycheck-error-list-mode-map)
  :diminish flycheck-mode)
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
 #+END_SRC
 
 ** Flyspell
@@ -3651,26 +3633,6 @@ operators will be replaced.
  :hook
  (purescript-mode . inferior-psci-mode)
  :delight "psci")
-#+END_SRC
-
-**** Flycheck
-
-Should be superseeded by psc-ide-mode's flycheck integration
-https://github.com/dysinger/purescript-mode/pull/8
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package flycheck-purescript
- :after flycheck
- :disabled
- :preface
- (defun my/flycheck-purescript/setup ()
-   (setq default-directory (locate-dominating-file default-directory "node_modules")))
- :after purescript-mode
- :init
- (eval-after-load 'flycheck
-   '(add-hook 'flycheck-mode-hook 'flycheck-purescript-setup))
- :hook
- (purescript-mode . my/flycheck-purescript/setup))
 #+END_SRC
 
 *** Nix
