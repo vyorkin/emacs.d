@@ -15,7 +15,6 @@ vimish-fold
 var/pcache
 request/
 magithub/
-lisp/
 transient/
 .lsp-session-v1
 forge-database.sqlite
