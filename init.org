@@ -3364,6 +3364,14 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 #+END_SRC
 
 *** Haskell
+**** Hasklig (ligatures)
+
+#+BEGIN_SRC emacs-lisp
+(use-package hasklig-mode
+  :hook (haskell-mode)
+  :delight "hl")
+#+END_SRC
+
 **** Mode
 
 #+BEGIN_SRC emacs-lisp
@@ -3378,6 +3386,8 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   ("\\.cabal\\'" . haskell-cabal-mode))
  :preface
  (defun my/haskell-mode/setup ()
+   (setq buffer-face-mode-face '(:family "Hasklig"))
+   (buffer-face-mode)
    ;; Treat symbol (e.g. "_") as a word
    (defalias 'forward-evil-word 'forward-evil-symbol)
    ;; (subword-mode 1)
@@ -3441,7 +3451,8 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   ;; haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans")
   ;; Use "stack build" as the default build command
   ;; haskell-compile-cabal-build-command "stack build --no-library-profiling"
-  haskell-compile-cabal-build-command "cd %s && make build")
+  haskell-compile-cabal-build-command "cd %s && make build"
+)
  :config
  ;; Common key bindings
  (nmap '(haskell-mode-map haskell-cabal-mode-map haskell-interactive-mode-map)
@@ -4390,6 +4401,21 @@ Flow LSP support.
 (use-package glsl-mode)
 #+END_SRC
 
+** Docker
+
+#+BEGIN_SRC emacs-lisp
+(use-package docker
+ :diminish docker-mode
+ :config
+ (nmap
+   :prefix my/leader
+   "d" 'docker))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package docker-compose-mode)
+#+END_SRC
+
 ** GDB
 
 When gdb debugging, show the many windows (stack trace, break points, etc).
@@ -4702,6 +4728,7 @@ Setup wakatime.
  :config
  (delight
   '((emacs-lisp-mode "elisp" :major)
+    (buffer-face-mode "bf" buffer-face)
     (ruby-mode "ruby" :major)
     (elixir-mode "ex" elixir)
     (alchemist-mode "al" alchemist)
