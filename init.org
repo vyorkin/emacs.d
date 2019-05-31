@@ -12,15 +12,31 @@ Inspired by [[https://github.com/freetonik/emacs-dotfiles][freetonik's]] setup.
 
 This config is not intended to be used by anyone other than me.
 
-* Config
+* Setup
 
-** Setup
+- Symlink =init.org= to =~/.emacs.d/init.org=
+- Symlink =init.el= to =~/.emacs.d/init.el=
 
 #+BEGIN_SRC sh :tangle no
-$ emacs --load ~/.emacs.d/setup.el
+ln -sf $(pwd)/init.org ~/.emacs.d/init.org
+ln -sf $(pwd)/init.el ~/.emacs.d/init.el
 #+END_SRC
 
-When this configuration is loaded, the =init.el= the with the actual configuration is generated.
+On the first run Emacs will install some packages. It's best to restart Emacs after that process is done for the first time.
+
+There is no reason to track the =init.el= that is generated; by running the following command =git= will not bother tracking it:
+
+#+BEGIN_SRC sh :tangle no
+git update-index --assume-unchanged init.el
+#+END_SRC
+
+If one wishes to make changes to the repo-version of =init.el= start tracking again with:
+
+#+BEGIN_SRC sh :tangle no
+git update-index --no-assume-unchanged init.el
+#+END_SRC
+
+When this configuration is loaded for the first time, the =init.el= is the file that is loaded. It looks like this:
 
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; We can't tangle without org!
@@ -35,11 +51,29 @@ When this configuration is loaded, the =init.el= the with the actual configurati
 (byte-compile-file (concat user-emacs-directory "init.el"))
 #+END_SRC
 
+* Config
+
 [[https://www.emacswiki.org/emacs/LexicalBinding][Lexical binding]] for the init-file is needed, it can be specified in the header.
 This is the first line of the actual configuration.
 
 #+BEGIN_SRC emacs-lisp
 ;;; -*- lexical-binding: t -*-
+#+END_SRC
+
+Tangle and compile this file on save automatically:
+
+#+BEGIN_SRC emacs-lisp
+(defun tangle-init ()
+  "If the current buffer is 'init.org' the code-blocks are
+tangled, and the tangled file is compiled."
+  (when (equal (buffer-file-name)
+               (file-truename (concat user-emacs-directory "init.org")))
+    ;; Avoid running hooks when tangling.
+    (let ((prog-mode-hook nil))
+      (org-babel-tangle)
+      (byte-compile-file (concat user-emacs-directory "init.el")))))
+
+(add-hook 'after-save-hook 'tangle-init)
 #+END_SRC
 
 ** Use package
@@ -247,7 +281,7 @@ On save/write file:
 (use-package files
  :ensure nil
  :commands
- generate-new-buffer
+ (generate-new-buffer executable-find)
  :custom
  (require-final-newline t)
  :hook
@@ -902,6 +936,8 @@ sunset.
    "P s" 'profiler-start
    "P S" 'profiler-stop
    "P r" 'profiler-report
+   "E e" 'eval-expression
+   "E l" 'eval-last-sexp
    "h k" 'describe-key-briefly
    "h K" 'describe-key
    "h M" 'describe-mode
@@ -1059,6 +1095,7 @@ See the [[https://github.com/Benaiah/seethru][package repo]] for more info.
 
 #+BEGIN_SRC emacs-lisp
 (use-package seethru
+ :demand t
  :commands
  (seethru)
  :config
@@ -1857,6 +1894,8 @@ See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck
  :after (exec-path-from-shell general)
+ :commands
+ (global-flycheck-mode)
  :init
  (setq-default
   flycheck-disabled-checkers
@@ -2053,7 +2092,7 @@ Setup dired.
  ;; Enable omit mode
  ;; (setq-default dired-omit-mode t)
  ;; Hide autosave files
- (setq-default dired-omit-files "^\\.?#")
+ ;; (setq-default dired-omit-files "^\\.?#")
  ;; Uncomment the line below if you want to hide dot files
  ;; (setq-default dired-omit-files (concat dired-omit-files "\\|^\\.[^\\.]"))
  (setq
@@ -3368,8 +3407,8 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 
 #+BEGIN_SRC emacs-lisp
 (use-package hasklig-mode
-  :hook (haskell-mode)
-  :delight "hl")
+ :hook (haskell-mode)
+ :delight "hl")
 #+END_SRC
 
 **** Mode
@@ -3386,7 +3425,8 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   ("\\.cabal\\'" . haskell-cabal-mode))
  :preface
  (defun my/haskell-mode/setup ()
-   (setq buffer-face-mode-face '(:family "Hasklig"))
+   (interactive)
+   (setq buffer-face-mode-face '(:family "Hasklig" :height 140))
    (buffer-face-mode)
    ;; Treat symbol (e.g. "_") as a word
    (defalias 'forward-evil-word 'forward-evil-symbol)
@@ -3394,6 +3434,7 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
    ;; (eldoc-overlay-mode)       ; annoying
    ;; (haskell-indentation-mode) ; hi2 ftw
    ;; There are some tools that dont't work with unicode symbols
+   ;; I use Hasklig instead
    ;; (turn-on-haskell-unicode-input-method)
    ;; Affects haskell-indentation-mode
    (setq-local evil-auto-indent nil)
@@ -3574,7 +3615,6 @@ operators will be replaced.
 (use-package lsp-haskell
  :init
  (setq
-  lsp-haskell-process-path-hie "hie-wrapper"
   lsp-haskell-set-completion-snippets-on t)
  :config
  (add-hook 'haskell-mode-hook #'lsp))
@@ -3587,7 +3627,7 @@ The PureScript mode.
 
 #+BEGIN_SRC emacs-lisp
 (use-package purescript-mode
- :after general
+ :after (general files)
  :if (executable-find "purs")
  :load-path (lambda () (my/emacs-path "purescript-mode"))
  :ensure nil
@@ -3618,6 +3658,7 @@ A new, simple purescript mode for cheap syntax highlighting.
 #+BEGIN_SRC emacs-lisp
 (use-package psc-ide
  :after (general purescript-mode)
+ :commands (psc-ide-mode)
  :preface
  (defun my/psc-ide/setup ()
    (setq-local evil-auto-indent nil)
@@ -3798,30 +3839,6 @@ OCaml support for Flycheck using Merlin.
  ;; see: https://github.com/ProofGeneral/PG/issues/404
  ;; (proof-shrink-windows-tofit t)
  :init
- (use-package coq-mode
-   :ensure nil
-   :commands coq-mode
-   :init
-   (setq
-    company-coq-live-on-the-edge t
-    company-coq-disabled-features '()
-    company-coq-dynamic-autocompletion t)
-   (use-package company-coq
-     :commands company-coq-mode
-     :preface
-     (defun my/company-coq/setup ()
-       (interactive)
-       (setq-local
-        prettify-symbols-alist
-        '((":=" . ?≜)
-          ("Proof." . ?∵)
-          ("Qed." . ?■)
-          ("Defined." . ?□)))
-       (sp-local-pair 'coq-mode "'" nil :actions nil)
-       (company-coq-mode)
-       (enable-coq-pretty-symbols)))
-   :hook
-   (coq-mode . my/company-coq/setup))
  :config
  (custom-set-faces
   '(proof-queue-face ((t (:foreground "#eee"))))
@@ -3829,6 +3846,34 @@ OCaml support for Flycheck using Merlin.
   '(proof-locked-face ((t (:background "#002255" ))))
   '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
  :delight "coq")
+
+(use-package coq-mode
+ :after (proof-site)
+ :ensure nil
+ :commands (coq-mode)
+ :preface
+ (defun my/company-coq/setup ()
+   (interactive)
+   (setq-local
+    prettify-symbols-alist
+    '((":=" . ?≜)
+      ("Proof." . ?∵)
+      ("Qed." . ?■)
+      ("Defined." . ?□)))
+   (sp-local-pair 'coq-mode "'" nil :actions nil))
+ :init
+ (setq
+  company-coq-live-on-the-edge t
+  company-coq-disabled-features '()
+  company-coq-dynamic-autocompletion t)
+ :hook
+ (coq-mode . my/company-coq/setup))
+
+(use-package company-coq
+ :after (proof-site coq-mode)
+ :commands (company-coq-mode)
+ :hook
+ (coq-mode . company-coq-mode))
 #+END_SRC
 
 *** Merlin eldoc
@@ -4174,6 +4219,8 @@ A JavaScript refactoring library.
 
 #+BEGIN_SRC emacs-lisp
 (use-package js2-refactor
+ :commands
+(js2r-add-keybindings-with-prefix)
  :hook
  (js2-mode . js2-refactor-mode)
  :config
@@ -4191,26 +4238,13 @@ A JavaScript refactoring library.
  (add-to-list 'auto-mode-alist '("\\.jsx\\'" . rjsx-mode)))
 #+END_SRC
 
-**** LSP
+**** TODO LSP
 
 Typescript LSP support.
 
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-javascript-typescript
- :after lsp-mode
- :preface
- (defun my/lsp-js-ts/company-transformer (candidates)
-   (let ((completion-ignore-case t))
-     (all-completions (company-grab-symbol) candidates)))
-  (defun my/lsp-js-ts/setup nil
-    (make-local-variable 'company-transformers)
-    (push my/lsp-js-ts/company-transformer company-transformers))
-  :hook
-  (js-mode . my/lsp-js-ts/setup)
-  (js2-mode . my/lsp-js-ts/setup)        ; for js2-mode support
-  (js3-mode . my/lsp-js-ts/setup)        ; for js3-mode support
-  (typescript-mode . my/lsp-js-ts/setup) ; for typescript support
-  (rjsx-mode . my/lsp-js-ts/setup))      ; for rjsx-mode support
+ :after lsp-mode)
 #+END_SRC
 
 Flow LSP support.
@@ -4728,7 +4762,6 @@ Setup wakatime.
  :config
  (delight
   '((emacs-lisp-mode "elisp" :major)
-    (buffer-face-mode "bf" buffer-face)
     (ruby-mode "ruby" :major)
     (elixir-mode "ex" elixir)
     (alchemist-mode "al" alchemist)
