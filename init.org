@@ -442,6 +442,17 @@ Setup [[https://www.emacswiki.org/emacs/EmacsTags][Emacs tags]].
  (calendar-week-start-day 1))
 #+END_SRC
 
+**** Face remap
+
+#+BEGIN_SRC emacs-lisp
+(use-package face-remap
+ :commands
+ (buffer-face-mode-face
+  face-remap-add-relative
+  buffer-face-mode)
+ :ensure nil)
+#+END_SRC
+
 ** UI
 *** Basics.
 
@@ -1099,7 +1110,7 @@ See the [[https://github.com/Benaiah/seethru][package repo]] for more info.
  :commands
  (seethru)
  :config
- (seethru 100)
+ (seethru 75)
  ;; C-c 8, C-c 9
  (seethru-recommended-keybinds))
 #+END_SRC
@@ -1426,6 +1437,31 @@ Emacs.
  :config
  (require 'spaceline-config)
  (spaceline-spacemacs-theme))
+#+END_SRC
+
+*** Beacon
+
+Visualizes cursor position. Might slow (or not so), but it works good without
+evil mode.
+
+#+BEGIN_SRC emacs-lisp
+(use-package beacon
+ :after (general)
+ :demand t
+ :commands (beacon-mode)
+ :custom
+ ;; (beacon-size 12)
+ ;; (beacon-blink-delay 0.0)
+ ;; (beacon-blink-duration 0.5)
+ (beacon-color "#ffd700")
+ (beacon-blink-when-window-scrolls nil)
+ (beacon-dont-blink-commands nil)
+ :config
+ (beacon-mode 1)
+ (nmap
+   :prefix my/leader
+   "t b" 'beacon-mode)
+ :diminish beacon-mode)
 #+END_SRC
 
 ** Evil
@@ -1893,7 +1929,8 @@ See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more
 
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck
- :after (exec-path-from-shell general)
+ :after (general)
+ :demand t
  :commands
  (global-flycheck-mode)
  :init
@@ -2145,6 +2182,8 @@ Setup [[https://github.com/emacsmirror/dired-plus][dired+]].
 (use-package dired+
  :after dired
  :quelpa (dired+ :fetcher github :repo "emacsmirror/dired-plus")
+ :commands
+ (dired-read-dir-and-switches)
  :init
  (setq
   diredp-hide-details-initially-flag nil
@@ -2463,9 +2502,21 @@ Setup [[https://github.com/abo-abo/swiper][ivy]].
  :diminish ivy-mode)
 #+END_SRC
 
+Ivy icons.
 
 #+BEGIN_SRC emacs-lisp
-
+(use-package all-the-icons-ivy
+ :after (ivy projectile)
+ :custom
+ (all-the-icons-ivy-buffer-commands '() "Don't use for buffers.")
+ (all-the-icons-ivy-file-commands
+  '(counsel-find-file
+    counsel-file-jump
+    counsel-recentf
+    counsel-projectile-find-file
+    counsel-projectile-find-dir) "Prettify more commands.")
+ :config
+ (all-the-icons-ivy-setup))
 #+END_SRC
 
 **** Rich
@@ -2970,7 +3021,7 @@ the Emacsclient does.
   undo-tree-visualizer-timestamps t
   undo-tree-enable-undo-in-region nil
   ;; Attempt to fix the "unrecognized entry in undo list" error
-  undo-tree-auto-save-history nil
+  ;; undo-tree-auto-save-history nil
   undo-tree-history-directory-alist
   `(("." . ,(expand-file-name "undo" user-emacs-directory))))
  ;; Diff is slow as hell and it doesn't destroy the diff buffer automatically.
@@ -3308,6 +3359,10 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 (use-package lsp-mode
  :after (general projectile)
  :commands (lsp)
+ :init
+ ;; Uncomment to inspect communication between client and the server
+ (setq lsp-print-io t)
+ (setq lsp-prefer-flymake nil)
  :config
  (nmap
   :prefix my/leader
@@ -3320,8 +3375,59 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 (use-package lsp-ui
  :after (lsp-mode)
  :commands (lsp-ui-mode general)
+ :init
+ (setq-default
+  lsp-ui-doc-frame-parameters
+  '((left . -1)
+    (top . -1)
+    (no-accept-focus . t)
+    (min-width . 0)
+    (width . 0)
+    (min-height . 0)
+    (height . 0)
+    (internal-border-width . 5)
+    (vertical-scroll-bars)
+    (horizontal-scroll-bars)
+    (left-fringe . 0)
+    (right-fringe . 0)
+    (menu-bar-lines . 0)
+    (tool-bar-lines . 0)
+    (line-spacing . 0.1)
+    (unsplittable . t)
+    (undecorated . t)
+    (minibuffer . nil)
+    (visibility . nil)
+    (mouse-wheel-frame . nil)
+    (no-other-frame . t)
+    (cursor-type)
+    (no-special-glyphs . t)
+    (visual-line-mode . -1)))
  :config
  (add-hook 'lsp-mode-hook 'lsp-ui-mode)
+ (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
+ (add-hook 'lsp-ui-doc-frame-hook
+  (lambda (frame _w)
+    (set-face-attribute 'default frame :font "Fira Code" :height 120)))
+ (setq
+  lsp-ui-sideline-enable nil
+  lsp-enable-completion-at-point t
+  lsp-ui-doc-position 'at-point
+  lsp-ui-doc-header nil
+  lsp-ui-doc-enable t
+  lsp-ui-doc-delay 1
+  lsp-ui-doc-use-webkit nil
+  lsp-ui-doc-max-width 80
+  lsp-ui-doc-max-height 10
+  lsp-ui-doc-use-childframe t
+  lsp-ui-doc-include-signature t
+  lsp-ui-doc-border "#222"
+  lsp-ui-flycheck-enable t
+  lsp-ui-peek-fontify nil
+  lsp-ui-peek-expand-function (lambda (xs) (mapcar #'car xs)))
+ (nmap 'haskell-mode-map
+   :prefix my/leader
+   "t d" 'lsp-ui-doc-mode
+   "t S" 'lsp-ui-sideline-mode)
  (general-def 'lsp-ui-peek-mode-map
    "h" 'lsp-ui-peek--select-next-file
    "l" 'lsp-ui-peek--select-prev-file
@@ -3346,6 +3452,19 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   company-lsp-enable-snippet t)
  :config
  (push 'company-lsp company-backends))
+#+END_SRC
+
+
+*** Treemacs
+
+#+BEGIN_SRC emacs-lisp
+(use-package lsp-treemacs
+ :after (general)
+ :commands lsp-treemacs-errors-list
+ :config
+ (nmap
+   :prefix my/leader
+   "e t" 'lsp-treemacs-errors-list))
 #+END_SRC
 
 ** Languages
@@ -3417,16 +3536,16 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 (use-package haskell-mode
  :after
  (general company eldoc)
- :quelpa
- (haskell-mode :fetcher github :repo "haskell/haskell-mode")
- :mode
- (("\\.hs\\(c\\|-boot\\)?\\'" . haskell-mode)
-  ("\\.lhs\\'" . literate-haskell-mode)
-  ("\\.cabal\\'" . haskell-cabal-mode))
+ ;; :quelpa
+ ;; (haskell-mode :fetcher github :repo "haskell/haskell-mode")
+ ;; :mode
+ ;; (("\\.hs\\(c\\|-boot\\)?\\'" . haskell-mode)
+ ;; ("\\.lhs\\'" . literate-haskell-mode)
+ ;; ("\\.cabal\\'" . haskell-cabal-mode))
  :preface
  (defun my/haskell-mode/setup ()
    (interactive)
-   (setq buffer-face-mode-face '(:family "Hasklig" :height 140))
+   (setq buffer-face-mode-face '(:family "Hasklig"))
    (buffer-face-mode)
    ;; Treat symbol (e.g. "_") as a word
    (defalias 'forward-evil-word 'forward-evil-symbol)
@@ -3440,8 +3559,7 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
    (setq-local evil-auto-indent nil)
    (face-remap-add-relative
     'font-lock-doc-face
-    'font-lock-comment-face)
-   (flymake-mode-off))
+    'font-lock-comment-face))
  (defvar haskell-process-use-ghci nil)
  (defun my/haskell-mode/toggle-process-type ()
    "Toggle GHCi process between cabal and ghci"
@@ -3482,7 +3600,6 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   haskell-process-suggest-restart nil
   ;; Don't suggest adding the OverloadedStrings extensions
   haskell-process-suggest-overloaded-strings nil
-
   ;; Auto import the modules reported by GHC to have been loaded
   haskell-process-auto-import-loaded-modules t
   ;; Don't popup errors in a separate buffer
@@ -3614,8 +3731,7 @@ operators will be replaced.
 #+BEGIN_SRC emacs-lisp
 (use-package lsp-haskell
  :init
- (setq
-  lsp-haskell-set-completion-snippets-on t)
+ (setq lsp-haskell-set-completion-snippets-on t)
  :config
  (add-hook 'haskell-mode-hook #'lsp))
 #+END_SRC
@@ -3690,6 +3806,17 @@ A new, simple purescript mode for cheap syntax highlighting.
  :hook
  (purescript-mode . inferior-psci-mode)
  :delight "psci")
+#+END_SRC
+
+*** Idris
+
+#+BEGIN_SRC emacs-lisp
+(use-package idris-mode
+ :custom
+ (idris-repl-banner-functions '(idris-repl-text-banner))
+ (idris-repl-prompt-style 'short)
+ :hook
+ (idris-mode . enable-idris-pretty-symbols))
 #+END_SRC
 
 *** Nix
@@ -3833,16 +3960,14 @@ OCaml support for Flycheck using Merlin.
 #+BEGIN_SRC emacs-lisp
 (use-package proof-site
  :load-path "lisp/PG/generic"
- :mode ("\\.v\\'" . coq-mode)
  :custom
  (proof-delete-empty-windows t)
  ;; see: https://github.com/ProofGeneral/PG/issues/404
  ;; (proof-shrink-windows-tofit t)
- :init
  :config
  (custom-set-faces
   '(proof-queue-face ((t (:foreground "#eee"))))
-  ;; '(proof-locked-face ((t (:background "#001800" :foreground "#00aa00"))))
+  '(proof-locked-face ((t (:background "#001800" :foreground "#00aa00"))))
   '(proof-locked-face ((t (:background "#002255" ))))
   '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
  :delight "coq")
@@ -3854,15 +3979,35 @@ OCaml support for Flycheck using Merlin.
  :preface
  (defun my/company-coq/setup ()
    (interactive)
+   (setq buffer-face-mode-face '(:family "Symbola"))
+   (buffer-face-mode)
    (setq-local
     prettify-symbols-alist
     '((":=" . ?≜)
       ("Proof." . ?∵)
       ("Qed." . ?■)
-      ("Defined." . ?□)))
+      ("Defined." . ?□)
+      ("Alpha" . ?Α) ("Beta" . ?Β) ("Gamma" . ?Γ)
+      ("Delta" . ?Δ) ("Epsilon" . ?Ε) ("Zeta" . ?Ζ)
+      ("Eta" . ?Η) ("Theta" . ?Θ) ("Iota" . ?Ι)
+      ("Kappa" . ?Κ) ("Lambda" . ?Λ) ("Mu" . ?Μ)
+      ("Nu" . ?Ν) ("Xi" . ?Ξ) ("Omicron" . ?Ο)
+      ("Pi" . ?Π) ("Rho" . ?Ρ) ("Sigma" . ?Σ)
+      ("Tau" . ?Τ) ("Upsilon" . ?Υ) ("Phi" . ?Φ)
+      ("Chi" . ?Χ) ("Psi" . ?Ψ) ("Omega" . ?Ω)
+      ("alpha" . ?α) ("beta" . ?β) ("gamma" . ?γ)
+      ("delta" . ?δ) ("epsilon" . ?ε) ("zeta" . ?ζ)
+      ("eta" . ?η) ("theta" . ?θ) ("iota" . ?ι)
+      ("kappa" . ?κ) ("lambda" . ?λ) ("mu" . ?μ)
+      ("nu" . ?ν) ("xi" . ?ξ) ("omicron" . ?ο)
+      ("pi" . ?π) ("rho" . ?ρ) ("sigma" . ?σ)
+      ("tau" . ?τ) ("upsilon" . ?υ) ("phi" . ?φ)
+      ("chi" . ?χ) ("psi" . ?ψ) ("omega" . ?ω)))
    (sp-local-pair 'coq-mode "'" nil :actions nil))
  :init
  (setq
+  ;; Enable autocompletion for theorem names and
+  ;; symbols defined in the libraries we load
   company-coq-live-on-the-edge t
   company-coq-disabled-features '()
   company-coq-dynamic-autocompletion t)
@@ -3917,6 +4062,376 @@ under point in OCaml and ReasonML files.
     :delight "re")
 #+END_SRC
 
+*** SML
+
+#+BEGIN_SRC emacs-lisp
+(use-package sml-mode
+ :quelpa (sml-mode :fetcher github :repo "emacsmirror/sml-mode")
+ :mode "\\.sml$")
+#+END_SRC
+
+*** Scheme
+
+#+BEGIN_SRC emacs-lisp
+(use-package geiser
+ :after general)
+
+(use-package scheme
+ :ensure nil
+ :after (geiser)
+ :preface
+ (defun my/scheme/setup ()
+   (geiser-mode t))
+ :hook
+ (scheme-mode . my/scheme/setup))
+
+(use-package quack
+ :after (scheme)
+ :config
+ (setq
+  ;; use emacs-style fontification
+  quack-fontify-style 'emacs))
+#+END_SRC
+
+*** Racket
+
+#+BEGIN_SRC emacs-lisp
+(use-package racket-mode
+ :after
+ (general
+  smartparens
+  org
+  geiser)
+ :if (executable-find "racket")
+ :mode ("\\.rkt[dl]?\\'" . racket-mode)
+ :interpreter ("racket" . racket-mode)
+ :hook
+ (racket-mode . smartparens-mode)
+ :init
+ (setq
+  geiser-scheme-implementation 'racket
+  racket-smart-open-bracket-enable t)
+ :config
+ (add-to-list 'org-babel-load-languages '(racket . t))
+ (sp-local-pair 'racket-mode "'" nil :actions nil)
+ (sp-local-pair 'racket-mode "`" nil :actions nil))
+#+END_SRC
+
+*** Clojure
+
+#+BEGIN_SRC emacs-lisp
+(use-package clojure-mode
+ :after (general company org)
+ :commands
+ (define-clojure-indent
+  put-clojure-indent)
+ :mode
+ (("\\.clj\\'" . clojure-mode)
+  ("\\.edn\\'" . clojure-mode)
+  ("\\.boot\\'" . clojure-mode)
+  ("\\.cljs.*\\'" . clojure-mode))
+ :init
+ (setq inferior-lisp-program "lein repl")
+ :config
+ (add-to-list 'org-babel-load-languages '(clojure . t))
+ (nmap 'clojure-mode-map
+   :prefix my/leader
+   "C s" 'cider-start-http-server
+   "C r" 'cider-refresh
+   "C u" 'cider-user-ns
+   "C R" 'cider-restart)
+ (define-clojure-indent (fact 1))
+ (define-clojure-indent (facts 1)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package clojure-mode-extra-font-locking
+ :after (clojure-mode)
+ :init
+ (font-lock-add-keywords
+  nil
+  '(("(\\(facts?\\)"
+     (1 font-lock-keyword-face))
+    ("(\\(background?\\)"
+     (1 font-lock-keyword-face)))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package cider
+ :after (clojure-mode)
+ :commands (cider-mode)
+ :custom
+ (cider-repl-result-prefix ";; => ")
+ :init
+ (setq
+  ;; go right to the REPL buffer when it's finished connecting
+  cider-repl-pop-to-buffer-on-connect t
+  ;; when there's a cider error, show its buffer and switch to it
+  cider-show-error-buffer t
+  cider-auto-select-error-buffer t
+  cider-repl-history-file "~/.emacs.d/cider-history"
+  cider-repl-wrap-history t)
+ :hook
+ (clojure-mode . clojure-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package kibit-helper)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-clojure
+  :after (flycheck clojure-mode)
+  :commands
+  (flycheck-clojure-setup)
+  :config
+  (eval-after-load 'flycheck '(flycheck-clojure-setup)))
+
+(use-package flycheck-pos-tip
+  :after (flycheck-clojure)
+  :commands
+  (flycheck-pos-tip-error-messages)
+  :config
+  (eval-after-load 'flycheck
+    '(setq flycheck-display-errors-function #'flycheck-pos-tip-error-messages)))
+#+END_SRC
+
+*** Scala
+
+#+BEGIN_SRC emacs-lisp
+(use-package scala-mode
+ :after (general)
+ :if (executable-find "scala"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package ensime
+ :after (general scala-mode)
+ :commands (ensime-mode)
+ :init
+ (setq
+  ensime-server-version "2.0.0-SNAPSHOT"
+  ensime-default-buffer-prefix "ENSIME-"
+  ensime-startup-notification nil
+  ensime-startup-snapshot-notification nil)
+ :config
+ (unbind-key "M-p" ensime-mode-map)
+ (nmap 'scala-mode-map
+   :prefix my/leader
+   "s e" 'ensime)
+ (nmap 'ensime-mode-map
+   :prefix my/leader
+   "r" 'ensime-inf-run-scala
+   "s r" 'ensime-sbt-do-run
+   "s c" 'ensime-sbt-do-compile)
+ ;; looks like a perfect candidate for a Hydra?
+ (nmap 'ensime-mode-map
+   :prefix my/leader
+   "s E" 'ensime-print-errors-at-point
+   "s t" 'ensime-print-type-at-point
+   "s o" 'ensime-import-type-at-point
+   "s g" 'ensime-edit-definition-other-window
+   "s ," 'ensime-pop-find-definition-stack
+   "s ." 'ensime-edit-definition-of-thing-at-point))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package sbt-mode
+ :after (general scala-mode)
+ :if (executable-find "sbt")
+ :init
+ (setq sbt:program-name "sbt -mem 2048 -v")
+ (setq-default truncate-lines nil)
+ :config
+ (nmap 'scala-mode-map
+   :prefix my/leader
+   "s" 'sbt-start
+   "r" 'sbt-command
+   "p" 'sbt-run-previous-command)
+ (general-define-key
+  :keymaps 'sbt-mode-map
+  :states '(normal insert)
+  "M-j" 'compilation-next-error
+  "M-k" 'compilation-previous-error)
+ (evil-set-initial-state 'sbt-mode 'normal))
+#+END_SRC
+
+*** Kotlin
+
+#+BEGIN_SRC emacs-lisp
+(use-package kotlin-mode)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-kotlin
+ :after (kotlin-mode flycheck)
+ :config
+ (flycheck-kotlin-setup))
+#+END_SRC
+
+*** Rust
+
+#+BEGIN_SRC emacs-lisp
+(use-package rust-mode
+ :after (company general)
+ :if (executable-find "rustc")
+ :commands (rust-mode)
+ :config
+ ;; enable rust-mode for .lalrpop files
+ (add-to-list 'auto-mode-alist '("\\.lalrpop\\'" . rust-mode))
+ (general-define-key
+  :keymaps 'rust-mode-map
+  "TAB" 'company-indent-or-complete-common
+  "C-c C-b" 'rust-compile
+  "C-c <tab>" 'rust-format-buffer))
+#+END_SRC
+
+Some of key bindings are provided by ==evil-collection=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package racer
+ :after rust-mode
+ :demand t
+ :commands racer-mode
+ :hook
+ ((racer-mode . eldoc-mode)
+  (racer-mode . company-mode)
+  (rust-mode . racer-mode)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package cargo
+ :after (general rust-mode)
+ :config
+ (nmap 'rust-mode-map
+   :prefix my/leader
+   "c ." 'cargo-process-repeat
+   "c c" 'cargo-process-clean
+   "c b" 'cargo-process-build
+   "c c" 'cargo-process-check
+   "c d" 'cargo-process-doc
+   "c e" 'cargo-process-bench
+   "c f" 'cargo-process-current-test
+   "c f" 'cargo-process-fmt
+   "c i" 'cargo-process-init
+   "c n" 'cargo-process-new
+   "c o" 'cargo-process-current-file-tests
+   "c s" 'cargo-process-search
+   "c u" 'cargo-process-update
+   "c x" 'cargo-process-run
+   "c X" 'cargo-process-run-example
+   "t" 'cargo-process-test))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-racer
+ :after (racer company)
+ :config
+ (add-to-list 'company-backends 'company-racer))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-rust
+  :config
+  (with-eval-after-load 'rust-mode
+    (add-hook 'flycheck-mode-hook #'flycheck-rust-setup)))
+#+END_SRC
+
+*** Erlang
+*** Elixir
+
+#+BEGIN_SRC emacs-lisp
+(use-package elixir-mode
+ :preface
+ (defun my/elixir-mode/setup ()
+   (when (and
+          (string-equal "exs" (file-name-extension buffer-file-name))
+          (string-equal "mix" (file-name-base buffer-file-name)))
+     (alchemist-hex-mode 1)))
+ :hook
+ ((elixir-mode . alchemist-mode)
+  (elixir-mode . my/elixir-mode/setup))
+ :init
+ (use-package alchemist
+   :demand t
+   :init
+   (setq
+    alchemist-goto-elixir-source-dir "~/projects/github/elixir"
+    alchemist-goto-erlang-source-dir "/usr/local/Cellar/erlang/19.2.3")
+   :config
+   ;; additional keybindings are here
+   ;; https://github.com/emacs-evil/evil-collection/blob/master/evil-collection-alchemist.el
+   (evil-define-key 'normal alchemist-mode-map
+     (kbd "C-j") nil
+     (kbd "C-k") nil
+     (kbd "M-j") 'alchemist-goto-jump-to-next-def-symbol
+     (kbd "M-k") 'alchemist-goto-jump-to-previous-def-symbol)
+   (nmap 'alchemist-mode-map
+     :prefix my/leader
+     ;; elixir general key bindings
+     "tt" 'alchemist-mix-test
+     "tf" 'alchemist-project-run-tests-for-current-file
+     "," 'alchemist-test-toggle-test-report-display
+     "h" 'alchemist-help-search-at-point
+     "H" 'alchemist-help
+     "a" 'alchemist-project-toggle-file-and-tests
+     "A" 'alchemist-project-toggle-file-and-tests-other-window
+     "m" 'alchemist-mix
+     ;; elixir IEx-specific key bindings
+     "e" 'alchemist-iex-project-run
+     "r" 'alchemist-iex-reload-module)
+   (vmap 'alchemist-mode-map
+     :prefix my/leader
+     "e" 'alchemist-iex-send-current-line
+     "E" 'alchemist-iex-send-current-line-and-go
+     "r" 'alchemist-iex-send-region
+     "R" 'alchemist-iex-send-region-and-go)
+   ;; elixir HEX-specific key bindings
+   (nmap 'alchemist-hex-mode-map
+     :prefix my/leader
+     "i" 'alchemist-hex-info-at-point
+     "I" 'alchemist-hex-info
+     "r" 'alchemist-hex-releases-at-point
+     "R" 'alchemist-hex-releases
+     "f" 'alchemist-hex-search)))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package elixir-format
+ :quelpa (elixir-format :fetcher github :repo "anildigital/mix-format.el")
+ :preface
+ (defun my/elixir-format/setup ()
+   (add-hook 'before-save-hook 'elixir-format-before-save))
+ :custom
+ (elixir-format-mix-path "/usr/local/bin/mix")
+ :hook
+ (elixir-mode . my/elixir-format/setup))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-elixir
+  :after (flycheck elixir-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-mix
+ :after (flycheck elixir-mode)
+ :config
+ (flycheck-mix-setup))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-dialyxir
+ :after (flycheck elixir-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-credo
+ :after (flycheck elixir-mode)
+ :config
+ (flycheck-credo-setup))
+#+END_SRC
+
 *** Dhall
 
 Idk how to prevent its popup to show up.
@@ -3948,6 +4463,36 @@ Also, it fails to validate =spago= dhall files for some reason.
   (company-terraform-init)
   :config
   (company-terraform-init))
+#+END_SRC
+
+*** SQL
+
+#+BEGIN_SRC emacs-lisp
+(use-package format-sql
+ :after (general)
+ :config
+ (vmap 'sql-mode-map
+   "C-c R" 'format-sql-region)
+ (nmap 'sql-mode-map
+   "C-c r" 'format-sql-buffer))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package sqlup-mode
+  :after (general)
+  :hook
+  ;; capitalize keywords in SQL mode
+  ;; capitalize keywords in an interactive session (e.g. psql)
+  ((sql-mode sql-interactive-mode) . sqlup-mode)
+  :config
+  (add-to-list 'sqlup-blacklist "name")
+  (add-to-list 'sqlup-blacklist "public")
+  (add-to-list 'sqlup-blacklist "state")
+  (nmap
+    :keymaps '(sql-mode-map sql-interactive-mode-map)
+    :prefix my/leader
+    "S u" 'sqlup-capitalize-keywords-in-region
+    "S U" 'sqlup-capitalize-keywords-in-buffer))
 #+END_SRC
 
 *** Json
@@ -4041,6 +4586,124 @@ Other JSON-related packages.
 
 #+END_SRC
 
+*** Python
+
+#+BEGIN_SRC emacs-lisp
+(use-package python-mode
+ :preface
+ (defun my/python-mode/setup ()
+   (mapc (lambda (pair) (push pair prettify-symbols-alist))
+         '(("def" . "𝒇")
+           ("class" . "𝑪")
+           ("and" . "∧")
+           ("or" . "∨")
+           ("not" . "￢")
+           ("in" . "∈")
+           ("not in" . "∉")
+           ("return" . "⟼")
+           ("yield" . "⟻")
+           ("for" . "∀")
+           ("!=" . "≠")
+           ("==" . "＝")
+           (">=" . "≥")
+           ("<=" . "≤")
+           ("[]" . "⃞")
+           ("=" . "≝"))))
+ :hook
+ (python-mode . my/python-mode/setup))
+#+END_SRC
+
+*** Ruby
+
+#+BEGIN_SRC emacs-lisp
+(use-package inf-ruby
+ :hook
+ ;; automatically switch from common ruby compilation modes
+ ;; to interact with a debugger
+ (compilation-filter . inf-ruby-auto-enter)
+ ;; required to use binding.pry or byebug
+ (after-init . inf-ruby-switch-setup))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package robe
+ :after (company)
+ :hook
+ (ruby-mode . robe-mode)
+ :config
+ (add-to-list 'company-backends 'company-robe)
+ :delight "robe")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package rubocop
+ :after (robe)
+ :hook
+ (ruby-mode . rubocop-mode)
+ :delight "rcop")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package bundler
+ :after general
+ :config
+ (nmap 'ruby-mode-map
+   :prefix my/leader
+   "b i" 'bundle-install
+   "b c" 'bundle-console
+   "b o" 'bundle-outdated
+   "b u" 'bundle-update
+   "b e" 'bundle-exec))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package rbenv
+ :preface
+ (defun my/rbenv/modeline (current-ruby)
+   (append
+    '(" ruby [")
+    (list (propertize current-ruby 'face 'rbenv-active-ruby-face))
+    '("]")))
+ :hook
+ (ruby-mode . rbenv-use-corresponding)
+ :init
+ (setq rbenv-modeline-function 'my/rbenv/modeline)
+ :config
+ (global-rbenv-mode)
+ (nmap 'ruby-mode-map
+   :prefix "C-c R"
+   "c" 'rbenv-use-corresponding
+   "u" 'rbenv-use))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package rake
+ :after (general projectile)
+ :init
+ (setq rake-completion-system projectile-completion-system)
+ :config
+ (nmap 'ruby-mode-map
+   :prefix my/leader
+   "r" 'rake))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package rspec-mode)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package projectile-rails
+ :after projectile
+ :init
+ (setq
+  projectile-rails-vanilla-command "bin/rails"
+  projectile-rails-spring-command "bin/spring"
+  projectile-rails-zeus-command "bin/zeus")
+ :config
+ (projectile-rails-global-mode)
+ :diminish)
+#+END_SRC
+
 *** Java
 
 #+BEGIN_SRC emacs-lisp
@@ -4119,6 +4782,52 @@ Other JSON-related packages.
 (use-package scss-mode
  :config
  :delight "scss")
+#+END_SRC
+
+*** Go
+
+#+BEGIN_SRC emacs-lisp
+(use-package go-mode
+  :after (company flycheck)
+  :if (executable-find "go")
+  :preface
+  (defun my/go-mode/setup ()
+    (add-hook 'before-save-hook 'gofmt-before-save)
+    (add-hook 'go-mode-hook 'flycheck-mode)
+    (setq-default)
+    (setq standard-indent 8)
+    (setq tab-width 8)
+    (setq indent-tabs-mode 1))
+  :mode "\\.go\\'"
+  :hook
+  (go-mode . my/go-mode/setup))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-go
+ :after (company go-mode)
+ :hook
+ (go-mode . company-mode)
+ :config
+ (add-to-list 'company-backends 'company-go))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package go-stacktracer)
+
+(use-package go-add-tags)
+
+(use-package go-eldoc
+ :hook
+ (go-mode . go-eldoc-setup))
+
+(use-package go-gopath)
+
+(use-package go-direx)
+
+(use-package gotest)
+
+(use-package go-playground)
 #+END_SRC
 
 *** TypeScript
@@ -4243,20 +4952,11 @@ A JavaScript refactoring library.
 Typescript LSP support.
 
 #+BEGIN_SRC emacs-lisp
-(use-package lsp-javascript-typescript
- :after lsp-mode)
 #+END_SRC
 
 Flow LSP support.
 
 #+BEGIN_SRC emacs-lisp
-(use-package lsp-javascript-flow
- :after lsp-mode
- :hook
- (js-mode . lsp-javascript-flow-enable)
- (js2-mode . lsp-javascript-flow-enable)   ; for js2-mode support
- (js3-mode . lsp-javascript-flow-enable)   ; for js3-mode support
- (rjsx-mode . lsp-javascript-flow-enable)) ; for rjsx-mode support
 #+END_SRC
 
 **** prettier
@@ -4289,6 +4989,25 @@ Flow LSP support.
  (add-to-list 'company-backends 'company-tern))
 #+END_SRC
 
+*** Vue
+
+#+BEGIN_SRC emacs-lisp
+(use-package vue-mode)
+#+END_SRC
+
+*** Elm
+
+#+BEGIN_SRC emacs-lisp
+(use-package elm-mode)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-elm
+ :after (elm-mode flycheck)
+ :hook
+ (flycheck-mode . flycheck-elm-setup))
+#+END_SRC
+
 *** Nginx
 
 #+BEGIN_SRC emacs-lisp
@@ -4299,6 +5018,15 @@ Flow LSP support.
 
 #+BEGIN_SRC emacs-lisp
 (use-package d-mode)
+#+END_SRC
+
+*** Octave
+
+#+BEGIN_SRC emacs-lisp
+(use-package octave
+ :after general
+ :ensure nil
+ :mode ("\.m$" . octave-mode))
 #+END_SRC
 
 *** Toml
@@ -4435,6 +5163,27 @@ Flow LSP support.
 (use-package glsl-mode)
 #+END_SRC
 
+** GDB
+
+When gdb debugging, show the many windows (stack trace, break points, etc).
+
+#+BEGIN_SRC emacs-lisp
+(use-package gdb-mi
+  :ensure nil
+  :commands (gdb-many-windows)
+  :hook
+  (gdb . gdb-many-windows))
+#+END_SRC
+
+** DAP
+
+#+BEGIN_SRC emacs-lisp
+(use-package dap-mode
+ :config
+ (dap-mode 1)
+ (dap-ui-mode 1))
+#+END_SRC
+
 ** Docker
 
 #+BEGIN_SRC emacs-lisp
@@ -4450,12 +5199,13 @@ Flow LSP support.
 (use-package docker-compose-mode)
 #+END_SRC
 
-** GDB
-
-When gdb debugging, show the many windows (stack trace, break points, etc).
+** Kubernetes
 
 #+BEGIN_SRC emacs-lisp
-(setq gdb-many-windows t)
+(use-package timonier
+ :after general
+ :init
+ (setq timonier-k8s-proxy "http://localhost:8001"))
 #+END_SRC
 
 ** Hydra
@@ -4583,6 +5333,99 @@ See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
    "G i i" 'ix
    "G i b" 'ix-browse
    "G i d" 'ix-delete))
+#+END_SRC
+
+** Email
+
+#+BEGIN_SRC emacs-lisp
+(use-package mu4e
+ :ensure nil
+ :hook
+ (after-init . mu4e-alert-enable-mode-line-display)
+ :init
+ (setq
+  mu4e-maildir "~/.Mail"
+  mu4e-drafts-folder "/vasiliy.yorkin/[Gmail].Drafts"
+  mu4e-sent-folder "/vasiliy.yorkin/[Gmail].Sent Mail"
+  mu4e-trash-folder "/vasiliy.yorkin/[Gmail].Trash"
+  ;; don't save message to Sent Messages, Gmail/IMAP takes care of this
+  mu4e-sent-messages-behavior 'delete
+  ;; auto update every minute
+  mu4e-update-interval (* 60 5)
+  mu4e-headers-auto-update t
+  mu4e-headers-date-format "%Y-%m-%d [%H:%M]"
+  mu4e-headers-fields
+  '((:date . 20)
+    (:mailing-list . 14)
+    (:from . 20)
+    (:subject . nil))
+  mu4e-view-fields '(:from :to :cc :subject :date :mailing-list :attachments :signature)
+  ;; I was getting duplicate emails, this fixes it
+  mu4e-headers-skip-duplicates t
+  mu4e-view-show-addresses t
+  mu4e-view-show-images t
+  mu4e-use-fancy-chars t
+  ;; sending
+  message-send-mail-function 'message-send-mail-with-sendmail
+  sendmail-program "/usr/bin/msmtp"
+  user-full-name "Vasiliy Yorkin"
+  ;; capturing
+  org-mu4e-link-query-in-headers-mode nil
+  ;; goobook
+  external-abook-command "goobook query '%s' | cut -f 1,2"
+  ;; mu4e alert
+  mu4e-alert-interesting-mail-query "flag:unread AND NOT flag:trashed AND maildir:/vasiliy.yorkin/INBOX"
+  mu4e-attachment-dir  "~/Downloads"
+  mu4e-maildir-shortcuts
+  '(("/vasiliy.yorkin/INBOX" . ?i)
+    ("/vasiliy.yorkin/[Gmail].Sent Mail" . ?s)
+    ("/vasiliy.yorkin/[Gmail].Trash" . ?t)
+    ("/vasiliy.yorkin/[Gmail].Drafts" . ?d)
+    ("/vasiliy.yorkin/[Gmail].All Mail" . ?a))
+  mu4e-bookmarks
+  '(("flag:unread AND NOT flag:trashed" "Unread messages"  ?u)
+    ("date:today..now" "Today's messages" ?t)
+    ("date:7d..now" "Last 7 days" ?w)
+    ("date:1m..now" "Last month" ?m)
+    ("mime:image/*" "Messages with images" ?p)
+    (,(mapconcat
+       'identity
+       (mapcar
+        (lambda (maildir)
+          (concat "maildir:" (car maildir)))
+        mu4e-maildir-shortcuts) " OR ")
+     "All inboxes" ?i)))
+ :config
+ (require 'mu4e-contrib)
+ (setq
+  ;; mu4e-html2text-command 'mu4e-shr2text
+  ;; shr-color-visible-distance-min 5
+  ;; shr-use-colors nil
+  ;; when using a dark theme the messages are hard to read
+  ;; it can help to change the luminosity
+  ;; shr-color-visible-luminance-min 80
+  ;; textutil is an alternative to html2text for macOS
+  ;; mu4e-html2text-command "textutil -stdin -format html -convert txt -stdout"
+  mu4e-html2text-command "html2text -b 72")
+ (advice-add 'shr-colorize-region :around (defun shr-no-colourise-region (&rest ignore)))
+ (nmap
+   :prefix my/leader
+   "M" 'mu4e))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package external-abook
+ :after (quelpa)
+ :quelpa (external-abook :fetcher github :repo "emacsmirror/external-abook"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package mu4e-alert
+ :after (mu4e)
+ :config
+ (mu4e-alert-enable-mode-line-display)
+ (mu4e-alert-enable-notifications)
+ (mu4e-alert-set-default-style 'notifier))
 #+END_SRC
 
 ** Translation
