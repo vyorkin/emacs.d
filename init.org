@@ -281,7 +281,10 @@ On save/write file:
 (use-package files
  :ensure nil
  :commands
- (generate-new-buffer executable-find)
+ (generate-new-buffer
+  executable-find
+  file-name-base
+  file-name-extension)
  :custom
  (require-final-newline t)
  :hook
@@ -450,7 +453,8 @@ Setup [[https://www.emacswiki.org/emacs/EmacsTags][Emacs tags]].
  (buffer-face-mode-face
   face-remap-add-relative
   buffer-face-mode)
- :ensure nil)
+ :ensure nil
+ :diminish buffer-face-mode)
 #+END_SRC
 
 ** UI
@@ -1110,7 +1114,7 @@ See the [[https://github.com/Benaiah/seethru][package repo]] for more info.
  :commands
  (seethru)
  :config
- (seethru 75)
+ (seethru 100)
  ;; C-c 8, C-c 9
  (seethru-recommended-keybinds))
 #+END_SRC
@@ -1444,7 +1448,7 @@ Emacs.
 Visualizes cursor position. Might slow (or not so), but it works good without
 evil mode.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package beacon
  :after (general)
  :demand t
@@ -2507,6 +2511,8 @@ Ivy icons.
 #+BEGIN_SRC emacs-lisp
 (use-package all-the-icons-ivy
  :after (ivy projectile)
+ :commands
+ (all-the-icons-ivy-setup)
  :custom
  (all-the-icons-ivy-buffer-commands '() "Don't use for buffers.")
  (all-the-icons-ivy-file-commands
@@ -3366,7 +3372,8 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
  :config
  (nmap
   :prefix my/leader
-  "l r" 'lsp-restart-workspace))
+  "l r" 'lsp-restart-workspace)
+ :delight "lsp")
 #+END_SRC
 
 *** LSP UI
@@ -3407,21 +3414,22 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
  (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
  (add-hook 'lsp-ui-doc-frame-hook
   (lambda (frame _w)
-    (set-face-attribute 'default frame :font "Fira Code" :height 120)))
+    (set-face-attribute 'default frame :font "Fira Code" :height 110)))
  (setq
   lsp-ui-sideline-enable nil
   lsp-enable-completion-at-point t
-  lsp-ui-doc-position 'at-point
+  lsp-ui-doc-position 'bottom
+  ; lsp-ui-doc-position 'at-point
   lsp-ui-doc-header nil
-  lsp-ui-doc-enable t
-  lsp-ui-doc-delay 1
+  lsp-ui-doc-enable nil
+  lsp-ui-doc-delay 0.5
   lsp-ui-doc-use-webkit nil
-  lsp-ui-doc-max-width 80
-  lsp-ui-doc-max-height 10
-  lsp-ui-doc-use-childframe t
+  ;; lsp-ui-doc-max-width 160
+  ;; lsp-ui-doc-max-height 20
+  ;; lsp-ui-doc-use-childframe t
   lsp-ui-doc-include-signature t
   lsp-ui-doc-border "#222"
-  lsp-ui-flycheck-enable t
+  ;; lsp-ui-flycheck-enable t
   lsp-ui-peek-fontify nil
   lsp-ui-peek-expand-function (lambda (xs) (mapcar #'car xs)))
  (nmap 'haskell-mode-map
@@ -3542,6 +3550,9 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
  ;; (("\\.hs\\(c\\|-boot\\)?\\'" . haskell-mode)
  ;; ("\\.lhs\\'" . literate-haskell-mode)
  ;; ("\\.cabal\\'" . haskell-cabal-mode))
+ :commands
+ (haskell-compile-cabal-build-command
+  haskell-interactive-mode-map)
  :preface
  (defun my/haskell-mode/setup ()
    (interactive)
@@ -3604,6 +3615,11 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   haskell-process-auto-import-loaded-modules t
   ;; Don't popup errors in a separate buffer
   haskell-interactive-popup-errors nil
+  ;; Make haskell-process-log look better
+  haskell-process-args-ghci '("-ferror-spans" "-fshow-loaded-modules")
+  haskell-process-args-cabal-repl '("--ghc-options=-fdiagnostics-color=never")
+  haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans -fshow-loaded-modules" "--no-build" "--no-load")
+  haskell-process-args-cabal-new-repl '("--ghc-options=-fdiagnostics-color=never")
   ;; Use "cabal new-repl" as the inferior haskell process
   haskell-process-type 'cabal-new-repl
   ;; haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans")
@@ -3874,6 +3890,8 @@ https://github.com/diml/utop#integration-with-emacs
 (use-package utop
  :if (and my/utop-site-elisp (my/in-nix-shell-p))
  :load-path my/utop-site-elisp
+ :commands
+ (utop-command)
  :config
  (setq utop-command "opam config exec utop -- -emacs")
  :hook
@@ -4265,6 +4283,8 @@ under point in OCaml and ReasonML files.
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck-kotlin
  :after (kotlin-mode flycheck)
+ :commands
+ (flycheck-kotlin-setup)
  :config
  (flycheck-kotlin-setup))
 #+END_SRC
@@ -4416,6 +4436,8 @@ Some of key bindings are provided by ==evil-collection=.
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck-mix
  :after (flycheck elixir-mode)
+ :commands
+ (flycheck-mix-setup)
  :config
  (flycheck-mix-setup))
 #+END_SRC
@@ -4428,6 +4450,8 @@ Some of key bindings are provided by ==evil-collection=.
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck-credo
  :after (flycheck elixir-mode)
+ :commands
+ (flycheck-credo-setup)
  :config
  (flycheck-credo-setup))
 #+END_SRC
@@ -4658,6 +4682,8 @@ Other JSON-related packages.
 
 #+BEGIN_SRC emacs-lisp
 (use-package rbenv
+ :commands
+ (global-rbenv-mode)
  :preface
  (defun my/rbenv/modeline (current-ruby)
    (append
@@ -4694,6 +4720,8 @@ Other JSON-related packages.
 #+BEGIN_SRC emacs-lisp
 (use-package projectile-rails
  :after projectile
+ :commands
+ (projectile-rails-global-mode)
  :init
  (setq
   projectile-rails-vanilla-command "bin/rails"
@@ -5068,7 +5096,8 @@ Flow LSP support.
   :fetcher url
   :url "http://www.emacswiki.org/emacs/download/lua-block.el")
  :init
- (autoload 'lua-block-mode "lua-block" nil t))
+ (autoload 'lua-block-mode "lua-block" nil t)
+ :delight "lb")
 #+END_SRC
 
 *** Haml
@@ -5337,9 +5366,11 @@ See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
 
 ** Email
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package mu4e
  :ensure nil
+ :commands
+ (mu4e-html2text-command)
  :hook
  (after-init . mu4e-alert-enable-mode-line-display)
  :init
