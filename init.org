@@ -1351,10 +1351,10 @@ See the [[https://github.com/antonj/Highlight-Indentation-for-Emacs][package rep
 #+BEGIN_SRC emacs-lisp
 (use-package highlight-indentation
  :after general
- :hook
- (yaml-mode . highlight-indentation-mode)
- (haskell-mode . highlight-indentation-mode)
- (prog-mode . highlight-indentation-current-column-mode)
+ ;; :hook
+ ;; (yaml-mode . highlight-indentation-mode)
+ ;; (haskell-mode . highlight-indentation-mode)
+ ;; (prog-mode . highlight-indentation-current-column-mode)
  :config
  (set-face-background 'highlight-indentation-face "#121212")
  (set-face-background 'highlight-indentation-current-column-face "#111111")
