@@ -1511,6 +1511,14 @@ See the package [[https://github.com/syl20bnr/vi-tilde-fringe][repo]] for more i
  :diminish vi-tilde-fringe-mode)
 #+END_SRC
 
+*** Info colors
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package info-colors
+ :hook
+ (Info-selection #'info-colors-fontify-node))
+#+END_SRC
+
 *** Fill column
 
 I keep it disabled, because it is too slow.
@@ -2092,19 +2100,17 @@ This only works with the =company-capf= backend.
 (use-package ispell
  :ensure nil
  :custom
- (ispell-really-aspell nil)
- (ispell-really-hunspell t)
+ (ispell-program-name "aspell")
+ ;; (ispell-dictionary "english")
+ ;; (ispell-local-dictionary "russian")
+ (ispell-really-aspell t)
+ (ispell-really-hunspell nil)
+ (ispell-extra-args '("--sug-mode=ultra"))
  (ispell-encoding8-command t)
- (ispell-program-name "hunspell")
- (ispell-dictionary "ru_RU,en_US")
  (ispell-silently-savep t)
  (ispell-have-new-look t)
  (ispell-enable-tex-parser t)
  :config
- ;; ispell-set-spellchecker-params has to be called
- ;; before ispell-hunspell-add-multi-dic will work
- (ispell-set-spellchecker-params)
- (ispell-hunspell-add-multi-dic "ru_RU,en_US")
  ;; Don’t spell check in org source code blocks.
  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_LATEX" . "#\\+END_LATEX"))
@@ -2117,8 +2123,7 @@ This only works with the =company-capf= backend.
    "C-c i r" 'ispell-region)
  (when (eq system-type 'darwin)
    (general-define-key
-    "s-\\" 'ispell-word))
-)
+    "s-\\" 'ispell-word)))
 #+END_SRC
 
 ** Flycheck
@@ -3160,6 +3165,23 @@ the Emacsclient does.
 (use-package gitconfig-mode)
 #+END_SRC
 
+*** Magithub
+
+#+BEGIN_SRC emacs-lisp
+(use-package magithub
+ :ensure t
+ :after magit
+ :custom
+ (magithub-clone-default-directory "~/projects/github/unsorted")
+ :config
+ (magithub-feature-autoinject t)
+ (nmap 'magit-prefix-map
+   "h b" 'magithub-browse
+   "h c" 'magithub-clone
+   "h C" 'magithub-create
+   "h f" 'magithub-fork))
+#+END_SRC
+
 *** Gist
 
 #+BEGIN_SRC emacs-lisp
@@ -3607,7 +3629,7 @@ Setup =tramp=.
 (use-package evil-org
  :after (general org)
  :commands
- (evil-org-set-key-theme)
+ (evil-org-set-key-theme evil-org-agenda-set-keys)
  :preface
  (defun my/evil-org/setup ()
    (evil-org-set-key-theme)
@@ -3810,6 +3832,58 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
    :keymaps 'emacs-lisp-mode-map
    :prefix my/leader
    "m e" 'macrostep-expand))
+#+END_SRC
+
+**** Highlight
+
+#+BEGIN_SRC emacs-lisp
+(use-package highlight-defined
+ :custom
+ (highlight-defined-face-use-itself t)
+ :hook
+ (emacs-lisp-mode . highlight-defined-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package highlight-quoted
+ :hook
+ (emacs-lisp-mode . highlight-quoted-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package eros
+ :hook
+ (emacs-lisp-mode . eros-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package suggest
+ :defer t)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package ipretty
+ :defer t
+ :config
+ (ipretty-mode 1))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package nameless
+ :hook
+ (emacs-lisp-mode .  nameless-mode)
+ :custom
+ (nameless-global-aliases '())
+ (nameless-private-prefix t))
+#+END_SRC
+
+Flycheck checker for elisp package metadata.
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-package
+ :defer t
+ :after flycheck
+ (flycheck-package-setup))
 #+END_SRC
 
 *** Haskell
