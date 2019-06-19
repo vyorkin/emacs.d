@@ -457,6 +457,16 @@ Setup [[https://www.emacswiki.org/emacs/EmacsTags][Emacs tags]].
  :diminish buffer-face-mode)
 #+END_SRC
 
+**** CC mode
+
+#+BEGIN_SRC emacs-lisp
+(use-package cc-mode
+ :ensure nil
+ :config
+ (add-to-list 'auto-mode-alist '("\\.m\\'" . objc-mode))
+ (add-to-list 'auto-mode-alist '("\\.mm\\'" . objc-mode)))
+#+END_SRC
+
 ** UI
 *** Basics.
 
@@ -758,6 +768,33 @@ Advice setting ~:ensure nil~ for =use-package= + =quelpa=.
 (quelpa-use-package-activate-advice)
 #+END_SRC
 
+** Use-package plugins
+
+All credit to [[https://github.com/a13][a13]].
+
+Works as ~:custom~ keyword, but instead of a value takes update function or the
+second (the first is the original one) argument to the default updater.
+
+#+BEGIN_SRC emacs-lisp
+(use-package use-package-custom-update
+ :quelpa
+ (use-package-custom-update
+   :repo "a13/use-package-custom-update"
+   :fetcher github
+   :version original))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package use-package-secrets
+ :custom
+ (use-package-secrets-default-directory "~/.emacs.d/secrets")
+ :quelpa
+ (use-package-secrets
+   :repo "a13/use-package-secrets"
+   :fetcher github
+   :version original))
+#+END_SRC
+
 ** Font
 *** Faces
 
@@ -788,7 +825,7 @@ Base-16 themes.
 (use-package base16-theme
   :config
   ;; (load-theme 'base16-chalk t)
-  (load-theme 'base16-black-metal t)
+  ;; (load-theme 'base16-black-metal t)
   ;; (load-theme 'base16-default-dark t)
   ;; (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
@@ -819,6 +856,15 @@ Doom themes.
   (doom-themes-neotree-config)
   ;; Corrects (and improves) org-mode's native fontification
   (doom-themes-org-config))
+#+END_SRC
+
+Zero dark.
+
+#+BEGIN_SRC emacs-lisp
+(use-package zerodark-theme
+ :config
+ (load-theme 'zerodark t nil)
+ (zerodark-setup-modeline-format))
 #+END_SRC
 
 Other themes.
@@ -1076,6 +1122,15 @@ Save buffers when they lose focus.
  :diminish)
 #+END_SRC
 
+*** Auto read-only
+
+#+BEGIN_SRC emacs-lisp
+(use-package auto-read-only
+ :config
+ (auto-read-only-mode 1)
+ (add-to-list 'auto-read-only-file-regexps "~/.emacs.d/init.el"))
+#+END_SRC
+
 *** Zoom
 
 ~text-scale-increase~ and ~text-scale-decrease~ doesn't play well with
@@ -1101,6 +1156,18 @@ more info: https://github.com/company-mode/company-mode/issues/299#issuecomment-
    "C--" 'zoom-frm-out
    "<s-triple-wheel-up>" 'zoom-frm-in
    "<s-triple-wheel-down>" 'zoom-frm-out))
+#+END_SRC
+
+Fixed and automatic balanced window layout for Emacs.
+TL;DR: Zooms current pane.
+
+#+BEGIN_SRC emacs-lisp
+(use-package zoom
+ :custom
+ (zoom-size '(0.8 . 0.8))
+ (zoom-ignored-major-modes '(dired-mode pomidor-mode))
+ (zoom-ignored-buffer-name-regexps '("^*calc"))
+ (zoom-ignore-predicates '((lambda () (> (count-lines (point-min) (point-max)) 20)))))
 #+END_SRC
 
 *** Transparency
@@ -1248,11 +1315,14 @@ Define an interactive function for customizing appearance.
    'fringe nil
    :foreground (face-foreground 'default)
    :background (face-background 'default))
+  ;; comment/uncomment the lines below to
   ;; set the highlight color for selected text
-  (set-face-attribute 'region nil :foreground "#fff")
-  (set-face-attribute 'region nil :background "#282828")
+  ;; (set-face-attribute 'region nil :foreground "#fff")
+  ;; (set-face-attribute 'region nil :background "#282828")
+  ;; comment/uncomment the line below to
   ;; set the highlight color and foreground color for matching search results
-  (set-face-attribute 'lazy-highlight nil :foreground "black" :background "#ffd700"))
+  ;; (set-face-attribute 'lazy-highlight nil :foreground "black" :background "#ffd700")
+  )
 #+END_SRC
 
 Required for =emacsclient=.
@@ -1283,6 +1353,26 @@ Display ugly =^L= page breaks as tidy horizontal lines.
 
 #+BEGIN_SRC emacs-lisp
 (use-package rainbow-delimiters
+ :commands
+ (rainbow-delimiters-unmatched-face)
+ :config
+ ;; Pastels..
+ (set-face-attribute 'rainbow-delimiters-depth-1-face nil :foreground "#78c5d6")
+ (set-face-attribute 'rainbow-delimiters-depth-2-face nil :foreground "#bf62a6")
+ (set-face-attribute 'rainbow-delimiters-depth-3-face nil :foreground "#459ba8")
+ (set-face-attribute 'rainbow-delimiters-depth-4-face nil :foreground "#e868a2")
+ (set-face-attribute 'rainbow-delimiters-depth-5-face nil :foreground "#79c267")
+ (set-face-attribute 'rainbow-delimiters-depth-6-face nil :foreground "#f28c33")
+ (set-face-attribute 'rainbow-delimiters-depth-7-face nil :foreground "#c5d647")
+ (set-face-attribute 'rainbow-delimiters-depth-8-face nil :foreground "#f5d63d")
+ (set-face-attribute 'rainbow-delimiters-depth-9-face nil :foreground "#78c5d6")
+ ;; Make unmatched parens stand out more
+ (set-face-attribute
+  'rainbow-delimiters-unmatched-face nil
+   :foreground 'unspecified
+   :inherit 'show-paren-mismatch
+   :strike-through t)
+ (set-face-foreground 'rainbow-delimiters-unmatched-face "magenta")
  :hook
  (prog-mode . rainbow-delimiters-mode)
  :diminish rainbow-delimiters-mode)
@@ -1356,8 +1446,12 @@ See the [[https://github.com/antonj/Highlight-Indentation-for-Emacs][package rep
  ;; (haskell-mode . highlight-indentation-mode)
  ;; (prog-mode . highlight-indentation-current-column-mode)
  :config
- (set-face-background 'highlight-indentation-face "#121212")
- (set-face-background 'highlight-indentation-current-column-face "#111111")
+ ;; theme: zerodark
+ (set-face-background 'highlight-indentation-face "#24282f")
+ (set-face-background 'highlight-indentation-current-column-face "#22252c")
+ ;; theme: grayscale dark
+ ;; (set-face-background 'highlight-indentation-face "#121212")
+ ;; (set-face-background 'highlight-indentation-current-column-face "#111111")
  (nmap
    :prefix my/leader
    "t i" 'highlight-indentation-mode)
@@ -1417,22 +1511,81 @@ See the package [[https://github.com/syl20bnr/vi-tilde-fringe][repo]] for more i
  :diminish vi-tilde-fringe-mode)
 #+END_SRC
 
+*** Fill column
+
+I keep it disabled, because it is too slow.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package fill-column-indicator
+ :config
+ (setq fci-rule-column 120)
+ (setq fci-rule-color "#ff6c6b")
+ (setq fill-column 80))
+#+END_SRC
+
 *** All the icons
 
 A utility [[https://github.com/domtronn/all-the-icons.el][package]] to collect various =Icon Fonts= and propertize them within
 Emacs.
 
+Don't forget to run ~M-x all-the-icons-install-fonts~.
+
 #+BEGIN_SRC emacs-lisp
 (use-package all-the-icons
  :config
- (add-to-list
-  'all-the-icons-mode-icon-alist
-  '(package-menu-mode all-the-icons-octicon "package" :v-adjust 0.0)))
+ (setq
+   all-the-icons-mode-icon-alist
+   `(,@all-the-icons-mode-icon-alist
+     (package-menu-mode all-the-icons-octicon "package" :v-adjust 0.0)
+     (jabber-chat-mode all-the-icons-material "chat" :v-adjust 0.0)
+     (jabber-roster-mode all-the-icons-material "contacts" :v-adjust 0.0)
+     (telega-chat-mode all-the-icons-fileicon "telegram" :v-adjust 0.0
+                       :face all-the-icons-blue-alt)
+     (telega-root-mode all-the-icons-material "contacts" :v-adjust 0.0))))
+#+END_SRC
+
+*** Emojify
+
+Add emoji support. This is useful when working with =HTML=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package emojify
+ :hook
+ (text-mode . emojify-mode))
 #+END_SRC
 
 *** Mode line
 
+A minimal mode-line configuration that aims to replicate some of the features of
+the =doom-modeline= package.
+
 #+BEGIN_SRC emacs-lisp
+(use-package mood-line
+ :hook
+ (after-init . mood-line-mode))
+#+END_SRC
+
+Another option is =moody= + =minions= as an attractive minimalist mode line
+replacement.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package minions
+ :config
+ (setq minions-mode-line-lighter "[+]")
+ (minions-mode 1))
+
+(use-package moody
+ :config
+ (moody-replace-mode-line-buffer-identification)
+ (moody-replace-vc-mode)
+ (setq-default
+  x-underline-at-descent-line t
+  column-number-mode t))
+#+END_SRC
+
+A very cool mode line that I used previously.
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package spaceline
  :init
  (setq
@@ -1800,6 +1953,19 @@ display this documentation inline using a buffer text overlay.
  :diminish "eo")
 #+END_SRC
 
+** Secrets
+
+#+BEGIN_SRC emacs-lisp
+(use-package use-package-secrets
+  :custom
+  (use-package-secrets-default-directory "~/.secrets")
+  :quelpa
+  (use-package-secrets
+    :repo "a13/use-package-secrets"
+    :fetcher github
+    :version original))
+#+END_SRC
+
 ** Bookmarks
 
 Most of the keybindings are set by the =evil-collection= package.
@@ -1836,20 +2002,26 @@ Some of the key bindings are provided by the =evil-collection=.
  (company-dabbrev-downcase nil)
  (company-idle-delay 0.2 "adjust this setting according to your typing speed")
  (company-minimum-prefix-length 1)
+ ;; Disable in org
+ (company-global-modes '(not org-mode))
  :config
- (custom-set-faces
-  '(company-preview ((t (:foreground "#171717" :underline t))))
-  '(company-preview-common ((t (:inherit company-preview))))
-  '(company-tooltip ((t (:background "#171717" :foreground "#ddd"))))
-  '(company-tooltip-selection ((t (:background "#1f1f1f" :foreground "#eee"))))
-  '(company-tooltip-common
-    ((((type x)) (:inherit company-tooltip :weight bold))
-     (t (:inherit company-tooltip))))
-  '(company-tooltip-common-selection
-    ((((type x)) (:inherit company-tooltip-selection :weight bold))
-     (t (:inherit company-tooltip-selection))))
-  '(company-scrollbar-bg ((t (:background "#111"))))
-  '(company-scrollbar-fg ((t (:background "#1a1a1a")))))
+ ;; Style nicely
+ (let* ((bg (face-attribute 'default :background))
+       (bg-light (color-lighten-name bg 2))
+       (bg-lighter (color-lighten-name bg 5))
+       (bg-lightest (color-lighten-name bg 10))
+       (ac (face-attribute 'match :foreground)))
+  (custom-set-faces
+   `(company-tooltip
+     ((t (:inherit default :background ,bg-light))))
+   `(company-scrollbar-bg ((t (:background ,bg-lightest))))
+   `(company-scrollbar-fg ((t (:background ,bg-lighter))))
+   `(company-tooltip-selection
+     ((t (:inherit font-lock-function-name-face))))
+   `(company-tooltip-common
+     ((t (:inherit font-lock-constant-face))))
+   `(company-preview-common
+     ((t (:foreground ,ac :background ,bg-lightest))))))
  (unbind-key "C-SPC")
  (imap
   "C-SPC" 'company-complete
@@ -1863,6 +2035,23 @@ Some of the key bindings are provided by the =evil-collection=.
   "C-d" 'company-show-doc-buffer
   "C-w" 'backward-kill-word)
  :diminish company-mode)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(eval-after-load 'company
+ '(custom-set-faces
+  '(company-preview ((t (:foreground "#171717" :underline t))))
+  '(company-preview-common ((t (:inherit company-preview))))
+  '(company-tooltip ((t (:background "#171717" :foreground "#ddd"))))
+  '(company-tooltip-selection ((t (:background "#1f1f1f" :foreground "#eee"))))
+  '(company-tooltip-common
+    ((((type x)) (:inherit company-tooltip :weight bold))
+     (t (:inherit company-tooltip))))
+  '(company-tooltip-common-selection
+    ((((type x)) (:inherit company-tooltip-selection :weight bold))
+     (t (:inherit company-tooltip-selection))))
+  '(company-scrollbar-bg ((t (:background "#111"))))
+  '(company-scrollbar-fg ((t (:background "#1a1a1a"))))))
 #+END_SRC
 
 *** Company quickhelp
@@ -1914,6 +2103,9 @@ This only works with the =company-capf= backend.
  (ispell-have-new-look t)
  (ispell-enable-tex-parser t)
  :config
+ ;; Don’t spell check in org source code blocks.
+ (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
+ (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_LATEX" . "#\\+END_LATEX"))
  (nmap
    "C-c i w" 'ispell-word
    "C-c i c" 'ispell-comments-and-strings
@@ -2162,6 +2354,19 @@ Setup dired.
  :diminish dired-mode)
 #+END_SRC
 
+*** Dired hide dotfiles
+
+Allows to easily show/hide dotfiles.
+
+#+BEGIN_SRC emacs-lisp
+(use-package dired-hide-dotfiles
+ :config
+ (nmap 'dired-mode-map
+   "." 'dired-hide-dotfiles-mode)
+ :hook
+ (dired-mode . dired-hide-dotfiles-mode))
+#+END_SRC
+
 *** Dired fl
 
 Extra Emacs font lock rules for a more colourful dired.
@@ -2174,8 +2379,28 @@ See the [[https://github.com/purcell/diredfl][package repo]] for more info.
  (dired-mode . diredfl-mode))
 #+END_SRC
 
+*** Dired rsync
+
 #+BEGIN_SRC emacs-lisp
-(use-package dired-launch)
+(use-package dired-rsync
+ :config
+ (nmap 'dired-mode-map
+   "r" 'dired-rsync))
+#+END_SRC
+
+*** Dired launch
+
+Launch an external application from dired.
+
+#+BEGIN_SRC emacs-lisp
+(use-package dired-launch
+ :hook
+ (dired-mode . dired-launch-mode)
+ :init
+ (setq dired-launch-default-launcher '("xdg-open"))
+ :config
+ (nmap 'dired-launch-mode-map
+   "l" 'dired-launch-command))
 #+END_SRC
 
 *** Dired+
@@ -2185,7 +2410,8 @@ Setup [[https://github.com/emacsmirror/dired-plus][dired+]].
 #+BEGIN_SRC emacs-lisp
 (use-package dired+
  :after dired
- :quelpa (dired+ :fetcher github :repo "emacsmirror/dired-plus")
+ :quelpa
+ (dired+ :fetcher github :repo "emacsmirror/dired-plus")
  :commands
  (dired-read-dir-and-switches)
  :init
@@ -2365,6 +2591,14 @@ Most of key bindings are provided by the =evil-collection=.
  (when (eq system-type 'darwin)
    (general-define-key
     "s-B" 'neotree-toggle)))
+#+END_SRC
+
+*** Icons
+
+#+BEGIN_SRC emacs-lisp
+(use-package all-the-icons-dired
+ :hook
+ (dired-mode . all-the-icons-dired-mode))
 #+END_SRC
 
 ** Navigation
@@ -2900,9 +3134,9 @@ the Emacsclient does.
   '(git-gutter:added-sign "+")
   '(git-gutter:deleted-sign "-")
   '(git-gutter:hide-gutter nil))
- (set-face-foreground 'git-gutter:modified "#444")
- (set-face-foreground 'git-gutter:added "light green")
- (set-face-foreground 'git-gutter:deleted "maroon3")
+ (set-face-foreground 'git-gutter:modified "#da8548")
+ (set-face-foreground 'git-gutter:added "#98be65")
+ (set-face-foreground 'git-gutter:deleted "#ff6c6b")
  (nmap
    :prefix my/leader
    "t g" 'git-gutter-mode)
@@ -2963,6 +3197,17 @@ the Emacsclient does.
  (eshell-smart-space-goes-to-end t))
 #+END_SRC
 
+*** Esh help
+
+#+BEGIN_SRC emacs-lisp
+(use-package esh-help
+ :defer t
+ :commands
+ (setup-esh-help-eldoc)
+ :config
+ (setup-esh-help-eldoc))
+#+END_SRC
+
 *** Esh autosuggest
 
 #+BEGIN_SRC emacs-lisp
@@ -2970,17 +3215,23 @@ the Emacsclient does.
  :hook (eshell-mode . esh-autosuggest-mode))
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(use-package eshell-prompt-extras
+ :after esh-opt
+ :commands
+ (epe-theme-dakrone)
+ :custom
+ (eshell-prompt-function #'epe-theme-dakrone))
+#+END_SRC
+
 *** EShell toggle
 
 #+BEGIN_SRC emacs-lisp
 (use-package eshell-toggle
- :ensure nil
- :after general
- :quelpa
- (eshell-toggle
-  :repo "4DA/eshell-toggle"
-  :fetcher github
-  :version original)
+ :after (general)
+ :custom
+ (eshell-toggle-use-projectile-root t)
+ (eshell-toggle-run-command nil)
  :config
  (nmap
    :prefix my/leader
@@ -3241,11 +3492,15 @@ Setup =tramp=.
  ;; to be sure we have latest Org version
  ;; :ensure org-plus-contrib
  :mode ("\\.org\\'" . org-mode)
+ :commands
+ (org-babel-do-load-languages)
  :init
  (setq
   ;; Forces to mark all child tasks as DONE before
   ;; you can mark the parent as DONE
   org-enforce-todo-dependencies t
+  ;; Allows displaying UTF-8 chars like \alpha
+  org-pretty-entities t
   ;; Insert an annotation in a task when
   ;; it is marked as done including a
   ;; timestamp of when exactly that happened
@@ -3305,8 +3560,33 @@ Setup =tramp=.
   ;; Do not dim blocked tasks
   org-agenda-dim-blocked-tasks nil
   ;; Compact the block agenda view
-  org-agenda-compact-blocks t)
+  org-agenda-compact-blocks t
+  ;; Hide DONE items
+  org-agenda-skip-scheduled-if-done t
+  org-agenda-skip-deadline-if-done t
+  ;; Set a 30 day span, instead of a week view
+  org-agenda-start-day "-3d"
+  org-agenda-span 30
+  ;; Omit empty days in the agenda
+  org-agenda-show-all-dates nil
+  ;; Disable pre-warnings
+  org-deadline-warning-days 0
+  ;; Hide the time grid by default
+  org-agenda-use-time-grid nil
+  ;; Make the agenda schedule prettier
+  org-agenda-prefix-format
+      '((agenda . " %i %-12t% s %b\n                           ")
+        (timeline . "  % s")
+        (todo . " %i %-12:c")
+        (tags . " %i %-12:c")
+        (search . " %i %-12:c")))
  :config
+ (require 'org)
+  ;; Makes inline latex previews bigger
+ (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.7))
+ (nmap 'org-mode-map
+  "C-k" 'windmove-up
+  "C-j" 'windmove-down)
  (nmap
    :prefix my/leader
    "o" 'org-todo-list
@@ -3790,6 +4070,11 @@ A new, simple purescript mode for cheap syntax highlighting.
 #+BEGIN_SRC emacs-lisp
 (use-package psc-ide
  :after (general purescript-mode)
+ :quelpa
+ (psc-ide
+   :repo "purescript-emacs/psc-ide-emacs"
+   :commit "230101a3d56c9e062c3ce2bf9a4dc077e5607cc0"
+   :fetcher github)
  :commands (psc-ide-mode)
  :preface
  (defun my/psc-ide/setup ()
@@ -4571,6 +4856,16 @@ Other JSON-related packages.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
+(use-package jira-markup-mode
+ :defer t
+ :after atomic-chrome
+ :mode ("\\.confluence$" . jira-markup-mode)
+ :custom-update
+ (atomic-chrome-url-major-mode-alist
+  '(("atlassian\\.net$" . jira-markup-mode))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
 (use-package gh-md
  :after (general markdown-mode)
  :config
@@ -4732,10 +5027,30 @@ Other JSON-related packages.
  :diminish)
 #+END_SRC
 
+*** PHP
+
+#+BEGIN_SRC emacs-lisp
+(use-package php-mode
+  :mode "\\.\\(php\\|inc\\)$")
+#+END_SRC
+
 *** Java
 
 #+BEGIN_SRC emacs-lisp
 
+#+END_SRC
+
+*** Kotlin
+
+#+BEGIN_SRC emacs-lisp
+(use-package kotlin-mode)
+#+END_SRC
+
+*** Groovy
+
+#+BEGIN_SRC emacs-lisp
+(use-package groovy-mode
+ :mode ("\\.gradle$" . groovy-mode))
 #+END_SRC
 
 *** Web
@@ -5048,6 +5363,47 @@ Flow LSP support.
 (use-package d-mode)
 #+END_SRC
 
+*** C/C++
+
+Emacs has a great built in C/C++ mode, but we can improve on it with =irony-mode=
+for code completion via =libclang=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package irony
+ :hook
+ (c-mode . irony-mode)
+ (c++-mode . irony-mode))
+#+END_SRC
+
+Add company mode support.
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-irony
+ :config
+ (add-to-list 'company-backends 'company-irony))
+#+END_SRC
+
+Add flycheck support.
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-irony
+ :hook
+ (flycheck-mode . flycheck-irony-setup))
+#+END_SRC
+
+*** Objective C
+
+#+BEGIN_SRC emacs-lisp
+(use-package objc-font-lock
+ :config
+ (objc-font-lock-global-mode 1))
+#+END_SRC
+
+*** Matlab
+
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
 *** Octave
 
 #+BEGIN_SRC emacs-lisp
@@ -5055,6 +5411,49 @@ Flow LSP support.
  :after general
  :ensure nil
  :mode ("\.m$" . octave-mode))
+#+END_SRC
+
+*** Latex
+
+#+BEGIN_SRC emacs-lisp
+(use-package tex
+ :demand t
+ :ensure auctex
+ :config
+ (setq-default TeX-engine 'luatex)
+ (setq-default TeX-PDF-mode t)
+ (setq-default TeX-master nil)
+ (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
+ (setq reftex-plug-into-AUCTeX t)
+ (setq reftex-bibliography-commands '("bibliography" "nobibliography" "addbibresource"))
+ (setq reftex-use-external-file-finders t)
+ (setq reftex-external-file-finders
+       '(("tex" . "kpsewhich -format=.tex %f")
+         ("bib" . "kpsewhich -format=.bib %f")))
+ (setq reftex-insert-label-flags '("s" "sft" "e"))
+ (setq TeX-electric-sub-and-superscrip t)
+ (setq TeX-electric-math (cons "\\(" "\\)"))
+ :hook
+ ((LaTeX-mode . visual-line-mode)
+  (LaTeX-mode . turn-on-auto-fill)
+  (LaTeX-mode . flyspell-mode)
+  (LaTeX-mode . LaTeX-math-mode)
+  (LaTeX-mode . turn-on-reftex)
+  (TeX-after-compilation-finished-functions
+    . TeX-revert-document-buffer)))
+
+(use-package auctex-latexmk
+  :hook (LaTeX-mode . auctex-latexmk-setup))
+#+END_SRC
+
+Add company mode support. This package provides completion back-ends for math
+unicode symbols and latex tags.
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-math
+ :config
+ (add-to-list 'company-backends 'company-math-symbols-latex)
+ (add-to-list 'company-backends 'company-math-symbols-unicode))
 #+END_SRC
 
 *** Toml
@@ -5213,6 +5612,36 @@ When gdb debugging, show the many windows (stack trace, break points, etc).
  (dap-ui-mode 1))
 #+END_SRC
 
+** HTTP
+
+#+BEGIN_SRC emacs-lisp
+(use-package restclient
+ :mode
+ ("\\.http\\'" . restclient-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package restclient-test
+ :hook
+ (restclient-mode-hook . restclient-test-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package ob-restclient
+ :after (org restclient)
+ :init
+ (org-babel-do-load-languages
+  'org-babel-load-languages
+  '((restclient . t))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package company-restclient
+ :after (company restclient)
+ :custom-update
+ (company-backends '(company-restclient)))
+#+END_SRC
+
 ** Docker
 
 #+BEGIN_SRC emacs-lisp
@@ -5364,6 +5793,27 @@ See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
    "G i d" 'ix-delete))
 #+END_SRC
 
+** Calendar
+
+#+BEGIN_SRC emacs-lisp
+(use-package calfw-org)
+(use-package calfw
+ :demand t
+ :config
+ (require 'calfw-org)
+
+ ;; Nicer Unicode characters
+ (setq
+   cfw:fchar-junction ?╋
+   cfw:fchar-vertical-line ?┃
+   cfw:fchar-horizontal-line ?━
+   cfw:fchar-left-junction ?┣
+   cfw:fchar-right-junction ?┫
+   cfw:fchar-top-junction ?┯
+   cfw:fchar-top-left-corner ?┏
+   cfw:fchar-top-right-corner ?┓))
+#+END_SRC
+
 ** Email
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -5459,6 +5909,23 @@ See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
  (mu4e-alert-set-default-style 'notifier))
 #+END_SRC
 
+** Reading
+*** PDF
+
+#+BEGIN_SRC emacs-lisp
+(use-package pdf-tools
+ :mode ("\\.pdf\\'" . pdf-view-mode)
+ :config
+ (pdf-tools-install)
+ (setq-default pdf-view-display-size 'fit-width))
+#+END_SRC
+
+*** Djvu
+
+#+BEGIN_SRC emacs-lisp
+(use-package djvu)
+#+END_SRC
+
 ** Translation
 
 This package allows to translate the strings using Google Translate service
@@ -5548,6 +6015,72 @@ I use =engine-mode= instead.
  (nmap
    :prefix my/leader
    "G" google-this-mode-submap))
+#+END_SRC
+
+*** Stack exchange
+
+#+BEGIN_SRC emacs-lisp
+ (use-package sx
+  :config
+  (nmap
+    :prefix my/leader
+    "' q" 'sx-tab-all-questions
+    "' i" 'sx-inbox
+    "' o" 'sx-open-link
+    "' u" 'sx-tab-unanswered-my-tags
+    "' a" 'sx-ask
+    "' s" 'sx-search))
+#+END_SRC
+
+** Messaging
+*** Prerequisites
+
+#+BEGIN_SRC emacs-lisp
+(use-package alert
+ :commands (alert)
+ :init
+ (setq alert-style-default 'notifier))
+#+END_SRC
+
+*** Slack
+
+#+BEGIN_SRC emacs-lisp
+(use-package slack
+ :after (general company)
+ :commands (slack-start)
+ :init
+ (setq
+  slack-buffer-emojify t
+  slack-prefer-current-team t)
+ :config
+ ;; Only use Slack company completion
+ (make-local-variable 'company-backends)
+ (setq company-backends '((company-slack-backend)))
+
+ (add-hook 'slack-mode-hook
+           '(lambda ()
+              (flycheck-mode -1)
+              (company-mode -1)))
+
+ (nmap 'slack-mode-map
+   ",ra" 'slack-message-add-reaction
+   ",rr" 'slack-message-remove-reaction
+   ",rs" 'slack-message-show-reaction-users
+   ",pl" 'slack-room-pins-list
+   ",pa" 'slack-message-pins-add
+   ",pr" 'slack-message-pins-remove
+   ",mm" 'slack-message-write-another-buffer
+   ",me" 'slack-message-edit
+   ",md" 'slack-message-delete
+   ",2" 'slack-message-embed-mention
+   ",3" 'slack-message-embed-channel
+   "\C-n" 'slack-buffer-goto-next-message
+   "\C-p" 'slack-buffer-goto-prev-message)
+ (nmap 'slack-edit-message-mode-map
+   ",k" 'slack-message-cancel-edit
+   ",s" 'slack-message-send-from-buffer
+   ",2" 'slack-message-embed-mention
+   ",3" 'slack-message-embed-channel))
 #+END_SRC
 
 ** Pomodoro
