@@ -1958,7 +1958,7 @@ display this documentation inline using a buffer text overlay.
 #+BEGIN_SRC emacs-lisp
 (use-package use-package-secrets
   :custom
-  (use-package-secrets-default-directory "~/.secrets")
+  (use-package-secrets-default-directory "~/.emacs.d/secrets")
   :quelpa
   (use-package-secrets
     :repo "a13/use-package-secrets"
@@ -2092,17 +2092,19 @@ This only works with the =company-capf= backend.
 (use-package ispell
  :ensure nil
  :custom
- (ispell-program-name "aspell")
- ;; (ispell-dictionary "english")
- ;; (ispell-local-dictionary "russian")
- (ispell-really-aspell t)
- (ispell-really-hunspell nil)
- (ispell-extra-args '("--sug-mode=ultra"))
+ (ispell-really-aspell nil)
+ (ispell-really-hunspell t)
  (ispell-encoding8-command t)
+ (ispell-program-name "hunspell")
+ (ispell-dictionary "ru_RU,en_US")
  (ispell-silently-savep t)
  (ispell-have-new-look t)
  (ispell-enable-tex-parser t)
  :config
+ ;; ispell-set-spellchecker-params has to be called
+ ;; before ispell-hunspell-add-multi-dic will work
+ (ispell-set-spellchecker-params)
+ (ispell-hunspell-add-multi-dic "ru_RU,en_US")
  ;; Don’t spell check in org source code blocks.
  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
  (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_LATEX" . "#\\+END_LATEX"))
@@ -2115,7 +2117,8 @@ This only works with the =company-capf= backend.
    "C-c i r" 'ispell-region)
  (when (eq system-type 'darwin)
    (general-define-key
-    "s-\\" 'ispell-word)))
+    "s-\\" 'ispell-word))
+)
 #+END_SRC
 
 ** Flycheck
@@ -5915,6 +5918,8 @@ See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
 #+BEGIN_SRC emacs-lisp
 (use-package pdf-tools
  :mode ("\\.pdf\\'" . pdf-view-mode)
+ :commands
+ (pdf-tools-install)
  :config
  (pdf-tools-install)
  (setq-default pdf-view-display-size 'fit-width))
@@ -6039,15 +6044,19 @@ I use =engine-mode= instead.
 (use-package alert
  :commands (alert)
  :init
- (setq alert-style-default 'notifier))
+ (setq alert-style-default 'libinotify))
 #+END_SRC
 
 *** Slack
+
+Slack client for Emacs.
 
 #+BEGIN_SRC emacs-lisp
 (use-package slack
  :after (general company)
  :commands (slack-start)
+ :secret
+ (slack-start "slack.el")
  :init
  (setq
   slack-buffer-emojify t
@@ -6057,10 +6066,11 @@ I use =engine-mode= instead.
  (make-local-variable 'company-backends)
  (setq company-backends '((company-slack-backend)))
 
- (add-hook 'slack-mode-hook
-           '(lambda ()
-              (flycheck-mode -1)
-              (company-mode -1)))
+ (add-hook
+   'slack-mode-hook
+   '(lambda ()
+      (flycheck-mode -1)
+      (company-mode -1)))
 
  (nmap 'slack-mode-map
    ",ra" 'slack-message-add-reaction
@@ -6081,6 +6091,20 @@ I use =engine-mode= instead.
    ",s" 'slack-message-send-from-buffer
    ",2" 'slack-message-embed-mention
    ",3" 'slack-message-embed-channel))
+#+END_SRC
+
+*** Telega
+
+=telega.el= is full featured unofficial client for Telegram platform for GNU Emacs.
+
+#+BEGIN_SRC emacs-lisp
+(use-package telega
+ :quelpa
+ (telega
+  :fetcher github
+  :repo "zevlg/telega.el"
+  :branch "master"
+  :files (:defaults "README.md" "etc" "server" "Makefile" "test.el")))
 #+END_SRC
 
 ** Pomodoro
