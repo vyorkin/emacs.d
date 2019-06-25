@@ -1957,7 +1957,7 @@ display this documentation inline using a buffer text overlay.
  :config
  (nmap
    :prefix my/leader
-   "t e" 'eldoc-overlay-toggle)
+   "t E" 'eldoc-overlay-toggle)
  :diminish "eo")
 #+END_SRC
 
@@ -2154,6 +2154,7 @@ See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more
  (global-flycheck-mode 1)
  (nmap
    :prefix my/leader
+   "t e" 'flycheck-mode
    "e e" 'flycheck-list-errors
    "e c" 'flycheck-clear
    "e i" 'flycheck-manual
@@ -3027,6 +3028,7 @@ See the [[https://github.com/keith/evil-tmux-navigator][package repo]] for more 
  ;; :delight '(:eval (concat " " (projectile-project-name)))
  (nmap
    :prefix my/leader
+   "!" 'projectile-run-async-shell-command-in-root
    "DEL" 'projectile-invalidate-cache)
  :diminish projectile-mode)
 #+END_SRC
@@ -3929,16 +3931,23 @@ Flycheck checker for elisp package metadata.
     'font-lock-doc-face
     'font-lock-comment-face))
  (defvar haskell-process-use-ghci nil)
+ (defvar haskell-build-command-use-make nil)
+ (defun my/haskell-mode/toggle-build-command ()
+   "Toggle the build command"
+   (interactive)
+   (if haskell-build-command-use-make
+     (setq haskell-compile-cabal-build-command "cd %s && cabal new-build")
+     (setq haskell-compile-cabal-build-command "cd %s && make build")))
  (defun my/haskell-mode/toggle-process-type ()
    "Toggle GHCi process between cabal and ghci"
    (interactive)
    (if haskell-process-use-ghci
-       (progn
-         ;; You could set it to "cabal-repl" if
-         ;; you're using the old cabal workflow
-         (setq haskell-process-type 'cabal-new-repl)
-         (setq haskell-process-use-ghci nil)
-         (message "Using cabal new-repl"))
+     (progn
+       ;; You could set it to "cabal-repl" if
+       ;; you're using the old cabal workflow
+       (setq haskell-process-type 'cabal-new-repl)
+       (setq haskell-process-use-ghci nil)
+       (message "Using cabal new-repl"))
      (progn
        (setq haskell-process-type 'stack-ghci)
        (setq haskell-process-use-ghci t)
@@ -3980,9 +3989,8 @@ Flycheck checker for elisp package metadata.
   ;; Use "cabal new-repl" as the inferior haskell process
   haskell-process-type 'cabal-new-repl
   ;; haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans")
-  ;; Use "stack build" as the default build command
   ;; haskell-compile-cabal-build-command "stack build --no-library-profiling"
-  haskell-compile-cabal-build-command "cd %s && make build"
+  haskell-compile-cabal-build-command "cd %s && cabal new-build"
 )
  :config
  ;; Common key bindings
@@ -4007,6 +4015,7 @@ Flycheck checker for elisp package metadata.
    "M-j" 'compilation-next-error)
  (nmap 'haskell-mode-map
    "C-c T" 'my/haskell-mode/toggle-process-type
+   "C-c b" 'my/haskell-mode/toggle-build-command
    "C-c H" 'haskell-hayoo
    "C-c C-m" 'haskell-auto-insert-module-template
    "C-c ." 'haskell-hide-toggle
@@ -6174,11 +6183,28 @@ Slack client for Emacs.
 #+BEGIN_SRC emacs-lisp
 (use-package telega
  :quelpa
+ (telega :repo "zevlg/telega.el" :fetcher github :version original)
+ :custom
+ (telega-completing-read-function #'ivy-completing-read)
+ :hook (telega-root-mode . telega-notifications-mode)
+ :config
+ (setq telega-use-notifications t))
+
+(use-package telega
+ :quelpa
  (telega
-  :fetcher github
-  :repo "zevlg/telega.el"
-  :branch "master"
-  :files (:defaults "README.md" "etc" "server" "Makefile" "test.el")))
+   :fetcher github
+   :repo "zevlg/telega.el"
+   :branch "master"
+   :files (:defaults "README.md" "etc" "server" "Makefile" "test.el"))
+ :load-path "~/.emacs.d/quelpa/build/telega"
+ :bind
+ (:map telega-msg-button-map
+  ("j" . nil)
+  ("k" . nil)
+  ("h" . nil)
+  ("l" . nil))
+ :custom (telega-use-notifications t))
 #+END_SRC
 
 ** Pomodoro
