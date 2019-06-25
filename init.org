@@ -6190,15 +6190,6 @@ make compile
 #+BEGIN_SRC emacs-lisp
 (use-package telega
  :quelpa
- (telega :repo "zevlg/telega.el" :fetcher github :version original)
- :custom
- (telega-completing-read-function #'ivy-completing-read)
- :hook (telega-root-mode . telega-notifications-mode)
- :config
- (setq telega-use-notifications t))
-
-(use-package telega
- :quelpa
  (telega
    :fetcher github
    :repo "zevlg/telega.el"
@@ -6211,7 +6202,9 @@ make compile
   ("k" . nil)
   ("h" . nil)
   ("l" . nil))
- :custom (telega-use-notifications t))
+ :custom
+ (telega-completing-read-function #'ivy-completing-read)
+ (telega-use-notifications t))
 #+END_SRC
 
 ** Pomodoro
