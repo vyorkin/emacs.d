@@ -6180,6 +6180,13 @@ Slack client for Emacs.
 
 =telega.el= is full featured unofficial client for Telegram platform for GNU Emacs.
 
+Installation:
+
+#+BEGIN_SRC sh :tangle no
+cd ~/.emacs/quelpa/build/telega
+make compile
+#+END_SRC
+
 #+BEGIN_SRC emacs-lisp
 (use-package telega
  :quelpa
