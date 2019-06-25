@@ -867,6 +867,20 @@ Zero dark.
  (zerodark-setup-modeline-format))
 #+END_SRC
 
+Just another Tango theme based on =linux.org.ru= colors.
+
+#+BEGIN_SRC emacs-lisp
+(use-package lor-theme
+ :ensure nil
+ :custom-face
+ (variable-pitch ((t (:family "Serif"))))
+ (fixed-pitch ((t (:family "Monospace"))))
+ :config
+ (load-theme 'lor)
+ :quelpa
+ (lor-theme :repo "a13/lor-theme" :fetcher github :version original))
+#+END_SRC
+
 Other themes.
 
 #+BEGIN_SRC emacs-lisp :tangle no
