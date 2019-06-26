@@ -869,7 +869,7 @@ Zero dark.
 
 Just another Tango theme based on =linux.org.ru= colors.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package lor-theme
  :ensure nil
  :custom-face
@@ -3884,13 +3884,20 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
  (ipretty-mode 1))
 #+END_SRC
 
+Hide package namespace in your =emacs-lisp= code.
+For example, it changes ~ormolu-mode~ to ~:mode~.
+
 #+BEGIN_SRC emacs-lisp
 (use-package nameless
  :hook
  (emacs-lisp-mode .  nameless-mode)
  :custom
  (nameless-global-aliases '())
- (nameless-private-prefix t))
+ (nameless-private-prefix t)
+ :config
+ (nmap 'emacs-lisp-mode-map
+   :prefix my/leader
+   "t n" 'nameless-mode))
 #+END_SRC
 
 Flycheck checker for elisp package metadata.
@@ -4074,7 +4081,7 @@ Flycheck checker for elisp package metadata.
 Bear in mind that it doesn't support unicode syntax so all your cool unicode
 operators will be replaced.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package hindent
  :after (general haskell-mode)
  :hook
@@ -4087,6 +4094,16 @@ operators will be replaced.
    "C-c r" 'hindent-reformat-buffer
    "C-c R" 'hindent-reformat-decl)
  :diminish hindent-mode)
+#+END_SRC
+
+**** Ormolu
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package ormolu
+ :quelpa
+ (ormolu
+  :fetcher github
+  :repo "vyorkin/ormolu.el"))
 #+END_SRC
 
 **** Company-cabal
@@ -4218,6 +4235,25 @@ A new, simple purescript mode for cheap syntax highlighting.
  (idris-repl-prompt-style 'short)
  :hook
  (idris-mode . enable-idris-pretty-symbols))
+#+END_SRC
+
+*** ATS/ATS2
+
+ATS2 mode.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package ats-mode
+ :quelpa
+ (ats-mode
+  :fetcher file
+  :path "https://raw.githubusercontent.com/githwxi/ATS-Postiats/master/utils/emacs/ats2-mode.el"))
+#+END_SRC
+
+Flycheck.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package flycheck-ats2
+ :after (ats2-mode))
 #+END_SRC
 
 *** Nix
