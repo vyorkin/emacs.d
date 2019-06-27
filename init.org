@@ -3804,7 +3804,8 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   :ensure nil
   :config
   (put 'use-package 'lisp-indent-function 1)
-  (put 'add-hook 'lisp-indent-function 1))
+  (put 'add-hook 'lisp-indent-function 1)
+  (put :map 'lisp-indent-function 1))
 #+END_SRC
 
 *** Emacs Lisp
@@ -3885,7 +3886,7 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 #+END_SRC
 
 Hide package namespace in your =emacs-lisp= code.
-For example, it changes ~ormolu-mode~ to ~:mode~.
+For example, it changes ~whatever-mode~ to ~:mode~.
 
 #+BEGIN_SRC emacs-lisp
 (use-package nameless
@@ -4098,12 +4099,20 @@ operators will be replaced.
 
 **** Ormolu
 
-#+BEGIN_SRC emacs-lisp :tangle no
-(use-package ormolu
- :quelpa
- (ormolu
-  :fetcher github
-  :repo "vyorkin/ormolu.el"))
+#+BEGIN_SRC emacs-lisp
+  (use-package ormolu
+    :quelpa
+    (ormolu
+     :fetcher github
+     :repo "vyorkin/ormolu.el")
+    :commands
+    (ormolu-mode)
+    :hook (haskell-mode)
+    :custom
+    (ormolu-reformat-buffer-on-save t)
+    :config
+    (nmap 'haskell-mode-map
+      "C-c r" 'ormolu-format-buffer))
 #+END_SRC
 
 **** Company-cabal
@@ -4407,7 +4416,7 @@ OCaml support for Flycheck using Merlin.
  (custom-set-faces
   '(proof-queue-face ((t (:foreground "#eee"))))
   '(proof-locked-face ((t (:background "#001800" :foreground "#00aa00"))))
-  '(proof-locked-face ((t (:background "#002255" ))))
+  '(proof-locked-face ((t (:background "#660044" ))))
   '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
  :delight "coq")
 
@@ -4418,7 +4427,7 @@ OCaml support for Flycheck using Merlin.
  :preface
  (defun my/company-coq/setup ()
    (interactive)
-   (setq buffer-face-mode-face '(:family "Symbola"))
+   ;; (setq buffer-face-mode-face '(:family "Fira Code"))
    (buffer-face-mode)
    (setq-local
     prettify-symbols-alist
@@ -4876,6 +4885,22 @@ Some of key bindings are provided by ==evil-collection=.
  :config
  (flycheck-credo-setup))
 #+END_SRC
+
+*** Prolog
+
+#+BEGIN_SRC emacs-lisp
+(use-package prolog
+ :ensure nil
+ :commands
+ (prolog-mode mercury-mode)
+ :mode
+ (("\\.pl\\'" . prolog-mode)
+  ("\\.m\\'" . mercury-mode))
+ :init
+ (setq prolog-system 'swi))
+#+END_SRC
+
+TODO: add https://github.com/flycheck/flycheck-mercury
 
 *** Dhall
 
@@ -5546,7 +5571,9 @@ Add flycheck support.
 (use-package octave
  :after general
  :ensure nil
- :mode ("\.m$" . octave-mode))
+ ;; Overlaps with mercury-mode
+ ;; :mode ("\\.m\\'" . octave-mode)
+)
 #+END_SRC
 
 *** Latex
@@ -6047,6 +6074,19 @@ See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
 
 ** Reading
 *** PDF
+
+Emacs support library for =PDF= files.
+You should run the following command manually:
+
+#+BEGIN_SRC sh :tangle no
+M-x pdf-tools-install RET
+#+END_SRC
+
+To check if everything is ok:
+
+#+BEGIN_SRC sh :tangle no
+M-x pdf-info-check-epdfinfo RET
+#+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (use-package pdf-tools
