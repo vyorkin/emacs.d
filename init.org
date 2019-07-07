@@ -701,10 +701,10 @@ window’s edge to indicate that one can scroll to see the rest.
 (setq-default truncate-lines t)
 #+END_SRC
 
-Break line at 80 characters.
+Break line at ~N~ characters.
 
 #+BEGIN_SRC emacs-lisp
-(setq-default fill-column 80)
+(setq-default fill-column 64)
 #+END_SRC
 
 Enable automatic line breaking for all text mode buffers.
@@ -818,13 +818,12 @@ second (the first is the original one) argument to the default updater.
 #+END_SRC
 
 ** Theme
-
-Base-16 themes.
+*** Base-16 themes
 
 #+BEGIN_SRC emacs-lisp
 (use-package base16-theme
   :config
-  ;; (load-theme 'base16-chalk t)
+  (load-theme 'base16-chalk t)
   ;; (load-theme 'base16-black-metal t)
   ;; (load-theme 'base16-default-dark t)
   ;; (load-theme 'base16-grayscale-dark t)
@@ -840,32 +839,91 @@ Base-16 themes.
   )
 #+END_SRC
 
-Doom themes.
+Customizations for =vimish-fold= and =base16-grayscale-dark= theme.
+
+#+begin_src emacs-lisp :tangle no
+(eval-after-load 'vimish-fold
+ (custom-set-faces
+  '(vimish-fold-mouse-face ((t (:box (:line-width 1 :color "#555")))))
+  '(vimish-fold-overlay ((t (:box (:line-width 1 :color "#222")))))))
+#+end_src
+
+Base-16 customizations for =company-mode=.
+I've used this custom colors some time ago, but it seems that I
+don't need those anymore (see my =company= config to understand
+why). So the code block below is untangled.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(eval-after-load 'company
+ '(custom-set-faces
+  '(company-preview ((t (:foreground "#171717" :underline t))))
+  '(company-preview-common ((t (:inherit company-preview))))
+  '(company-tooltip ((t (:background "#171717" :foreground "#ddd"))))
+  '(company-tooltip-selection ((t (:background "#1f1f1f" :foreground "#eee"))))
+  '(company-tooltip-common
+    ((((type x)) (:inherit company-tooltip :weight bold))
+     (t (:inherit company-tooltip))))
+  '(company-tooltip-common-selection
+    ((((type x)) (:inherit company-tooltip-selection :weight bold))
+     (t (:inherit company-tooltip-selection))))
+  '(company-scrollbar-bg ((t (:background "#111"))))
+  '(company-scrollbar-fg ((t (:background "#1a1a1a"))))))
+#+END_SRC
+
+*** Doom themes
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package doom-themes
-  :init
-  (setq
-   doom-themes-enable-bold nil
-   doom-themes-enable-italic nil)
-  :config
-  (load-theme 'doom-dracula t)
-  (load-theme 'doom-challenger-deep t)
-  ;; Enable flashing mode-line on errors
-  (doom-themes-visual-bell-config)
-  (doom-themes-neotree-config)
-  ;; Corrects (and improves) org-mode's native fontification
-  (doom-themes-org-config))
-#+END_SRC
-
-Zero dark.
-
-#+BEGIN_SRC emacs-lisp
-(use-package zerodark-theme
+ :init
+ (setq
+  doom-themes-enable-bold nil
+  doom-themes-enable-italic nil)
  :config
- (load-theme 'zerodark t nil)
- (zerodark-setup-modeline-format))
+ (load-theme 'doom-dracula t)
+ (load-theme 'doom-challenger-deep t)
+ ;; Enable flashing mode-line on errors
+ (doom-themes-visual-bell-config)
+ (doom-themes-neotree-config)
+ ;; Corrects (and improves) org-mode's native fontification
+ (doom-themes-org-config))
 #+END_SRC
+
+*** Apropospriate theme
+
+#+begin_src emacs-lisp :tangle no
+(use-package apropospriate-theme
+ :config
+ (load-theme 'apropospriate-light))
+#+end_src
+
+*** Nord theme
+
+#+begin_src emacs-lisp :tangle no
+(use-package nord-theme)
+#+end_src
+
+*** Zero dark theme
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package zerodark-theme
+  :config
+  (load-theme 'zerodark t nil)
+  (zerodark-setup-modeline-format)
+  ;; Customizations
+  (with-eval-after-load 'idle-highlight-mode
+    ;; (set-face-background 'idle-highlight "#c51060")
+    (set-face-foreground 'idle-highlight "#999")
+    (set-face-background 'idle-highlight "#222"))
+  (with-eval-after-load 'proof-general
+    (custom-set-faces
+     '(proof-queue-face ((t (:foreground "#eee"))))
+     '(proof-locked-face ((t (:background "#001800" :foreground "#4a473d"))))
+     '(proof-locked-face ((t (:background "#0d3360" ))))
+     '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff"))))))
+  (with-eval-after-load 'company))
+#+END_SRC
+
+*** Lor theme
 
 Just another Tango theme based on =linux.org.ru= colors.
 
@@ -881,7 +939,7 @@ Just another Tango theme based on =linux.org.ru= colors.
  (lor-theme :repo "a13/lor-theme" :fetcher github :version original))
 #+END_SRC
 
-Other themes.
+*** Other themes
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package dracula-theme :defer t)
@@ -934,6 +992,8 @@ Other themes.
 (use-package lush-theme :defer t) ;; ****
 #+END_SRC
 
+*** Theme changer
+
 Sunrise/sunset [[https://github.com/hadronzoo/theme-changer][theme changer]]. Given a location and day/night color themes, this
 file provides a change-theme function that selects the appropriate theme based
 on whether it is day or night. It will continue to change themes at sunrise and
@@ -947,6 +1007,8 @@ sunset.
 
 ** Key bindings
 
+Use =SPC= as a "leader" key.
+
 #+BEGIN_SRC emacs-lisp
 (defvar my/leader "SPC")
 #+END_SRC
@@ -954,69 +1016,103 @@ sunset.
 #+BEGIN_SRC emacs-lisp
 (use-package general
  :config
- (general-define-key
-  "C-h" 'windmove-left
-  "C-l" 'windmove-right
-  "C-k" 'windmove-up
-  "C-j" 'windmove-down
-  "C-c C-k" 'kill-region)
- (when (eq system-type 'darwin)
-   (general-define-key
-    "s-<backspace>" 'kill-whole-line
-    "M-S-<backspace>" 'kill-word
-    ;; Use Super for movement and selection just like in macOS
-    "s-<right>" (kbd "C-e")
-    "S-s-<right>" (kbd "C-S-e")
-    "s-<left>" (kbd "M-m")
-    "S-s-<left>" (kbd "M-S-m")
-    "s-<up>" 'beginning-of-buffer
-    "s-<down>" 'end-of-buffer
-    ;; Basic things you should expect from macOS
-    "s-a" 'mark-whole-buffer       ; select all
-    "s-s" 'save-buffer             ; save
-    "s-S" 'write-file              ; save as
-    "s-q" 'save-buffers-kill-emacs ; quit
-    ;; Go to other windows easily with one keystroke
-    ;; s-something instead of C-x something
-    "s-o" (kbd "C-x o")
-    "s-w" (kbd "C-x 0") ; just like close tab in a web browser
-    "s-W" (kbd "C-x 1") ; close others with shift
-    ;; Move between windows with Control-Command-Arrow and
-    ;; with Cmd just like in iTerm
-    "s-[" 'windmove-left   ; Cmd+[ go to left window
-    "s-]" 'windmove-right  ; Cmd+] go to right window
-    "s-{" 'windmove-up     ; Cmd+Shift+[ go to upper window
-    "<s-}>" 'windmove-down ; Ctrl+Shift+[ go to down window
-    ;; Prev/next buffer
-    "s-<" 'previous-buffer
-    "s->" 'next-buffer))
- (general-evil-setup t)
- (nmap
-   ;; Swap : and ; to make colon commands
-   ;; easier to type in Emacs
-   ";" 'evil-ex
-   ":" 'evil-repeat-find-char)
- (nmap 'messages-buffer-mode-map
-   "0" 'evil-digit-argument-or-evil-beginning-of-line)
- ;; Process menu
- (nmap 'process-menu-mode-map
-   "M-d" 'process-menu-delete-process
-   "q" 'kill-buffer-and-window)
- (nmap
-   :prefix my/leader
-   "RET" 'toggle-frame-fullscreen
-   "v" 'split-window-horizontally
-   "s" 'split-window-vertically
-   "p" 'list-processes
-   "P s" 'profiler-start
-   "P S" 'profiler-stop
-   "P r" 'profiler-report
-   "E e" 'eval-expression
-   "E l" 'eval-last-sexp
-   "h k" 'describe-key-briefly
-   "h K" 'describe-key
-   "h M" 'describe-mode
-   "h m" 'info-display-manual))
+#+END_SRC
+
+Basic keybindings.
+
+#+BEGIN_SRC emacs-lisp
+(general-define-key
+ "C-h" 'windmove-left
+ "C-l" 'windmove-right
+ "C-k" 'windmove-up
+ "C-j" 'windmove-down
+ "C-c C-k" 'kill-region)
+#+END_SRC
+
+MacOS X - specific keybindings.
+
+#+BEGIN_SRC emacs-lisp
+(when (eq system-type 'darwin)
+  (general-define-key
+   "s-<backspace>" 'kill-whole-line
+   "M-S-<backspace>" 'kill-word
+   ;; Use Super for movement and selection just like in macOS
+   "s-<right>" (kbd "C-e")
+   "S-s-<right>" (kbd "C-S-e")
+   "s-<left>" (kbd "M-m")
+   "S-s-<left>" (kbd "M-S-m")
+   "s-<up>" 'beginning-of-buffer
+   "s-<down>" 'end-of-buffer
+   ;; Basic things you should expect from macOS
+   "s-a" 'mark-whole-buffer       ; select all
+   "s-s" 'save-buffer             ; save
+   "s-S" 'write-file              ; save as
+   "s-q" 'save-buffers-kill-emacs ; quit
+   ;; Go to other windows easily with one keystroke
+   ;; s-something instead of C-x something
+   "s-o" (kbd "C-x o")
+   "s-w" (kbd "C-x 0") ; just like close tab in a web browser
+   "s-W" (kbd "C-x 1") ; close others with shift
+   ;; Move between windows with Control-Command-Arrow and
+   ;; with Cmd just like in iTerm
+   "s-[" 'windmove-left   ; Cmd+[ go to left window
+   "s-]" 'windmove-right  ; Cmd+] go to right window
+   "s-{" 'windmove-up     ; Cmd+Shift+[ go to upper window
+   "<s-}>" 'windmove-down ; Ctrl+Shift+[ go to down window
+   ;; Prev/next buffer
+   "s-<" 'previous-buffer
+   "s->" 'next-buffer))
+#+END_SRC
+
+Set up some basic equivalents for vim mapping functions.
+This creates global key definition functions for the evil states.
+
+#+BEGIN_SRC emacs-lisp
+(general-evil-setup t)
+#+END_SRC
+
+Swap ~:~ and ~;~ to make colon commands easier to type in Emacs.
+
+#+BEGIN_SRC emacs-lisp
+(nmap
+ ";" 'evil-ex
+ ":" 'evil-repeat-find-char)
+#+END_SRC
+
+Remap ~0~ for convenience.
+
+#+BEGIN_SRC emacs-lisp
+(nmap 'messages-buffer-mode-map
+  "0" 'evil-digit-argument-or-evil-beginning-of-line)
+#+END_SRC
+
+Process menu.
+
+#+BEGIN_SRC emacs-lisp
+(nmap 'process-menu-mode-map
+  "M-d" 'process-menu-delete-process
+  "q" 'kill-buffer-and-window)
+#+END_SRC
+
+Leader-prefixed.
+
+#+BEGIN_SRC emacs-lisp
+(nmap
+  :prefix my/leader
+  "RET" 'toggle-frame-fullscreen
+  "v" 'split-window-horizontally
+  "s" 'split-window-vertically
+  "p" 'list-processes
+  "\\" 'widen
+  "P s" 'profiler-start
+  "P S" 'profiler-stop
+  "P r" 'profiler-report
+  "E e" 'eval-expression
+  "E l" 'eval-last-sexp
+  "h k" 'describe-key-briefly
+  "h K" 'describe-key
+  "h M" 'describe-mode
+  "h m" 'info-display-manual))
 #+END_SRC
 
 ** Behavior
@@ -1245,9 +1341,6 @@ Vim-like [[https://github.com/mrkkrp/vimish-fold][text folding]] for Emacs.
   vimish-fold-blank-fold-header "<...>"
   vimish-fold-indication-mode 'right-fringe)
  :config
- (custom-set-faces
-  '(vimish-fold-mouse-face ((t (:box (:line-width 1 :color "#555")))))
-  '(vimish-fold-overlay ((t (:box (:line-width 1 :color "#222"))))))
  (vimish-fold-global-mode 1))
 #+END_SRC
 
@@ -1421,9 +1514,6 @@ distracting.
  :hook
  (prog-mode . idle-highlight-mode)
  :config
- ;; (set-face-background 'idle-highlight "#c51060")
- (set-face-foreground 'idle-highlight "#999")
- (set-face-background 'idle-highlight "#222")
  (nmap
    :prefix my/leader
    "t H" 'idle-highlight-mode))
@@ -1577,6 +1667,7 @@ Add emoji support. This is useful when working with =HTML=.
 #+END_SRC
 
 *** Mode line
+**** Mood-line (active)
 
 A minimal mode-line configuration that aims to replicate some of the features of
 the =doom-modeline= package.
@@ -1587,8 +1678,10 @@ the =doom-modeline= package.
  (after-init . mood-line-mode))
 #+END_SRC
 
-Another option is =moody= + =minions= as an attractive minimalist mode line
-replacement.
+**** Moody + minions
+
+Another option is =moody= + =minions= as an attractive
+minimalist mode line replacement.
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package minions
@@ -1605,6 +1698,8 @@ replacement.
   column-number-mode t))
 #+END_SRC
 
+**** Spaceline
+
 A very cool mode line that I used previously.
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -1617,6 +1712,19 @@ A very cool mode line that I used previously.
  (require 'spaceline-config)
  (spaceline-spacemacs-theme))
 #+END_SRC
+
+**** Flycheck color
+
+Colors the mode-line according to the Flycheck state of the current buffer.
+
+#+begin_src emacs-lisp :tangle no
+(use-package flycheck-color-mode-line
+  :after (flycheck)
+  :commands
+  (flycheck-color-mode-line-mode)
+  :hook
+  (flycheck-mode . flycheck-color-mode-line-mode))
+#+end_src
 
 *** Beacon
 
@@ -2059,23 +2167,6 @@ Some of the key bindings are provided by the =evil-collection=.
  :diminish company-mode)
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp :tangle no
-(eval-after-load 'company
- '(custom-set-faces
-  '(company-preview ((t (:foreground "#171717" :underline t))))
-  '(company-preview-common ((t (:inherit company-preview))))
-  '(company-tooltip ((t (:background "#171717" :foreground "#ddd"))))
-  '(company-tooltip-selection ((t (:background "#1f1f1f" :foreground "#eee"))))
-  '(company-tooltip-common
-    ((((type x)) (:inherit company-tooltip :weight bold))
-     (t (:inherit company-tooltip))))
-  '(company-tooltip-common-selection
-    ((((type x)) (:inherit company-tooltip-selection :weight bold))
-     (t (:inherit company-tooltip-selection))))
-  '(company-scrollbar-bg ((t (:background "#111"))))
-  '(company-scrollbar-fg ((t (:background "#1a1a1a"))))))
-#+END_SRC
-
 *** Company quickhelp
 
 #+BEGIN_SRC emacs-lisp
@@ -2182,7 +2273,7 @@ See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more
  ;; like VisualStudio, Eclipse, etc.
  (add-to-list
   'display-buffer-alist
-  `(,(rx bos "*fucking errors*" eos)
+  `(,(rx bos "*errors*" eos)
     ;; (display-buffer-reuse-window
     ;;  display-buffer-in-side-window)
     (side . bottom)
@@ -2919,6 +3010,20 @@ Package for selecting a link to jump to.
   :after (general counsel))
 #+END_SRC
 
+*** Counsel ffdata
+
+Access your Firefox bookmarks and history in Emacs.
+
+#+BEGIN_SRC emacs-lisp
+(use-package counsel-ffdata
+ :after (general)
+ :config
+ (nmap
+  :prefix my/leader
+  "1" 'counsel-ffdata-firefox-history
+  "2" 'counsel-ffdata-firefox-bookmarks))
+#+END_SRC
+
 *** Swiper
 
 #+BEGIN_SRC emacs-lisp
@@ -3529,44 +3634,160 @@ Setup =tramp=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org
- :after (general counsel)
- ;; to be sure we have latest Org version
- ;; :ensure org-plus-contrib
- :mode ("\\.org\\'" . org-mode)
- :commands
- (org-babel-do-load-languages)
- :init
- (setq
-  ;; Forces to mark all child tasks as DONE before
-  ;; you can mark the parent as DONE
-  org-enforce-todo-dependencies t
-  ;; Allows displaying UTF-8 chars like \alpha
-  org-pretty-entities t
-  ;; Insert an annotation in a task when
-  ;; it is marked as done including a
-  ;; timestamp of when exactly that happened
-  org-log-done (quote time)
-  ;; Insert annotations when you change
-  ;; the deadline of a task, which will note
-  ;; the previous deadline date and when it was changed
-  org-log-redeadline (quote time)
-  ;; Same as above, but for the scheduled dates
-  org-log-reschedule (quote time)
-  ;; Hide leading stars
-  org-hide-leading-stars t
-  ;; Use syntax highlighting in
-  ;; source blocks while editing
-  org-src-fontify-natively t
-  ;; Noticeable ellipsis.
-  ;; Others: ▼,↴,⬎,⤷,…,⤵,⋱,•
-  org-ellipsis "…"
-  ;; Keep org files in Dropbox
-  org-directory "~/Dropbox/org"
-  org-agenda-files '("~/Dropbox/org/")
-  org-highest-priority ?A
-  org-lowest-priority ?C
-  org-default-priority ?B
-  ;; Default task sequence/lifecycle
+  :after (general counsel)
+  :quelpa
+  (org
+   :url
+   "https://code.orgmode.org/bzg/org-mode.git"
+   :fetcher git
+   :files ("lisp/*.el" "contrib/lisp/*.el" "doc/dir" "doc/*.texi")
+   :upgrade nil)
+  :mode ("\\.org\\'" . org-mode)
+  :commands
+  (org-babel-do-load-languages)
+  :init
+#+END_SRC
+
+Visually indent sections. This looks better for smaller files.
+Also, disallow editing invisible areas.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-startup-indented t)
+(setq org-catch-invisible-edits 'error)
+#+END_SRC
+
+Forces to mark all child tasks as =DONE= before you can mark the
+parent as =DONE=.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-enforce-todo-dependencies t)
+#+END_SRC
+
+Allows displaying UTF-8 chars like ~\alpha~.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-pretty-entities t)
+#+END_SRC
+
+Insert an annotation in a task when it is marked as done
+including a timestamp of when exactly that happened.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-log-done 'time)
+#+END_SRC
+
+Insert annotations when you change the deadline of a task, which
+will note the previous deadline date and when it was changed.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-log-redeadline (quote time))
+#+END_SRC
+
+Same as above, but for the scheduled dates.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-log-reschedule (quote time))
+#+END_SRC
+
+Hide leading stars.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-hide-leading-stars t)
+#+END_SRC
+
+Use syntax highlighting in source blocks while editing.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-src-fontify-natively t)
+#+END_SRC
+
+Noticeable ellipsis. Others:
+
+~▼~, ~↴~, ~⬎~, ~⤷~, ~…~, ~⤵~, ~⋱~, ~•~
+
+#+BEGIN_SRC emacs-lisp
+(setq org-ellipsis "…")
+#+END_SRC
+
+Keep org files in =Dropbox=.
+And all of those files should be in included agenda.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ org-directory "~/Dropbox/org"
+ org-agenda-files '("~/Dropbox/org/"))
+#+END_SRC
+
+Refile targets should include files and down to 9 levels into them.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ org-refile-targets
+ (quote ((nil :maxlevel . 9)
+  (org-agenda-files :maxlevel . 9))))
+#+END_SRC
+
+And inside those code blocks indentation should be correct
+depending on the source language used and have code highlighting.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-src-tab-acts-natively t)
+(setq org-src-preserve-indentation t)
+(setq org-src-fontify-natively t)
+#+END_SRC
+
+State changes for todos and also notes should go into a Logbook
+drawer:
+
+#+BEGIN_SRC emacs-lisp
+(setq org-log-into-drawer t)
+#+END_SRC
+
+Custom capture templates.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ org-capture-templates
+ '(("t" "todo" entry (file "todos.org")
+    "* TODO %?\n%U\n%a\n")
+   ("n" "note" entry (file "notes.org")
+    "* %?\n:NOTE:\n%U\n%a\n")
+   ("i" "idea" entry (file "ideas.org")
+    "* %?\n:IDEA:\n%U\n%a\n")
+   ("j" "journal" entry (file+datetree "journal.org")
+    "* %?\n%U\n")
+   ("h" "habit" entry (file "habits.org")
+    "* TODO %?\n%U\n%a\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: TODO\n:END:\n")))
+#+END_SRC
+
+I keep my links in =links.org=, export them to HTML and access
+them via browser. This makes the HTML file automatically on
+every save.
+
+#+BEGIN_SRC emacs-lisp
+  (defun org-mode-export-links ()
+    "Export links document to HTML automatically when 'links.org' is changed"
+    (when (equal (buffer-file-name) "~/Dropbox/org/links.org")
+      (progn
+        (org-html-export-to-html)
+        (message "HTML exported"))))
+
+  (add-hook 'after-save-hook 'org-mode-export-links)
+#+END_SRC
+
+Set =TODO= priorities.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ org-highest-priority ?A
+ org-lowest-priority ?C
+ org-default-priority ?B)
+#+END_SRC
+
+Set default task sequence/lifecycle, colors and triggers.
+
+#+BEGIN_SRC emacs-lisp
+(setq
   org-todo-keywords
   '((sequence "TODO" "IN-PROGRESS" "WAITING" "HOLD" "|" "DONE" "CANCELLED"))
   org-todo-keyword-faces
@@ -3585,61 +3806,108 @@ Setup =tramp=.
     (done ("WAITING") ("HOLD"))
     ("TODO" ("WAITING") ("CANCELLED") ("HOLD"))
     ("IN-PROGRESS" ("WAITING") ("CANCELLED") ("HOLD"))
-    ("DONE" ("WAITING") ("CANCELLED") ("HOLD")))
-  ;; Custom templates
-  org-capture-templates
-  '(("t" "todo" entry (file "todos.org")
-     "* TODO %?\n%U\n%a\n")
-    ("n" "note" entry (file "notes.org")
-     "* %?\n:NOTE:\n%U\n%a\n")
-    ("i" "idea" entry (file "ideas.org")
-     "* %?\n:IDEA:\n%U\n%a\n")
-    ("j" "journal" entry (file+datetree "diary.org")
-     "* %?\n%U\n")
-    ("h" "habit" entry (file "habits.org")
-     "* TODO %?\n%U\n%a\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: TODO\n:END:\n"))
-  ;; Do not dim blocked tasks
-  org-agenda-dim-blocked-tasks nil
-  ;; Compact the block agenda view
-  org-agenda-compact-blocks t
-  ;; Hide DONE items
-  org-agenda-skip-scheduled-if-done t
-  org-agenda-skip-deadline-if-done t
-  ;; Set a 30 day span, instead of a week view
-  org-agenda-start-day "-3d"
-  org-agenda-span 30
-  ;; Omit empty days in the agenda
-  org-agenda-show-all-dates nil
-  ;; Disable pre-warnings
-  org-deadline-warning-days 0
-  ;; Hide the time grid by default
-  org-agenda-use-time-grid nil
-  ;; Make the agenda schedule prettier
-  org-agenda-prefix-format
-      '((agenda . " %i %-12t% s %b\n                           ")
-        (timeline . "  % s")
-        (todo . " %i %-12:c")
-        (tags . " %i %-12:c")
-        (search . " %i %-12:c")))
- :config
- (require 'org)
-  ;; Makes inline latex previews bigger
- (setq org-format-latex-options (plist-put org-format-latex-options :scale 1.7))
- (nmap 'org-mode-map
-  "C-k" 'windmove-up
-  "C-j" 'windmove-down)
- (nmap
-   :prefix my/leader
-   "o" 'org-todo-list
-   "O" 'counsel-org-goto-all
-   "c" 'counsel-org-capture
-   "A" 'my/org/agenda-list)
- (mmap 'org-agenda-mode-map
-   "C-c C-l" 'org-agenda-log-mode)
- :delight "org")
+    ("DONE" ("WAITING") ("CANCELLED") ("HOLD"))))
+#+END_SRC
+
+Do not dim blocked tasks.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-dim-blocked-tasks nil)
+#+END_SRC
+
+Compact the block agenda view.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-compact-blocks t)
+#+END_SRC
+
+Hide =DONE= items.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ org-agenda-skip-scheduled-if-done t
+ org-agenda-skip-deadline-if-done t)
+#+END_SRC
+
+Set a 30 day span, instead of a week view.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ org-agenda-start-day "-3d"
+ org-agenda-span 30)
+#+END_SRC
+
+Omit empty days in the agenda.
+
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-show-all-dates nil)
+#+END_SRC
+
+Disable pre-warnings.
+#+BEGIN_SRC emacs-lisp
+(setq org-deadline-warning-days 0)
+#+END_SRC
+
+Hide the time grid by default
+#+BEGIN_SRC emacs-lisp
+(setq org-agenda-use-time-grid nil)
+#+END_SRC
+
+Make the agenda schedule prettier.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ org-agenda-prefix-format
+ '((agenda . " %i %-12t% s %b\n")
+   (timeline . "  % s")
+   (todo . " %i %-12:c")
+   (tags . " %i %-12:c")
+   (search . " %i %-12:c")))
+#+END_SRC
+
+Next comes the ~:config~ section.
+
+#+BEGIN_SRC emacs-lisp
+:config
+(require 'org)
+#+END_SRC
+
+Makes inline latex previews bigger.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ org-format-latex-options
+ (plist-put org-format-latex-options :scale 1.7))
+#+END_SRC
+
+Keybindings.
+
+Fix moving between windows.
+
+#+BEGIN_SRC emacs-lisp
+(nmap 'org-mode-map
+ "C-k" 'windmove-up
+ "C-j" 'windmove-down)
+#+END_SRC
+
+Other useful keybindings.
+
+#+BEGIN_SRC emacs-lisp
+(nmap
+  :prefix my/leader
+  "o" 'org-todo-list
+  "O" 'counsel-org-goto-all
+  "c" 'counsel-org-capture
+  "k" 'org-narrow-to-subtree)
+(mmap 'org-agenda-mode-map
+  "C-c C-l" 'org-agenda-log-mode)
+:delight "org")
 #+END_SRC
 
 *** Evil
+
+Supplemental =evil-mode= keybindings to emacs =org-mode=.
+See [[https://github.com/Somelauw/evil-org-mode#keybindings][the repo]] for keybindings cheatsheet.
 
 #+BEGIN_SRC emacs-lisp
 (use-package evil-org
@@ -3675,6 +3943,59 @@ Setup =tramp=.
  :after org
  :hook
  (org-mode . org-bullets-mode))
+#+END_SRC
+
+*** Pandoc exporter
+
+#+BEGIN_SRC emacs-lisp
+(use-package ox-pandoc)
+#+END_SRC
+
+*** Blogging with hugo
+
+Install =ox-hugo= and enable auto export.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ox-hugo
+ :after (ox)
+ :commands (org-hugo-slug)
+ :config
+#+END_SRC
+
+Org Capture template to quickly create posts and generate slugs.
+
+#+BEGIN_SRC emacs-lisp
+;; Populates only the EXPORT_FILE_NAME property in the inserted headline.
+(require 'ox-hugo)
+
+;; Define variable to get rid of 'reference to free variable' warnings.
+(defvar org-capture-templates nil)
+(with-eval-after-load 'org-capture
+  (defun org-hugo-new-subtree-post-capture-template ()
+    "Returns `org-capture' template string for new blog post.
+See `org-capture-templates' for more information."
+    (let*
+        ;; Prompt to enter the post title
+        ((title (read-from-minibuffer "Post Title: "))
+         (fname (org-hugo-slug title)))
+      (mapconcat
+       #'identity
+       `(
+         ,(concat "* TODO " title)
+         ":PROPERTIES:"
+         ,(concat ":EXPORT_FILE_NAME: " fname)
+         ":END:"
+         "%?\n") ; Place the cursor here finally
+       "\n")))
+
+  (add-to-list
+   'org-capture-templates
+   '("b"
+     "blog post"
+     entry
+     (file+olp "~/projects/personal/blog/content-org/blog.org" "Blog")
+     (function org-hugo-new-subtree-post-capture-template))))
+)
 #+END_SRC
 
 ** LSP
@@ -3880,9 +4201,11 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 
 #+BEGIN_SRC emacs-lisp
 (use-package ipretty
- :defer t
- :config
- (ipretty-mode 1))
+  :defer t
+  :commands
+  (ipretty-mode)
+  :config
+  (ipretty-mode 1))
 #+END_SRC
 
 Hide package namespace in your =emacs-lisp= code.
@@ -3891,7 +4214,7 @@ For example, it changes ~whatever-mode~ to ~:mode~.
 #+BEGIN_SRC emacs-lisp
 (use-package nameless
  :hook
- (emacs-lisp-mode .  nameless-mode)
+ (emacs-lisp-mode . nameless-mode)
  :custom
  (nameless-global-aliases '())
  (nameless-private-prefix t)
@@ -3915,8 +4238,8 @@ Flycheck checker for elisp package metadata.
 
 #+BEGIN_SRC emacs-lisp
 (use-package hasklig-mode
- :hook (haskell-mode)
- :delight "hl")
+  :hook (haskell-mode)
+  :delight "hl")
 #+END_SRC
 
 **** Mode
@@ -4012,8 +4335,7 @@ Flycheck checker for elisp package metadata.
   haskell-process-type 'cabal-new-repl
   ;; haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans")
   ;; haskell-compile-cabal-build-command "stack build --no-library-profiling"
-  haskell-compile-cabal-build-command "cd %s && cabal new-build"
-)
+  haskell-compile-cabal-build-command "cd %s && cabal new-build")
  :config
  ;; Common key bindings
  (nmap '(haskell-mode-map haskell-cabal-mode-map haskell-interactive-mode-map)
@@ -4123,6 +4445,26 @@ operators will be replaced.
  :config
  (add-to-list 'company-backends 'company-cabal))
 #+END_SRC
+**** Liquid types
+
+#+begin_src emacs-lisp
+(use-package liquid-types
+  :after (haskell-mode flycheck)
+  :config
+  ;; Configure flycheck-liquidhs
+  (add-hook 'haskell-mode-hook
+    '(lambda () (flycheck-select-checker 'haskell-liquid)))
+  (add-hook 'literate-haskell-mode-hook
+    '(lambda () (flycheck-select-checker 'haskell-liquid)))
+
+  (require 'liquid-types)
+
+  ;; Toggle minor mode on entering Haskell mode
+  (add-hook 'haskell-mode-hook
+    '(lambda () (liquid-types-mode)))
+  (add-hook 'literate-haskell-mode-hook
+    '(lambda () (liquid-types-mode))))
+#+end_src
 
 **** Hasky-stack
 
@@ -4411,13 +4753,7 @@ OCaml support for Flycheck using Merlin.
  :custom
  (proof-delete-empty-windows t)
  ;; see: https://github.com/ProofGeneral/PG/issues/404
- ;; (proof-shrink-windows-tofit t)
- :config
- (custom-set-faces
-  '(proof-queue-face ((t (:foreground "#eee"))))
-  '(proof-locked-face ((t (:background "#001800" :foreground "#00aa00"))))
-  '(proof-locked-face ((t (:background "#660044" ))))
-  '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
+ (proof-shrink-windows-tofit t)
  :delight "coq")
 
 (use-package coq-mode
@@ -4427,8 +4763,7 @@ OCaml support for Flycheck using Merlin.
  :preface
  (defun my/company-coq/setup ()
    (interactive)
-   ;; (setq buffer-face-mode-face '(:family "Fira Code"))
-   (buffer-face-mode)
+   (setq buffer-face-mode-face '(:family "Fira Code"))
    (setq-local
     prettify-symbols-alist
     '((":=" . ?≜)
@@ -4891,8 +5226,13 @@ Some of key bindings are provided by ==evil-collection=.
 #+BEGIN_SRC emacs-lisp
 (use-package prolog
  :ensure nil
+ :preface
+ (defun my/mercury-mode/setup ()
+   (electric-indent-mode -1))
  :commands
  (prolog-mode mercury-mode)
+ :hook
+ (mercury-mode . my/mercury-mode/setup)
  :mode
  (("\\.pl\\'" . prolog-mode)
   ("\\.m\\'" . mercury-mode))
@@ -5572,8 +5912,7 @@ Add flycheck support.
  :after general
  :ensure nil
  ;; Overlaps with mercury-mode
- ;; :mode ("\\.m\\'" . octave-mode)
-)
+ :mode ("\\.octave\\'" . octave-mode))
 #+END_SRC
 
 *** Latex
