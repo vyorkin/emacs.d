@@ -823,8 +823,8 @@ second (the first is the original one) argument to the default updater.
 #+BEGIN_SRC emacs-lisp
 (use-package base16-theme
   :config
-  (load-theme 'base16-chalk t)
-  ;; (load-theme 'base16-black-metal t)
+  ;; (load-theme 'base16-chalk t)
+  (load-theme 'base16-black-metal t)
   ;; (load-theme 'base16-default-dark t)
   ;; (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
@@ -3998,6 +3998,55 @@ See `org-capture-templates' for more information."
 )
 #+END_SRC
 
+*** Slim HTML export (disabled)
+
+=slimhtml= is an emacs =org= mode export backend. It is a set of
+transcoders for common =org= elements which outputs minimal =HTML=.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package htmlize)
+(use-package ox-slimhtml)
+
+(defun org-html-export-as-slimhtml
+(&optional async subtreep visible-only body-only ext-plist)
+  (interactive)
+  (org-export-to-buffer 'slimhtml "*slimhtml*"
+    async subtreep visible-only body-only ext-plist (lambda () (html-mode))))
+
+(eval-after-load 'org
+  `(define-key org-mode-map
+     (kbd "s-O")
+     (lambda ()
+       (interactive)
+       (org-html-export-as-slimhtml nil nil nil t)
+       (with-no-warnings (mark-whole-buffer))
+       ;; TODO: I don't use simpleclip, so need to update this
+       ;; (simplecmlip-copy (point-min) (point-max))
+       (delete-window))))
+#+END_SRC
+
+*** Org Download
+
+Drag and drop images to =org= files.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-download
+  :config
+  ;; Org-download creates links, but I need to change the path
+  ;; for my blog. This simple hook runs on every save.
+  (defun org-mode-blog-fix-org-downloaded-image-paths ()
+    (when (equal (buffer-file-name) "~/projects/personal/blog/content-org/blog.org")
+      (progn
+        (while (re-search-forward "file:../static" nil t)
+          (replace-match "file:"))
+        (while (re-search-backward "file:../static" nil t)
+          (replace-match "file:")))))
+
+  (add-hook 'after-save-hook 'org-mode-blog-fix-org-downloaded-image-paths)
+  :hook
+  (dired-mode-hook . org-download-enable))
+#+END_SRC
+
 ** LSP
 *** Mode
 
@@ -4242,7 +4291,7 @@ Flycheck checker for elisp package metadata.
   :commands
   (hasklig-mode)
   :hook
-  (haskell-mode)
+  (haskell-mode . hasklig-mode)
   :delight "hl")
 #+END_SRC
 
@@ -4443,19 +4492,19 @@ operators will be replaced.
 **** Ormolu
 
 #+BEGIN_SRC emacs-lisp
-  (use-package ormolu
-    :quelpa
-    (ormolu
-     :fetcher github
-     :repo "vyorkin/ormolu.el")
-    :commands
-    (ormolu-mode)
-    :hook (haskell-mode)
-    :custom
-    (ormolu-reformat-buffer-on-save t)
-    :config
-    (nmap 'haskell-mode-map
-      "C-c r" 'ormolu-format-buffer))
+(use-package ormolu
+  :quelpa
+  (ormolu
+   :fetcher github
+   :repo "vyorkin/ormolu.el")
+  :commands
+  (ormolu-mode)
+  :hook (haskell-mode)
+  :custom
+  (ormolu-reformat-buffer-on-save t)
+  :config
+  (nmap 'haskell-mode-map
+    "C-c r" 'ormolu-format-buffer))
 #+END_SRC
 
 **** Company-cabal
@@ -4485,7 +4534,8 @@ operators will be replaced.
   (add-hook 'haskell-mode-hook
     '(lambda () (liquid-types-mode)))
   (add-hook 'literate-haskell-mode-hook
-    '(lambda () (liquid-types-mode))))
+    '(lambda () (liquid-types-mode)))
+  :delight "lh")
 #+end_src
 
 **** Hasky-stack
