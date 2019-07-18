@@ -824,11 +824,10 @@ second (the first is the original one) argument to the default updater.
 (use-package base16-theme
   :config
   ;; (load-theme 'base16-chalk t)
-  (load-theme 'base16-black-metal t)
+  ;; (load-theme 'base16-black-metal t)
   ;; (load-theme 'base16-default-dark t)
   ;; (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
-  ;; (load-theme 'base16-one-light t)
   ;; (load-theme 'base16-gruvbox-light-hard t)
   ;; (load-theme 'base16-material-palenight t) ;; ****
   ;; (load-theme 'base16-rebecca t)
@@ -836,6 +835,17 @@ second (the first is the original one) argument to the default updater.
   ;; (load-theme 'base16-tomorrow-night t)
   ;; (load-theme 'base16-twilight t)
   ;; (load-theme 'base16-irblack t)
+#+END_SRC
+
+~base16-one-light~ + customizations.
+
+#+BEGIN_SRC emacs-lisp
+  (load-theme 'base16-one-light t)
+  (custom-set-faces
+   '(proof-queue-face ((t (:foreground "#f0f0f0"))))
+   '(proof-locked-face ((t (:background "#faebd7" :foreground "#4a473d"))))
+   '(proof-locked-face ((t (:background "#faebd7" ))))
+   '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
   )
 #+END_SRC
 
@@ -890,11 +900,11 @@ why). So the code block below is untangled.
 
 *** Apropospriate theme
 
-#+begin_src emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package apropospriate-theme
  :config
  (load-theme 'apropospriate-light))
-#+end_src
+#+END_SRC
 
 *** Nord theme
 
@@ -2238,49 +2248,50 @@ See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more
 
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck
- :after (general)
- :demand t
- :commands
- (global-flycheck-mode)
- :init
- (setq-default
-  flycheck-disabled-checkers
-  '(emacs-lisp-checkdoc
-    javascript-jshint
-    haskell-stack-ghc
-    haskell-ghc
-    haskell-hlint))
- (setq
-  flycheck-highlighting-mode 'lines
-  flycheck-indication-mode 'left-fringe
-  flycheck-mode-line-prefix "fly"
-  flycheck-javascript-eslint-executable "eslint_d")
- :config
- (global-flycheck-mode 1)
- (nmap
-   :prefix my/leader
-   "t e" 'flycheck-mode
-   "e e" 'flycheck-list-errors
-   "e c" 'flycheck-clear
-   "e i" 'flycheck-manual
-   "e C" 'flycheck-compile
-   "e n" 'flycheck-next-error
-   "e p" 'flycheck-previous-error
-   "e b" 'flycheck-buffer
-   "e v" 'flycheck-verify-setup
-   "e V" 'flycheck-verify-checker)
- ;; Make the error list display like similar lists in contemporary IDEs
- ;; like VisualStudio, Eclipse, etc.
- (add-to-list
-  'display-buffer-alist
-  `(,(rx bos "*errors*" eos)
-    ;; (display-buffer-reuse-window
-    ;;  display-buffer-in-side-window)
-    (side . bottom)
-    (reusable-frames . visible)
-    (window-height . 0.33)))
- (unbind-key "C-j" flycheck-error-list-mode-map)
- :diminish flycheck-mode)
+  :after (general)
+  :demand t
+  :commands
+  (global-flycheck-mode)
+  :init
+  (setq-default
+   flycheck-disabled-checkers
+   '(emacs-lisp-checkdoc
+     javascript-jshint
+     haskell-stack-ghc
+     haskell-ghc
+     haskell-hlint))
+  (setq
+   flycheck-highlighting-mode 'lines
+   flycheck-indication-mode 'left-fringe
+   flycheck-mode-line-prefix "fly"
+   flycheck-javascript-eslint-executable "eslint_d")
+  :config
+  (global-flycheck-mode 1)
+  (nmap
+    :prefix my/leader
+    "t e" 'flycheck-mode
+    "e e" 'flycheck-list-errors
+    "e c" 'flycheck-clear
+    "e i" 'flycheck-manual
+    "e C" 'flycheck-compile
+    "e n" 'flycheck-next-error
+    "e p" 'flycheck-previous-error
+    "e b" 'flycheck-buffer
+    "e s" 'flycheck-select-checker
+    "e v" 'flycheck-verify-setup
+    "e V" 'flycheck-verify-checker)
+  ;; Make the error list display like similar lists in contemporary IDEs
+  ;; like VisualStudio, Eclipse, etc.
+  (add-to-list
+   'display-buffer-alist
+   `(,(rx bos "*errors*" eos)
+     ;; (display-buffer-reuse-window
+     ;;  display-buffer-in-side-window)
+     (side . bottom)
+     (reusable-frames . visible)
+     (window-height . 0.33)))
+  (unbind-key "C-j" flycheck-error-list-mode-map)
+  :diminish flycheck-mode)
 #+END_SRC
 
 ** Flyspell
@@ -4517,26 +4528,37 @@ operators will be replaced.
 #+END_SRC
 **** Liquid types
 
-#+begin_src emacs-lisp
+#+BEGIN_SRC emacs-lisp
 (use-package liquid-types
   :after
   (haskell-mode flycheck)
   :config
-  ;; Configure flycheck-liquidhs
-  (add-hook 'haskell-mode-hook
-    '(lambda () (flycheck-select-checker 'haskell-liquid)))
-  (add-hook 'literate-haskell-mode-hook
-    '(lambda () (flycheck-select-checker 'haskell-liquid)))
-
   (require 'liquid-types)
+#+END_SRC
 
-  ;; Toggle minor mode on entering Haskell mode
+Configure =flycheck-liquidhs=.
+Currenly untangled because I don't always use LH.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(add-hook 'haskell-mode-hook
+  '(lambda () (flycheck-select-checker 'haskell-liquid)))
+(add-hook 'literate-haskell-mode-hook
+  '(lambda () (flycheck-select-checker 'haskell-liquid)))
+#+END_SRC
+
+Toggle minor mode on entering Haskell mode.
+Currently disabled, too.
+
+#+BEGIN_SRC emacs-lisp :tangle no
   (add-hook 'haskell-mode-hook
     '(lambda () (liquid-types-mode)))
   (add-hook 'literate-haskell-mode-hook
     '(lambda () (liquid-types-mode)))
-  :delight "lh")
-#+end_src
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+:delight "lh")
+#+END_SRC
 
 **** Hasky-stack
 
@@ -4826,55 +4848,89 @@ OCaml support for Flycheck using Merlin.
  :custom
  (proof-delete-empty-windows t)
  ;; see: https://github.com/ProofGeneral/PG/issues/404
- (proof-shrink-windows-tofit t)
+ ;; (proof-shrink-windows-tofit t)
  :delight "coq")
 
 (use-package coq-mode
- :after (proof-site)
- :ensure nil
- :commands (coq-mode)
- :preface
- (defun my/company-coq/setup ()
-   (interactive)
-   (setq buffer-face-mode-face '(:family "Fira Code"))
-   (setq-local
-    prettify-symbols-alist
-    '((":=" . ?≜)
-      ("Proof." . ?∵)
-      ("Qed." . ?■)
-      ("Defined." . ?□)
-      ("Alpha" . ?Α) ("Beta" . ?Β) ("Gamma" . ?Γ)
-      ("Delta" . ?Δ) ("Epsilon" . ?Ε) ("Zeta" . ?Ζ)
-      ("Eta" . ?Η) ("Theta" . ?Θ) ("Iota" . ?Ι)
-      ("Kappa" . ?Κ) ("Lambda" . ?Λ) ("Mu" . ?Μ)
-      ("Nu" . ?Ν) ("Xi" . ?Ξ) ("Omicron" . ?Ο)
-      ("Pi" . ?Π) ("Rho" . ?Ρ) ("Sigma" . ?Σ)
-      ("Tau" . ?Τ) ("Upsilon" . ?Υ) ("Phi" . ?Φ)
-      ("Chi" . ?Χ) ("Psi" . ?Ψ) ("Omega" . ?Ω)
-      ("alpha" . ?α) ("beta" . ?β) ("gamma" . ?γ)
-      ("delta" . ?δ) ("epsilon" . ?ε) ("zeta" . ?ζ)
-      ("eta" . ?η) ("theta" . ?θ) ("iota" . ?ι)
-      ("kappa" . ?κ) ("lambda" . ?λ) ("mu" . ?μ)
-      ("nu" . ?ν) ("xi" . ?ξ) ("omicron" . ?ο)
-      ("pi" . ?π) ("rho" . ?ρ) ("sigma" . ?σ)
-      ("tau" . ?τ) ("upsilon" . ?υ) ("phi" . ?φ)
-      ("chi" . ?χ) ("psi" . ?ψ) ("omega" . ?ω)))
-   (sp-local-pair 'coq-mode "'" nil :actions nil))
- :init
- (setq
-  ;; Enable autocompletion for theorem names and
-  ;; symbols defined in the libraries we load
-  company-coq-live-on-the-edge t
-  company-coq-disabled-features '()
-  company-coq-dynamic-autocompletion t)
- :hook
- (coq-mode . my/company-coq/setup))
+  :after (proof-site)
+  :ensure nil
+  :commands (coq-mode)
+  :preface
+  (defun my/company-coq/setup ()
+    (interactive)
+    (setq buffer-face-mode-face '(:family "Fira Code"))
+    (setq-local
+     prettify-symbols-alist
+     '((":=" . ?≜)
+       ("Proof." . ?∵)
+       ("Qed." . ?■)
+       ("Defined." . ?□)
+       ("Alpha" . ?Α) ("Beta" . ?Β) ("Gamma" . ?Γ)
+       ("Delta" . ?Δ) ("Epsilon" . ?Ε) ("Zeta" . ?Ζ)
+       ("Eta" . ?Η) ("Theta" . ?Θ) ("Iota" . ?Ι)
+       ("Kappa" . ?Κ) ("Lambda" . ?Λ) ("Mu" . ?Μ)
+       ("Nu" . ?Ν) ("Xi" . ?Ξ) ("Omicron" . ?Ο)
+       ("Pi" . ?Π) ("Rho" . ?Ρ) ("Sigma" . ?Σ)
+       ("Tau" . ?Τ) ("Upsilon" . ?Υ) ("Phi" . ?Φ)
+       ("Chi" . ?Χ) ("Psi" . ?Ψ) ("Omega" . ?Ω)
+       ("alpha" . ?α) ("beta" . ?β) ("gamma" . ?γ)
+       ("delta" . ?δ) ("epsilon" . ?ε) ("zeta" . ?ζ)
+       ("eta" . ?η) ("theta" . ?θ) ("iota" . ?ι)
+       ("kappa" . ?κ) ("lambda" . ?λ) ("mu" . ?μ)
+       ("nu" . ?ν) ("xi" . ?ξ) ("omicron" . ?ο)
+       ("pi" . ?π) ("rho" . ?ρ) ("sigma" . ?σ)
+       ("tau" . ?τ) ("upsilon" . ?υ) ("phi" . ?φ)
+       ("chi" . ?χ) ("psi" . ?ψ) ("omega" . ?ω)))
+    (sp-local-pair 'coq-mode "'" nil :actions nil))
+  :init
+  (setq
+   ;; Enable autocompletion for theorem names and
+   ;; symbols defined in the libraries we load
+   company-coq-live-on-the-edge t
+   company-coq-disabled-features '()
+   company-coq-dynamic-autocompletion t)
+  :config
+  (nmap 'coq-mode-map
+    :prefix my/leader
+    "1" 'coq-SearchAbout
+    "2" 'coq-Print
+    "3" 'coq-LocateNotation
+    "4" 'coq-LocateConstant
+    "5" 'coq-Inspect
+    "8" 'coq-About
+    "9" 'coq-Show
+    "0" 'coq-Check)
+  :hook
+  (coq-mode . my/company-coq/setup))
 
 (use-package company-coq
  :after (proof-site coq-mode)
  :commands (company-coq-mode)
  :hook
  (coq-mode . company-coq-mode))
+#+END_SRC
+
+*** Minizinc
+
+#+BEGIN_SRC emacs-lisp
+(use-package minizinc-mode
+  :mode
+  ("\\.mzn\\'"))
+#+END_SRC
+
+*** TLA+
+
+#+BEGIN_SRC emacs-lisp
+(use-package tla-mode :mode "\.tla$")
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package polymode)
+
+(use-package tla-pcal-mode
+  :after (polymode)
+  :quelpa
+  (tla-pcal-mode :fetcher github :repo "mrc/tla-tools"))
 #+END_SRC
 
 *** Merlin eldoc
