@@ -1874,6 +1874,8 @@ See the [[https://github.com/noctuid/emacs-sentence-navigation][package repo]] f
 #+BEGIN_SRC emacs-lisp
 (use-package sentence-navigation
  :after evil
+ :commands
+ (sentence-nav-evil-forward)
  :config
  (mmap
    ")" 'sentence-nav-evil-forward
@@ -2242,6 +2244,7 @@ This only works with the =company-capf= backend.
 #+END_SRC
 
 ** Flycheck
+*** Mode
 
 On-the-fly syntax checking for GNU Emacs.
 See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more info.
@@ -2292,6 +2295,42 @@ See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more
      (window-height . 0.33)))
   (unbind-key "C-j" flycheck-error-list-mode-map)
   :diminish flycheck-mode)
+#+END_SRC
+
+*** Popup (flycheck-popup-tip)
+
+ Display Flycheck error messages using =popup.el=.
+ Can be used together with the =flyheck-pos-tip=.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package flycheck-popup-tip
+  :after (flycheck)
+  :custom
+  (flycheck-popup-tip-error-prefix "* ")
+  :config
+  (flycheck-popup-tip-mode))
+#+END_SRC
+
+*** Popup (flycheck-pos-tip)
+
+Displays flycheck errors in tooltip. However, it does not
+display popup if you run Emacs under TTY. It displays message on
+echo area and that is often used for ELDoc. Also, popups made by
+pos-tip library does not always look good, especially on macOS
+and Windows.
+
+Can be used together with the =flyheck-popup-tip=.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package flycheck-pos-tip
+  :after (flycheck flycheck-popup-tip)
+  :commands
+  (flycheck-pos-tip-error-messages)
+  :config
+  (setq
+   flycheck-pos-tip-display-errors-tty-function
+   #'flycheck-popup-tip-show-popup)
+  (flycheck-pos-tip-mode))
 #+END_SRC
 
 ** Flyspell
@@ -4703,6 +4742,9 @@ ATS2 mode.
 #+END_SRC
 
 *** Nix
+**** Mode
+
+An emacs major mode for editing nix expressions.
 
 #+BEGIN_SRC emacs-lisp
 (use-package nix-mode
@@ -4710,31 +4752,69 @@ ATS2 mode.
   :mode ("\\.nix\\'" "\\.nix.in\\'")
   :config
   (nmap 'nix-mode-map
-   "C-c r" 'nix-format-buffer)
+    "C-c r" 'nix-format-buffer)
   :delight "nix")
+#+END_SRC
+
+**** Drv mode
+
+A major mode for viewing Nix derivations (=.drv= files).
+
+#+BEGIN_SRC emacs-lisp
 (use-package nix-drv-mode
   :ensure nix-mode
   :mode "\\.drv\\'")
+#+END_SRC
+
+**** Shell (disabled)
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package nix-shell
   :ensure nix-mode
   :commands (nix-shell-unpack nix-shell-configure nix-shell-build))
+#+END_SRC
+
+**** REPL
+
+#+BEGIN_SRC emacs-lisp
 (use-package nix-repl
   :ensure nix-mode
   :commands (nix-repl))
 #+END_SRC
 
-**** Helpers
+**** Company
 
-Predicate function that checks if we inside a =nix-shell=.
-See my config for Ocaml for the usage example.
+Company backend for NixOS options.
 
 #+BEGIN_SRC emacs-lisp
-(defun my/in-nix-shell-p ()
-  (string-equal (getenv "IN_NIX_SHELL") "1"))
+(use-package company-nixos-options
+  :after (company)
+  :commands (company-nixos-options)
+  :config
+  (add-to-list 'company-backends 'company-nixos-options))
 #+END_SRC
 
-#+RESULTS:
-: in-nix-shell-p
+**** Sandbox
+
+#+BEGIN_SRC emacs-lisp
+(use-package nix-sandbox)
+#+END_SRC
+
+**** Flycheck
+
+TODO: https://github.com/travisbhartwell/nix-emacs#flycheck
+
+**** Helpers
+
+Predicate function that checks if all of the required
+environment variables are set.
+
+See my NixOS config for OCaml for the usage example.
+
+#+BEGIN_SRC emacs-lisp
+(defun my/ocaml-in-emacs-p ()
+  (string-equal (getenv "OCAML_IN_EMACS") "1"))
+#+END_SRC
 
 *** Ocaml
 
@@ -4749,20 +4829,38 @@ The main idea is [[https://blog.jethro.dev/blog/ocaml_with_nix/][described here.
 (defconst my/ocp-site-elisp (getenv "OCP_INDENT_SITE_LISP"))
 #+END_SRC
 
-**** Utop
+**** Tuareg
 
-https://github.com/diml/utop#integration-with-emacs
+[[https://github.com/ocaml/tuareg][Tuareg]] is an Emacs OCaml mode.
+
+Provides:
+- Syntax highlighting.
+- REPL (aka =toplevel=).
+- OCaml debugger within Emacs.
+
+Usage:
+- Start the OCaml REPL with ~M-x run-ocaml~.
+- Run the OCaml debugger with ~M-x ocamldebug FILE~.
 
 #+BEGIN_SRC emacs-lisp
-(use-package utop
- :if (and my/utop-site-elisp (my/in-nix-shell-p))
- :load-path my/utop-site-elisp
- :commands
- (utop-command)
- :config
- (setq utop-command "opam config exec utop -- -emacs")
- :hook
- ((tuareg-mode reason-mode) . utop-minor-mode))
+(use-package tuareg
+  :demand t
+  :mode
+  (("\\.ml[ily]?$" . tuareg-mode)
+   ("\\.topml$" . tuareg-mode))
+  :init
+  (setq tuareg-match-patterns-aligned t)
+  :hook
+  (caml-mode . tuareg-mode)
+  :delight "ocaml")
+#+END_SRC
+
+**** Smartparens
+
+#+BEGIN_SRC emacs-lisp
+(with-eval-after-load 'smartparens
+  (sp-local-pair 'tuareg-mode "'" nil :actions nil)
+  (sp-local-pair 'tuareg-mode "`" nil :actions nil))
 #+END_SRC
 
 **** Merlin
@@ -4774,47 +4872,88 @@ See the [[https://github.com/ocaml/merlin][package repo]] for more info.
 
 #+BEGIN_SRC emacs-lisp
 (use-package merlin
- :after (company)
- :if (and my/merlin-site-elisp (my/in-nix-shell-p))
- :load-path my/merlin-site-elisp
- :init
- ;; Disable merlin's own error checking
- ;; We'll use flycheck-ocaml for that
- (setq
-  merlin-error-after-save nil
-  merlin-command "/run/current-system/sw/bin/ocamlmerlin")
- :config
- (add-to-list 'company-backends 'merlin-company-backend)
- :hook
- ((tuareg-mode caml-mode) . merlin-mode))
+  :after (company tuareg)
+  :if (and my/merlin-site-elisp (my/ocaml-in-emacs-p))
+  :load-path my/merlin-site-elisp
+  :init
+  ;; Disable merlin's own error checking
+  ;; We'll use flycheck-ocaml for that
+  (setq
+   merlin-error-after-save nil
+   merlin-completion-with-doc t
+   merlin-command "/run/current-system/sw/bin/ocamlmerlin")
+  :config
+  (add-to-list 'company-backends 'merlin-company-backend)
+  (nmap 'merlin-mode-map
+    "C-t" 'merlin-locate
+    "C-]" 'merlin-locate
+    "C-[" 'merlin-pop-stack
+    "g d" 'merlin-locate)
+  (nmap 'merlin-mode-map
+    :prefix my/leader
+    "3" 'merlin-occurrences
+    "4" 'merlin-jump
+    "5" 'merlin-document
+    "9" 'merlin-locate-ident
+    "0" 'merlin-iedit-occurrences)
+  :hook
+  ((tuareg-mode caml-mode) . merlin-mode))
 #+END_SRC
 
-**** Tuareg
+**** Merlin eldoc
 
-[[https://github.com/ocaml/tuareg][Tuareg]] is an Emacs OCaml mode.
-
-Provides:
-- Syntax highlighting.
-- REPL (aka =toplevel=).
-- Ocaml debugger within Emacs.
-
-Usage:
-- Start the OCaml REPL with ~M-x run-ocaml~.
-- Run the OCaml debugger with ~M-x ocamldebug FILE~.
+Automatically (without using keybindings) provide information for the value
+under point in OCaml and ReasonML files.
 
 #+BEGIN_SRC emacs-lisp
-(use-package tuareg
- :init
- (setq tuareg-match-patterns-aligned t)
- :delight "ocaml")
+(use-package merlin-eldoc
+ :after (merlin)
+ :custom
+ (eldoc-echo-area-use-multiline-p t)   ; Use multiple lines when necessary
+ (merlin-eldoc-max-lines 8)            ; But not more than 8
+ (merlin-eldoc-type-verbosity 'min)    ; Don't display verbose types
+ (merlin-eldoc-function-arguments nil) ; Don't show function arguments
+ (merlin-eldoc-doc nil)                ; Don't show the documentation
+ :config
+ (nmap 'merlin-mode-map
+   :prefix my/leader
+   "m p" 'merlin-eldoc-jump-to-prev-occurrence
+   "m n" 'merlin-eldoc-jump-to-next-occurrence)
+ :hook
+ ((tuareg-mode reason-mode) . merlin-eldoc-setup))
+#+END_SRC
+
+**** Utop
+
+https://github.com/diml/utop#integration-with-emacs
+
+#+BEGIN_SRC emacs-lisp
+(use-package utop
+  :after (tuareg)
+  :if (and my/utop-site-elisp (my/ocaml-in-emacs-p))
+  :load-path my/utop-site-elisp
+  :commands
+  (utop-command)
+  :config
+  (setq utop-command "opam config exec utop -- -emacs")
+  (autoload 'utop-minor-mode "utop" "Minor mode for utop" t)
+  (nmap 'utop-mode-map
+    "C-c C-j" 'utop
+    "C-c C-SPC" 'utop-eval-phrase)
+  :hook
+  ((tuareg-mode reason-mode) . utop-minor-mode))
 #+END_SRC
 
 **** Indentation
 
 #+BEGIN_SRC emacs-lisp
 (use-package ocp-indent
- :if (and my/ocp-site-elisp (my/in-nix-shell-p))
- :load-path my/ocp-site-elisp)
+  :after (tuareg)
+  :if (and my/ocp-site-elisp (my/ocaml-in-emacs-p))
+  :load-path my/ocp-site-elisp
+  :config
+  (nmap 'tuareg-mode-map
+    "C-c r" 'ocp-indent-buffer))
 #+END_SRC
 
 **** Dune
@@ -4832,12 +4971,12 @@ OCaml support for Flycheck using Merlin.
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck-ocaml
  :after (flycheck merlin)
+ :demand t
  :commands
  (flycheck-ocaml-setup)
  :config
- (with-eval-after-load 'merlin
-   ;; Enable flycheck checker
-   (flycheck-ocaml-setup)))
+ ;; Enable flycheck checker
+ (flycheck-ocaml-setup))
 #+END_SRC
 
 *** Coq
@@ -4892,11 +5031,11 @@ OCaml support for Flycheck using Merlin.
   :config
   (nmap 'coq-mode-map
     :prefix my/leader
-    "1" 'coq-SearchAbout
-    "2" 'coq-Print
-    "3" 'coq-LocateNotation
-    "4" 'coq-LocateConstant
-    "5" 'coq-Inspect
+    "3" 'coq-SearchAbout
+    "4" 'coq-Print
+    "5" 'coq-LocateNotation
+    "6" 'coq-LocateConstant
+    "7" 'coq-Inspect
     "8" 'coq-About
     "9" 'coq-Show
     "0" 'coq-Check)
@@ -4921,7 +5060,10 @@ OCaml support for Flycheck using Merlin.
 *** TLA+
 
 #+BEGIN_SRC emacs-lisp
-(use-package tla-mode :mode "\.tla$")
+(use-package tla-mode
+  :quelpa
+  (tla-mode :fetcher github :repo "ratish-punnoose/tla-mode")
+  :mode "\.tla$")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -4931,29 +5073,6 @@ OCaml support for Flycheck using Merlin.
   :after (polymode)
   :quelpa
   (tla-pcal-mode :fetcher github :repo "mrc/tla-tools"))
-#+END_SRC
-
-*** Merlin eldoc
-
-Automatically (without using keybindings) provide information for the value
-under point in OCaml and ReasonML files.
-
-#+BEGIN_SRC emacs-lisp
-(use-package merlin-eldoc
- :after merlin
- :custom
- (eldoc-echo-area-use-multiline-p t)   ; Use multiple lines when necessary
- (merlin-eldoc-max-lines 8)            ; But not more than 8
- (merlin-eldoc-type-verbosity 'min)    ; Don't display verbose types
- (merlin-eldoc-function-arguments nil) ; Don't show function arguments
- (merlin-eldoc-doc nil)                ; Don't show the documentation
- :config
- (nmap 'merlin-mode-map
-   :prefix my/leader
-   "m p" 'merlin-eldoc-jump-to-prev-occurrence
-   "m n" 'merlin-eldoc-jump-to-next-occurrence)
- :hook
- ((tuareg-mode reason-mode) . merlin-eldoc-setup))
 #+END_SRC
 
 *** Reason
@@ -5098,14 +5217,6 @@ under point in OCaml and ReasonML files.
   (flycheck-clojure-setup)
   :config
   (eval-after-load 'flycheck '(flycheck-clojure-setup)))
-
-(use-package flycheck-pos-tip
-  :after (flycheck-clojure)
-  :commands
-  (flycheck-pos-tip-error-messages)
-  :config
-  (eval-after-load 'flycheck
-    '(setq flycheck-display-errors-function #'flycheck-pos-tip-error-messages)))
 #+END_SRC
 
 *** Scala
@@ -6202,6 +6313,15 @@ unicode symbols and latex tags.
 #+BEGIN_SRC emacs-lisp
 (use-package bnf-mode
  :mode "\\.bnf\\'")
+#+END_SRC
+
+*** CUDA
+
+#+BEGIN_SRC emacs-lisp
+(use-package cuda-mode
+  :mode
+  (("\\.cu\\'" . cuda-mode)
+   ("\\.cuh\\'" . cuda-mode)))
 #+END_SRC
 
 *** Ansible
