@@ -92,6 +92,8 @@ See [[https://www.reddit.com/r/emacs/comments/1rdstn/set_packageenableatstartup_
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
 (let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
                     (not (gnutls-available-p))))
     (proto (if no-ssl "http" "https")))
@@ -824,7 +826,7 @@ second (the first is the original one) argument to the default updater.
 (use-package base16-theme
   :config
   ;; (load-theme 'base16-chalk t)
-  ;; (load-theme 'base16-black-metal t)
+  (load-theme 'base16-black-metal t)
   ;; (load-theme 'base16-default-dark t)
   ;; (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
@@ -839,14 +841,17 @@ second (the first is the original one) argument to the default updater.
 
 ~base16-one-light~ + customizations.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
   (load-theme 'base16-one-light t)
   (custom-set-faces
    '(proof-queue-face ((t (:foreground "#f0f0f0"))))
    '(proof-locked-face ((t (:background "#faebd7" :foreground "#4a473d"))))
    '(proof-locked-face ((t (:background "#faebd7" ))))
    '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
-  )
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+)
 #+END_SRC
 
 Customizations for =vimish-fold= and =base16-grayscale-dark= theme.
@@ -1015,12 +1020,20 @@ sunset.
   (change-theme 'base16-gruvbox-light-hard 'labburn))
 #+END_SRC
 
+*** Kurecolor
+
+#+BEGIN_SRC emacs-lisp
+(use-package kurecolor)
+#+END_SRC
+
 ** Key bindings
 
-Use =SPC= as a "leader" key.
+Use =SPC= as a "leader" key and =C-SPC= as a second leader (I
+call it "leader+" here).
 
 #+BEGIN_SRC emacs-lisp
 (defvar my/leader "SPC")
+(defvar my/leader+ "C-SPC")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1611,6 +1624,16 @@ See the [[https://github.com/mrBliss/highlight-leading-spaces][package repo]] fo
  (nmap
    :prefix my/leader
    "t s" 'highlight-leading-spaces-mode))
+#+END_SRC
+
+*** Highlight numbers
+
+Minor mode that highlights numeric literals in source code.
+
+#+BEGIN_SRC emacs-lisp
+(use-package highlight-numbers
+ :hook
+ (prog-mode . highlight-numbers-mode))
 #+END_SRC
 
 *** VI Tilde fringe
@@ -2399,6 +2422,15 @@ try again later ;)
    "D" 'define-word-at-point))
 #+END_SRC
 
+*** Wordnut
+
+Interface to WordNet lexical database.
+
+#+BEGIN_SRC emacs-lisp
+(use-package wordnut
+  :if (executable-find "wordnet"))
+#+END_SRC
+
 ** Dired
 *** Constants (file extensions)
 
@@ -2962,11 +2994,6 @@ More friendly interface for ivy. Here is the [[https://github.com/Yevgnen/ivy-ri
    "C-;" 'flyspell-correct-previous-word-generic))
 #+END_SRC
 
-**** Hydra
-
-#+BEGIN_SRC emacs-lisp
-#+END_SRC
-
 *** IBuffer VC
 
 #+BEGIN_SRC emacs-lisp
@@ -3199,6 +3226,8 @@ See the [[https://github.com/keith/evil-tmux-navigator][package repo]] for more 
    :prefix my/leader
    "!" 'projectile-run-async-shell-command-in-root
    "DEL" 'projectile-invalidate-cache)
+ (nmap
+   "C-SPC SPC" 'projectile-commander)
  :diminish projectile-mode)
 #+END_SRC
 
@@ -3301,11 +3330,12 @@ the Emacsclient does.
 
 #+BEGIN_SRC emacs-lisp
 (use-package git-gutter
- :after general
+ :after (general)
+ :demand t
  :commands
  (global-git-gutter-mode)
  :config
- (global-git-gutter-mode t)
+ (global-git-gutter-mode)
  ;; (git-gutter:linum-setup)
  (custom-set-variables
   '(git-gutter:update-interval 2)
@@ -4216,6 +4246,14 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
    "e t" 'lsp-treemacs-errors-list))
 #+END_SRC
 
+** Makefile
+
+#+BEGIN_SRC emacs-lisp
+(use-package makefile-executor
+  :config
+  (add-hook 'makefile-mode-hook 'makefile-executor-mode))
+#+END_SRC
+
 ** Languages
 *** Lisp
 
@@ -4285,6 +4323,22 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 (use-package highlight-quoted
  :hook
  (emacs-lisp-mode . highlight-quoted-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package highlight-sexp
+  :quelpa
+  (highlight-sexp :repo "daimrod/highlight-sexp" :fetcher github :version original)
+  :hook
+  (emacs-lisp-mode . highlight-sexp-mode)
+  (lisp-mode . highlight-sexp-mode))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(use-package anaphora)
+(use-package prism
+  :after (anaphora)
+  :quelpa (prism :fetcher github :repo "alphapapa/prism.el"))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -4567,7 +4621,9 @@ operators will be replaced.
 #+END_SRC
 **** Liquid types
 
-#+BEGIN_SRC emacs-lisp
+Currenly untangled because I don't always use LH.
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package liquid-types
   :after
   (haskell-mode flycheck)
@@ -4576,7 +4632,6 @@ operators will be replaced.
 #+END_SRC
 
 Configure =flycheck-liquidhs=.
-Currenly untangled because I don't always use LH.
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (add-hook 'haskell-mode-hook
@@ -4595,7 +4650,7 @@ Currently disabled, too.
     '(lambda () (liquid-types-mode)))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 :delight "lh")
 #+END_SRC
 
@@ -4847,6 +4902,7 @@ Usage:
   :demand t
   :mode
   (("\\.ml[ily]?$" . tuareg-mode)
+   ("\\.mly$" . tuareg-menhir)
    ("\\.topml$" . tuareg-mode))
   :init
   (setq tuareg-match-patterns-aligned t)
@@ -4902,25 +4958,34 @@ See the [[https://github.com/ocaml/merlin][package repo]] for more info.
 
 **** Merlin eldoc
 
-Automatically (without using keybindings) provide information for the value
-under point in OCaml and ReasonML files.
+Automatically (without using keybindings) provide information
+for the value under point in OCaml and ReasonML files.
 
 #+BEGIN_SRC emacs-lisp
 (use-package merlin-eldoc
- :after (merlin)
- :custom
- (eldoc-echo-area-use-multiline-p t)   ; Use multiple lines when necessary
- (merlin-eldoc-max-lines 8)            ; But not more than 8
- (merlin-eldoc-type-verbosity 'min)    ; Don't display verbose types
- (merlin-eldoc-function-arguments nil) ; Don't show function arguments
- (merlin-eldoc-doc nil)                ; Don't show the documentation
- :config
- (nmap 'merlin-mode-map
-   :prefix my/leader
-   "m p" 'merlin-eldoc-jump-to-prev-occurrence
-   "m n" 'merlin-eldoc-jump-to-next-occurrence)
- :hook
- ((tuareg-mode reason-mode) . merlin-eldoc-setup))
+  :after (merlin)
+  :custom
+  (eldoc-echo-area-use-multiline-p t)   ; Use multiple lines when necessary
+  (merlin-eldoc-max-lines 8)            ; But not more than 8
+  (merlin-eldoc-type-verbosity 'min)    ; Don't display verbose types
+  (merlin-eldoc-function-arguments t)   ; Show function arguments
+  (merlin-eldoc-doc nil)                ; Don't show the documentation
+  (merlin-eldoc-occurrences t)          ; Highlight occurences
+  :config
+  (nmap 'merlin-mode-map
+    :prefix my/leader
+    "m p" 'merlin-eldoc-jump-to-prev-occurrence
+    "m n" 'merlin-eldoc-jump-to-next-occurrence)
+  :hook
+  ((tuareg-mode reason-mode) . merlin-eldoc-setup))
+#+END_SRC
+
+**** Customizations for =merlin-eldoc=
+
+#+BEGIN_SRC emacs-lisp
+(with-eval-after-load 'merlin-eldoc
+  (custom-set-faces
+   (set-face-background 'merlin-eldoc-occurrences-face "#111")))
 #+END_SRC
 
 **** Utop
@@ -5247,7 +5312,7 @@ OCaml support for Flycheck using Merlin.
    "r" 'ensime-inf-run-scala
    "s r" 'ensime-sbt-do-run
    "s c" 'ensime-sbt-do-compile)
- ;; looks like a perfect candidate for a Hydra?
+ ;; TODO: looks like a perfect candidate for a Hydra?
  (nmap 'ensime-mode-map
    :prefix my/leader
    "s E" 'ensime-print-errors-at-point
@@ -6342,6 +6407,16 @@ unicode symbols and latex tags.
 (use-package glsl-mode)
 #+END_SRC
 
+*** Scilla (disabled)
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package scilla
+  :after (flycheck)
+  :preface
+  (setq scilla-root "~/work/zilliqa/scilla")
+  :load-path (lambda () (concat scilla-root "/misc/emacs-mode")))
+#+END_SRC
+
 ** GDB
 
 When gdb debugging, show the many windows (stack trace, break points, etc).
@@ -6467,84 +6542,6 @@ highlighting won't work for new regions of Haskell code in the
 #+begin_src emacs-lisp
 (setq mmm-parse-when-idle 't))
 #+end_src
-** Hydra
-*** Install
-
-Install hydra.
-
-#+BEGIN_SRC emacs-lisp
-(use-package hydra
- :after general)
-#+END_SRC
-
-*** Text scale
-
-Define hydra for text scaling.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(defhydra hydra-zoom ()
-  "zoom"
-  ("k" text-scale-increase "in")
-  ("j" text-scale-decrease "out"))
-#+END_SRC
-
-*** Window management
-
-Define window management hydra.
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(defhydra hydra-window ()
-  "
-Movement^^      ^Split^            ^Resize^
-------------------------------------------------
-_h_ ←          _v_ertical          _H_ X←
-_j_ ↓          _s_ horizontal      _J_ X↓
-_k_ ↑          _U_ undo            _K_ X↑
-_l_ →          _R_ reset           _L_ X→
-_f_ollow       _d_lt Other
-_SPC_ cancel   _o_nly this
-"
-  ("h" windmove-left)
-  ("j" windmove-down)
-  ("k" windmove-up)
-  ("l" windmove-right)
-
-  ("H" evil-window-increase-width)
-  ("J" evil-window-increase-height)
-  ("K" evil-window-decrease-height)
-  ("L" evil-window-decrease-width)
-
-  ("f" follow-mode)
-  ("v"
-   (lambda ()
-     (interactive)
-     (split-window-right)
-     (windmove-right))
-   )
-  ("s"
-   (lambda ()
-     (interactive)
-     (split-window-below)
-     (windmove-down))
-   )
-  ("d" delete-window)
-  ("o" delete-other-windows)
-  ("i" ace-maximize-window)
-  ("U"
-   (progn
-     (winner-undo)
-     (setq this-command 'winner-undo))
-   )
-  ("R" winner-redo)
-  ("SPC" nil))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp :tangle no
-(nmap
-  "M-t" 'hydra-zoom/body
-  "M-w" 'hydra-window/body)
-#+END_SRC
-
 ** Help
 
 See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
@@ -6592,6 +6589,16 @@ See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
    "G i i" 'ix
    "G i b" 'ix-browse
    "G i d" 'ix-delete))
+#+END_SRC
+
+*** Direnv (disabled)
+
+Provides [[https://direnv.net/][=direnv=]] integration for Emacs.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package direnv
+ :config
+ (direnv-mode))
 #+END_SRC
 
 ** Calendar
@@ -6795,9 +6802,12 @@ directly from Emacs.
    "https://stackoverflow.com/search?q=%s"
    :keybinding "s"
    :docstring "Search Stack Overlow")
+ (defengine google-translate
+   "https://translate.google.com/#view=home&op=translate&sl=en&tl=ru&text=%s"
+   :keybinding "t")
  (defengine twitter
    "https://twitter.com/search?q=%s"
-   :keybinding "t")
+   :keybinding "T")
  (defengine wikipedia
    "http://www.wikipedia.org/search-redirect.php?language=en&go=Go&search=%s"
    :keybinding "w"
@@ -6808,12 +6818,18 @@ directly from Emacs.
  (defengine hoogle
    "https://www.haskell.org/hoogle/?hoogle=%s"
    :keybinding "h")
+ (defengine hackage
+   "https://hackage.haskell.org/packages/search?terms=%s"
+   :keybinding "H")
  (defengine hayoo
    "http://hayoo.fh-wedel.de/?query=%s")
  (defengine wiktionary
    "https://www.wikipedia.org/search-redirect.php?family=wiktionary&language=en&go=Go&search=%s")
  (defengine wolfram-alpha
    "http://www.wolframalpha.com/input/?i=%s")
+ (defengine urban-dictionary
+   "https://www.urbandictionary.com/define.php?term=%s"
+   :keybinding "u")
  (defengine youtube
    "http://www.youtube.com/results?aq=f&oq=&search_query=%s"
    :keybinding "y"))
@@ -7012,6 +7028,356 @@ Setup wakatime.
  :config
  (global-wakatime-mode)
  :diminish wakatime-mode)
+#+END_SRC
+
+** Hydra
+*** Install
+
+Install hydra.
+
+#+BEGIN_SRC emacs-lisp
+(use-package hydra
+ :config
+#+END_SRC
+
+*** Text scale
+
+Define hydra for text scaling.
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-zoom ()
+  "
+ ^Zoom^
+───────────────────────────────────
+"
+  ("=" text-scale-increase nil)
+  ("k" text-scale-increase "in")
+  ("j" text-scale-decrease "out")
+  ("+" text-scale-increase "in")
+  ("-" text-scale-decrease "out")
+  ("0" (text-scale-set 0) "remove"))
+#+END_SRC
+
+*** Window management
+
+Define window management hydra.
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-window ()
+  "
+Movement^^      ^Split^            ^Resize^
+────────────────────────────────────────────────────
+_h_ ←          _v_ertical          _H_ X←
+_j_ ↓          _s_ horizontal      _J_ X↓
+_k_ ↑          _U_ undo            _K_ X↑
+_l_ →          _R_ reset           _L_ X→
+_f_ollow       _d_lt Other
+_SPC_ cancel   _o_nly this
+"
+  ("h" windmove-left)
+  ("j" windmove-down)
+  ("k" windmove-up)
+  ("l" windmove-right)
+
+  ("H" evil-window-increase-width)
+  ("J" evil-window-increase-height)
+  ("K" evil-window-decrease-height)
+  ("L" evil-window-decrease-width)
+
+  ("f" follow-mode)
+  ("v"
+   (lambda ()
+     (interactive)
+     (split-window-right)
+     (windmove-right))
+   )
+  ("s"
+   (lambda ()
+     (interactive)
+     (split-window-below)
+     (windmove-down))
+   )
+  ("d" delete-window)
+  ("o" delete-other-windows)
+  ("i" ace-maximize-window)
+  ("U"
+   (progn
+     (winner-undo)
+     (setq this-command 'winner-undo))
+   )
+  ("R" winner-redo)
+  ("SPC" nil))
+#+END_SRC
+
+*** Rectangle
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-rectangle ()
+  "
+^Rectangle^
+───────────────────
+_m_: mark region
+_k_: kill region
+_y_: yank region
+  "
+  ("m" rectangle-mark-mode nil)
+  ("y" yank-rectangle nil)
+  ("k" kill-rectangle nil)
+
+  ("l" forward-char)
+  ("h" backward-char)
+  ("j" next-line)
+  ("k" previous-line)
+  ("0" move-beginning-of-line)
+  ("$" move-end-of-line))
+#+END_SRC
+
+*** Flycheck
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-flycheck (:color blue)
+  "
+  ^
+  ^Flycheck^          ^Errors^            ^Checker^
+  ^────────^──────────^──────^────────────^───────^─────
+  _M_ manual          _<_ previous        _?_ describe
+  _v_ verify setup    _>_ next            _d_ disable
+  ^^                  _f_ check           _m_ mode
+  ^^                  _l_ list            _s_ select
+  ^^                  ^^                  ^^
+  "
+  ("<" flycheck-previous-error :color pink)
+  (">" flycheck-next-error :color pink)
+  ("?" flycheck-describe-checker)
+  ("M" flycheck-manual)
+  ("d" flycheck-disable-checker)
+  ("f" flycheck-buffer)
+  ("l" flycheck-list-errors)
+  ("m" flycheck-mode)
+  ("s" flycheck-select-checker)
+  ("v" flycheck-verify-setup))
+#+END_SRC
+
+*** Yasnippet
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-yasnippet (:color blue :hint nil)
+  "
+^YASnippets^
+───────────────────────
+_i_: insert snippet
+_v_: visit snippet files
+_n_: new
+_r_: reload all
+  "
+  ("i" yas-insert-snippet)
+  ("v" yas-visit-snippet-file :color blue)
+  ("n" yas-new-snippet)
+  ("r" yas-reload-all))
+#+END_SRC
+
+*** Macro
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-macro ()
+  "
+^Macro^
+────────────────────────────
+_j_: create new macro
+_k_: end creation of new macro
+_e_: execute last macro
+_n_: insert Counter
+  "
+  ("j" kmacro-start-macro :color blue)
+  ("k" kmacro-end-macro :colocr blue)
+  ("e" kmacro-end-or-call-macro-repeat)
+  ("n" kmacro-insert-counter))
+#+END_SRC
+
+*** Org
+**** Base
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-org/base ()
+  "
+^Org base^
+───────────────
+_s_: store link
+_l_: insert link
+
+_r_: refile
+_t_: insert tag
+"
+  ("s" org-store-link nil :color blue)
+  ("l" org-insert-link nil :color blue)
+  ("r" org-refile nil :color blue)
+  ("t" org-set-tags-command nil :color blue))
+#+END_SRC
+
+**** Link
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-org/link ()
+  "
+^Org link^
+────────────────────────────────────────────────────────
+_i_ backward slurp     _o_ forward slurp    _n_ next link
+_j_ backward barf      _k_ forward barf     _p_ previous link
+"
+  ("i" org-link-edit-backward-slurp)
+  ("o" org-link-edit-forward-slurp)
+  ("j" org-link-edit-backward-barf)
+  ("k" org-link-edit-forward-barf)
+  ("n" org-next-link)
+  ("p" org-previous-link))
+#+END_SRC
+
+**** Table
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-org/table ()
+  "
+^Org table^
+──────────────────────────────────────────────────────────
+_r_ recalculate     _w_ wrap region      _c_ toggle coordinates
+_i_ iterate table   _t_ transpose        _D_ toggle debugger
+_B_ iterate buffer  _E_ export table     _d_ edit field
+_e_ eval formula    _s_ sort lines       ^^
+"
+  ("E" org-table-export :color blue)
+  ("s" org-table-sort-lines)
+  ("d" org-table-edit-field)
+  ("e" org-table-eval-formula)
+  ("r" org-table-recalculate)
+  ("i" org-table-iterate)
+  ("B" org-table-iterate-buffer-tables)
+  ("w" org-table-wrap-region)
+  ("D" org-table-toggle-formula-debugger)
+  ("t" org-table-transpose-table-at-point)
+  ("c" org-table-toggle-coordinate-overlays :color blue))
+#+END_SRC
+
+**** Babel
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-org/babel ()
+  "
+^Org babel^
+────────────────────────────────────────────────
+_n_ next       _i_ info           _I_ insert header
+_p_ prev       _c_ check          _e_ examplify region
+_h_ goto head  _E_ expand         ^^
+^^             _s_ split          ^^
+^^             _r_ remove result  ^^
+"
+  ("i" org-babel-view-src-block-info)
+  ("I" org-babel-insert-header-arg)
+  ("c" org-babel-check-src-block :color blue)
+  ("s" org-babel-demarcate-block :color blue)
+  ("n" org-babel-next-src-block)
+  ("p" org-babel-previous-src-block)
+  ("E" org-babel-expand-src-block :color blue)
+  ("e" org-babel-examplify-region :color blue)
+  ("r" org-babel-remove-result :color blue)
+  ("h" org-babel-goto-src-block-head))
+#+END_SRC
+
+*** Help
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-help ()
+  "
+^Help^
+────────────────────────────
+_f_: callable
+_F_: function
+_v_: variable
+_c_: command
+_k_: key
+_m_: mode
+_l_: view lossage
+_M_: view messages
+"
+  ("M" view-echo-area-messages :color blue)
+  ("f" helpful-callable :color blue)
+  ("F" helpful-function :color blue)
+  ("v" helpful-variable :color blue)
+  ("c" helpful-command :color blue)
+  ("k" helpful-key :color blue)
+  ("m" describe-mode :color blue)
+  ("l" view-lossage :color blue))
+#+END_SRC
+
+*** Packages
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-packages ()
+  "
+^Packages^
+─────────────────
+_l_: list
+_r_: refresh
+_d_: delete
+_e_: describe
+_i_: install
+_f_: install file
+"
+  ("l" package-list-packages)
+  ("r" package-refresh-contents)
+  ("d" package-delete)
+  ("i" package-install)
+  ("f" package-install-file)
+  ("e" describe-package))
+#+END_SRC
+
+*** Search online
+
+#+BEGIN_SRC emacs-lisp
+(defhydra hydra-search-online ()
+  "
+  ^
+^Search Online^
+────────────────────────────────────────────────────────
+_g_: google         _y_: youtube           _t_: twitter
+_t_: translate      _u_: urban dictionary  _m_: google maps
+_w_: wikipedia      _h_: hoogle            _i_: google images
+_s_: stack overflow _H_: hackage           _d_: duckduckgo
+_G_: github         _p_: pursuit           ^^
+  "
+  ("g" engine/search-google)
+  ("t" engine/search-google-translate)
+  ("w" engine/search-wikipedia)
+  ("s" engine/search-stack-overflow)
+  ("G" engine/search-github)
+  ("y" engine/search-youtube)
+  ("u" engine/search-urban-dictionary)
+  ("h" engine/search-hoogle)
+  ("H" engine/search-hackage)
+  ("p" engine/search-pursuit)
+  ("T" engine/search-twitter)
+  ("m" engine/search-google-maps)
+  ("i" engine/search-google-images)
+  ("d" engine/search-duckduckgo))
+#+END_SRC
+
+*** Key bindings
+
+#+BEGIN_SRC emacs-lisp
+(nmap
+  :prefix my/leader+
+  "f" 'hydra-flycheck/body
+  "h" 'hydra-help/body
+  "o o" 'hydra-org/base/body
+  "o l" 'hydra-org/link/body
+  "o t" 'hydra-org/table/body
+  "o b" 'hydra-org/babel/body
+  "r" 'hydra-rectangle/body
+  "m" 'hydra-macro/body
+  "p" 'hydra-packages/body
+  "C-SPC" 'hydra-search-online/body
+  "S" 'hydra-yasnippet/body
+  "t" 'hydra-zoom/body
+  "w" 'hydra-window/body))
 #+END_SRC
 
 ** Delight
