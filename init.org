@@ -52,6 +52,7 @@ When this configuration is loaded for the first time, the =init.el= is the file 
 #+END_SRC
 
 * Config
+** Intro
 
 [[https://www.emacswiki.org/emacs/LexicalBinding][Lexical binding]] for the init-file is needed, it can be specified in the header.
 This is the first line of the actual configuration.
@@ -59,6 +60,8 @@ This is the first line of the actual configuration.
 #+BEGIN_SRC emacs-lisp
 ;;; -*- lexical-binding: t -*-
 #+END_SRC
+
+** Auto-tangling
 
 Tangle and compile this file on save automatically:
 
@@ -242,6 +245,24 @@ Automatically save place in each file.
 (save-place-mode 1)
 #+END_SRC
 
+*** Performance
+
+Disable bidirectional text for tiny performance boost.
+
+#+BEGIN_SRC emacs-lisp
+(setq-default bidi-display-reordering nil)
+#+END_SRC
+
+Update UI less frequently.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ idle-update-delay 2
+ jit-lock-defer-time 0
+ jit-lock-stealth-time 0.2
+ jit-lock-stealth-verbose nil)
+#+END_SRC
+
 ** Location
 
 Set the location name and coordinates.
@@ -324,6 +345,27 @@ visiting the files =/u/rms/tmp/Makefile= and
  (uniquify-buffer-name-style 'forward))
 #+END_SRC
 
+**** History
+
+Many editors (e.g. Vim) have the feature of saving minibuffer
+history to an external file after exit. This package provides
+the same feature in Emacs. When set up, it saves recorded
+minibuffer histories to a file (=~/.emacs-history= by default).
+
+#+BEGIN_SRC emacs-lisp
+(use-package savehist
+  :ensure nil
+  :custom
+  (savehist-additional-variables
+   '(kill-ring
+     search-ring
+     regexp-search-ring))
+  (savehist-autosave-interval 60)
+  (savehist-save-minibuffer-history t)
+  :init
+  (savehist-mode 1))
+#+END_SRC
+
 **** Frame
 
 - Disable blinking cursor.
@@ -353,15 +395,26 @@ visiting the files =/u/rms/tmp/Makefile= and
 
 #+BEGIN_SRC emacs-lisp
 (use-package simple
- :ensure nil
- :diminish
- ((visual-line-mode . " ↩")
-  (auto-fill-function . " ↵"))
- :bind
- ;; remap ctrl-w/ctrl-h
- (("C-c h" . help-command)
-  ("C-x C-k" . kill-region)
-  ("C-h" . delete-backward-char)))
+  :ensure nil
+  :diminish
+  ((visual-line-mode . " ↩")
+   (auto-fill-function . " ↵"))
+  :bind
+  ;; remap ctrl-w/ctrl-h
+  (("C-c h" . help-command)
+   ("C-x C-k" . kill-region)
+   ("C-h" . delete-backward-char)))
+#+END_SRC
+
+**** VC hooks
+
+#+BEGIN_SRC emacs-lisp
+(use-package vc-hooks
+  :ensure nil
+  :config
+  (setq
+   vc-follow-symlinks t
+   vc-make-backup-files nil))
 #+END_SRC
 
 **** Pixel scroll
@@ -469,8 +522,44 @@ Setup [[https://www.emacswiki.org/emacs/EmacsTags][Emacs tags]].
  (add-to-list 'auto-mode-alist '("\\.mm\\'" . objc-mode)))
 #+END_SRC
 
+**** Compile
+
+Kill compilation process before stating another and save all
+buffers on compile.
+
+#+BEGIN_SRC emacs-lisp
+(use-package compile
+  :custom
+  (compilation-always-kill t)
+  (compilation-ask-about-save nil)
+  (compilation-scroll-output t)
+  :init
+  (make-variable-buffer-local 'compile-command)
+  (put 'compile-command 'safe-local-variable 'stringp))
+#+END_SRC
+
+** Libraries
+*** cl-lib
+
+#+BEGIN_SRC emacs-lisp
+(require 'cl-lib)
+#+END_SRC
+
+*** async
+
+Simple library for asynchronous processing in Emacs.
+
+#+BEGIN_SRC emacs-lisp
+(use-package async
+  :demand t
+  :config
+  (autoload 'dired-async-mode "dired-async.el" nil t)
+  (dired-async-mode 1)
+  (async-bytecomp-package-mode 1))
+#+END_SRC
+
 ** UI
-*** Basics.
+*** Basics
 
 #+BEGIN_SRC emacs-lisp
 (setq
@@ -481,12 +570,20 @@ Setup [[https://www.emacswiki.org/emacs/EmacsTags][Emacs tags]].
 
 *** Scroll
 
+More procedural scrolling.
+
 #+BEGIN_SRC emacs-lisp
 (setq
+ auto-window-vscroll nil
+ hscroll-margin 5
+ hscroll-step 5
+ scroll-conservatively 101
  scroll-margin 0
- scroll-conservatively 0
- scroll-preserve-screen-position nil
- scroll-step 1)
+ scroll-preserve-screen-position t)
+
+(setq-default
+ scroll-down-aggressively 0.01
+ scroll-up-aggressively 0.01)
 #+END_SRC
 
 *** UI elements
@@ -548,8 +645,10 @@ Show full path in the title bar.
 (setq-default frame-title-format "%b (%f)")
 #+END_SRC
 
-Don't implicitly resize the frame's display area in order to preserve the number of columns or lines the frame displays when changing font, menu bar, tool bar, internal borders, fringes or scroll bars.
-Read [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Implied-Frame-Resizing.html][this]] for more info.
+Don't implicitly resize the frame's display area in order to
+preserve the number of columns or lines the frame displays when
+changing font, menu bar, tool bar, internal borders, fringes or
+scroll bars. Read [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Implied-Frame-Resizing.html][this]] for more info.
 
 #+BEGIN_SRC emacs-lisp
 (setq-default frame-inhibit-implied-resize t)
@@ -561,6 +660,18 @@ Set fringe size.
 
 #+BEGIN_SRC emacs-lisp
 (fringe-mode '(12 . 12))
+#+END_SRC
+
+Setup fringes on both sides and display an indicator for buffer
+boundaries on the left side. Display fringes outside margins to
+have the padding on the inside.
+
+#+BEGIN_SRC emacs-lisp
+(setq-default
+ fringes-outside-margins t
+ left-fringe-width 8
+ right-fringe-width 8
+ indicate-buffer-boundaries 'left)
 #+END_SRC
 
 Remove continuation arrow on right fringe.
@@ -611,8 +722,8 @@ Set left and right margins for every window.
 
 #+BEGIN_SRC emacs-lisp
 (setq-default
- left-margin-width 2
- right-margin-width 2)
+ left-margin-width 1
+ right-margin-width 1)
 #+END_SRC
 
 *** Startup
@@ -623,7 +734,7 @@ Start maximized.
 (toggle-frame-maximized)
 #+END_SRC
 
-*** Mode-line
+*** Mode line
 
 Turn-off tooltips on cursor hover-over.
 
@@ -641,12 +752,25 @@ Turn-off tooltips on cursor hover-over.
 
 #+BEGIN_SRC emacs-lisp
 (use-package time
- :ensure nil
- :custom
- (display-time-default-load-average nil)
- (display-time-24hr-format t)
- :config
- (display-time-mode t))
+  :ensure nil
+  :custom
+  (display-time-default-load-average nil)
+  (display-time-24hr-format t)
+  :config
+  (display-time-mode t))
+#+END_SRC
+
+*** Echo area
+
+Adjust the font face used for the echo area.
+
+#+BEGIN_SRC emacs-lisp
+(dolist (buffer-name
+         '(" *Echo Area 0*"
+           " *Echo Area 1*"))
+  (with-current-buffer (get-buffer-create buffer-name)
+    (setq-local face-remapping-alist
+                '((default (:height 0.9) variable-pitch)))))
 #+END_SRC
 
 ** Editor
@@ -667,12 +791,43 @@ Some basic things.
 
 #+BEGIN_SRC emacs-lisp
 (setq
- sentence-end-double-space nil  ; sentences should end in one space
- initial-scratch-message nil    ; empty scratch buffer
- enable-recursive-minibuffers t ; allow minibuffer commands in the minibuffer
- echo-keystrokes 0.1            ; show keystrokes right away, don't show the message in the scratch buffer
- ns-use-native-fullscreen nil   ; disable native fullscreen support
-)
+ ;; sentences should end in one space
+ sentence-end-double-space nil
+ ;; empty scratch buffer
+ initial-scratch-message nil
+ ;; show keystrokes right away,
+ ;; don't show the message in the scratch buffer
+ echo-keystrokes 0.1
+ ;; disable native fullscreen support
+ ns-use-native-fullscreen nil)
+#+END_SRC
+
+*** Minibuffer
+
+Give some more room to the minbuffer.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ max-mini-window-height 0.3
+ resize-mini-windows 'grow-only)
+#+END_SRC
+
+Enable recursive minibuffers and
+keep the point out of the minibuffer.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ ;; allow minibuffer commands in the minibuffer
+ enable-recursive-minibuffers t
+ ;; keep the point out of the minibuffer
+ minibuffer-prompt-properties
+ '(read-only t point-entered minibuffer-avoid-prompt face minibuffer-prompt))
+#+END_SRC
+
+Auto executable scripts.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'after-save-hook #'executable-make-buffer-file-executable-if-script-p)
 #+END_SRC
 
 *** Tabs & spaces
@@ -795,6 +950,17 @@ second (the first is the original one) argument to the default updater.
    :repo "a13/use-package-secrets"
    :fetcher github
    :version original))
+#+END_SRC
+
+*** auto-minor-mode
+
+Enable minor modes by buffer name and contents. It provides the
+=use-package= keyword ~:minor~ and ~:magic-minor~ where you can
+specify these rules.
+
+#+BEGIN_SRC emacs-lisp
+(use-package auto-minor-mode
+  :demand t)
 #+END_SRC
 
 ** Font
@@ -1122,7 +1288,6 @@ Leader-prefixed.
 #+BEGIN_SRC emacs-lisp
 (nmap
   :prefix my/leader
-  "RET" 'toggle-frame-fullscreen
   "v" 'split-window-horizontally
   "s" 'split-window-vertically
   "p" 'list-processes
@@ -1139,6 +1304,21 @@ Leader-prefixed.
 #+END_SRC
 
 ** Behavior
+*** Server
+
+#+BEGIN_SRC emacs-lisp
+(use-package server
+  :commands server-running-p
+  :preface
+  (defun my/server-ensure-running (frame)
+    "Ensure server is running when launching FRAME."
+    (with-selected-frame frame
+      (unless (server-running-p)
+        (server-start))))
+  :init
+  (add-hook 'after-make-frame-functions #'my/server-ensure-running))
+#+END_SRC
+
 *** Trashing
 
 #+BEGIN_SRC emacs-lisp
@@ -1166,6 +1346,43 @@ See the [[https://github.com/rranelli/auto-package-update.el][package repo]] for
   auto-package-update-interval 10)          ; Update packages every 10 days
  (auto-package-update-maybe)                ; Check for updates on startup
  (auto-package-update-at-time "05:30"))     ; Update at =5:30=
+#+END_SRC
+
+*** Buffer
+
+Hide async shell command buffers.
+
+#+BEGIN_SRC emacs-lisp
+(cl-pushnew
+ '("^*Async Shell Command*" . (display-buffer-no-window))
+ display-buffer-alist
+ :test #'equal)
+#+END_SRC
+
+*** Popups
+
+Always display pop up buffers at the bottom and regard all star
+buffers as such buffers.
+
+#+BEGIN_SRC emacs-lisp
+(let ((rule
+       `(,(rx bos "*" (one-or-more anything) "*" (optional "<" (one-or-more anything) ">") eos)
+         (display-buffer-reuse-window
+          display-buffer-in-side-window)
+         (reusable-frames . visible)
+         (side . bottom)
+         (window-height . 0.4))))
+  (cl-pushnew rule display-buffer-alist :test #'equal))
+#+END_SRC
+
+*** Visual fill column
+
+Wrap lines according to ~fill-column~ in ~visual-line-mode~.
+
+#+BEGIN_SRC emacs-lisp
+(use-package visual-fill-column
+  :custom
+  (visual-fill-column-center-text t))
 #+END_SRC
 
 *** Clipboard
@@ -1211,6 +1428,16 @@ Allows to copy buffer locations as GitHub/Slack/JIRA/HipChat/... formatted code.
    "p" 'copy-as-format-pod
    "r" 'copy-as-format-rst
    "s" 'copy-as-format-slack))
+#+END_SRC
+
+*** Posframe
+
+Pop a posframe (just a child-frame) at point.
+
+#+BEGIN_SRC emacs-lisp
+(use-package posframe
+  :custom
+  (posframe-mouse-banish nil))
 #+END_SRC
 
 *** Extra whitespace trimming
@@ -1390,6 +1617,17 @@ Key bindings are provided by =evil-collection=.
    (add-to-list 'evil-collection-mode-list 'while-key)))
 #+END_SRC
 
+Let =which-key= use =posframe= to show its popup.
+Disabled for now, not sure is really like how it looks.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package which-key-posframe
+  :after (posframe which-key)
+  :config
+  (setq which-key-posframe-poshandler 'posframe-poshandler-frame-top-center)
+  (which-key-posframe-mode))
+#+END_SRC
+
 *** Free keys
 
 Show free bindings in current buffer. To use, call the command =M-x free-keys=.
@@ -1397,6 +1635,15 @@ See the [[https://github.com/Fuco1/free-keys][package repo]] for more info.
 
 #+BEGIN_SRC emacs-lisp
 (use-package free-keys)
+#+END_SRC
+
+*** VLF
+
+Large file support.
+This can view/edit/search and compare large files.
+
+#+BEGIN_SRC emacs-lisp
+(use-package vlf)
 #+END_SRC
 
 *** Sudo edit
@@ -1540,6 +1787,22 @@ distracting.
  (nmap
    :prefix my/leader
    "t H" 'idle-highlight-mode))
+#+END_SRC
+
+*** Hl-line
+
+#+BEGIN_SRC emacs-lisp
+(use-package hl-line
+  :hook
+  ((prog-mode conf-mode) . hl-line-mode)
+  :custom
+  ;; Only highlight in selected window
+  (hl-line-sticky-flag nil)
+  (global-hl-line-sticky-flag nil)
+  :config
+  (nmap
+    :prefix my/leader
+    "t l" 'hl-line-mode))
 #+END_SRC
 
 *** Hl-todo
@@ -1705,7 +1968,7 @@ Add emoji support. This is useful when working with =HTML=.
 A minimal mode-line configuration that aims to replicate some of the features of
 the =doom-modeline= package.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package mood-line
  :hook
  (after-init . mood-line-mode))
@@ -1716,7 +1979,7 @@ the =doom-modeline= package.
 Another option is =moody= + =minions= as an attractive
 minimalist mode line replacement.
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package minions
  :config
  (setq minions-mode-line-lighter "[+]")
@@ -1750,14 +2013,37 @@ A very cool mode line that I used previously.
 
 Colors the mode-line according to the Flycheck state of the current buffer.
 
-#+begin_src emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package flycheck-color-mode-line
   :after (flycheck)
   :commands
   (flycheck-color-mode-line-mode)
   :hook
   (flycheck-mode . flycheck-color-mode-line-mode))
-#+end_src
+#+END_SRC
+
+**** Indent info
+
+Display information about the current indentation settings.
+
+#+BEGIN_SRC emacs-lisp
+(use-package indent-info
+  :defer 2
+  :custom
+  (indent-info-prefix " ")
+  (indent-info-suffix " ")
+  :config
+  (global-indent-info-mode 1))
+#+END_SRC
+
+**** Hide mode line
+
+Support hiding the mode line, this can be useful for different
+modes displaying documents or presentation.
+
+#+BEGIN_SRC emacs-lisp
+(use-package hide-mode-line)
+#+END_SRC
 
 *** Beacon
 
@@ -1941,14 +2227,7 @@ See the [[https://github.com/noctuid/emacs-sentence-navigation][package repo]] f
  :diminish evil-mc-mode)
 #+END_SRC
 
-*** Ediff
-
-#+BEGIN_SRC emacs-lisp
-(use-package evil-ediff
- :demand t)
-#+END_SRC
-
-*** Matchit
+*** TODO Matchit
 
 #+BEGIN_SRC emacs-lisp
 (use-package evil-matchit
@@ -1960,6 +2239,12 @@ See the [[https://github.com/noctuid/emacs-sentence-navigation][package repo]] f
   global-evil-matchit-mode)
  :config
  (global-evil-matchit-mode 1))
+#+END_SRC
+
+*** String inflection
+
+#+BEGIN_SRC emacs-lisp
+(use-package evil-string-inflection)
 #+END_SRC
 
 *** Surround
@@ -2101,12 +2386,13 @@ output.
 #+END_SRC
 
 ** Eldoc
+*** Overlay
 
 [[https://www.emacswiki.org/emacs/ElDoc][Eldoc]] displays the function signature of the closest function call around point
 either in the minibuffer or in the modeline. [[https://github.com/stardiviner/eldoc-overlay][This package]] modifies Eldoc to
 display this documentation inline using a buffer text overlay.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package eldoc-overlay
  :after general
  :init
@@ -2116,6 +2402,20 @@ display this documentation inline using a buffer text overlay.
    :prefix my/leader
    "t E" 'eldoc-overlay-toggle)
  :diminish "eo")
+#+END_SRC
+
+*** Posframe
+
+Display eldoc in a child frame.
+
+#+BEGIN_SRC emacs-lisp
+(use-package eldoc-posframe
+  :after (posframe)
+  :quelpa (eldoc-posframe :fetcher github :repo "gexplorer/eldoc-posframe")
+  :diminish eldoc-posframe-mode
+  :custom
+  (eldoc-posframe-left-fringe 0)
+  (eldoc-posframe-poshandler #'posframe-poshandler-point-bottom-left-corner))
 #+END_SRC
 
 ** Secrets
@@ -2320,10 +2620,31 @@ See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more
   :diminish flycheck-mode)
 #+END_SRC
 
+
+*** Posframe
+
+#+BEGIN_SRC emacs-lisp
+(use-package flycheck-posframe
+  :after (flycheck)
+  :config
+  (flycheck-posframe-configure-pretty-defaults)
+  (add-to-list
+   'flycheck-posframe-inhibit-functions
+   #'(lambda () (bound-and-true-p company-backend)))
+  (setq flycheck-posframe-border-width 1)
+  (set-face-attribute 'flycheck-posframe-background-face nil :inherit nil :background "#282a36")
+  (set-face-attribute 'flycheck-posframe-error-face nil :inherit nil :foreground "red")
+  (set-face-attribute 'flycheck-posframe-warning-face nil :foreground "skyblue")
+  (set-face-attribute 'flycheck-posframe-info-face nil :foreground "white")
+  :custom-face (flycheck-posframe-border-face ((t (:foreground "#dc752f"))))
+  :hook
+  (flycheck-mode . flycheck-posframe-mode))
+#+END_SRC
+
 *** Popup (flycheck-popup-tip)
 
- Display Flycheck error messages using =popup.el=.
- Can be used together with the =flyheck-pos-tip=.
+Display Flycheck error messages using =popup.el=.
+Can be used together with the =flyheck-pos-tip=.
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package flycheck-popup-tip
@@ -2386,8 +2707,9 @@ Can be used together with the =flyheck-popup-tip=.
 
 ** Compilation
 
-Kill compilation process before starting another, save all buffers on =compile=,
-scroll to the first compilation error automatically.
+Kill compilation process before starting another, save all
+buffers on =compile=, scroll to the first compilation error
+automatically.
 
 #+BEGIN_SRC emacs-lisp
 (setq-default
@@ -2547,6 +2869,7 @@ Setup dired.
    "b" 'bookmark-set)
  :hook
  (dired-mode . dired-hide-details-mode)
+ (dired-mode . hl-line-mode)
  :diminish dired-mode)
 #+END_SRC
 
@@ -2562,6 +2885,17 @@ Allows to easily show/hide dotfiles.
  :hook
  (dired-mode . dired-hide-dotfiles-mode))
 #+END_SRC
+
+*** Stripe (disabled)
+
+Use different background colors for even and odd lines.
+See the [[https://github.com/sabof/stripe-buffer#customization][customization]] section.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package stripe-buffer
+  :hook
+  (dired-mode . stripe-buffer-mode))
+#+end_src
 
 *** Dired fl
 
@@ -2745,48 +3079,50 @@ Most of key bindings are provided by the =evil-collection=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package neotree
- :after general
- :functions
- (visual-line-mode)
- :preface
- (defvar my/neotree/open-app
-   (if (eq system-type 'darwin)
-       "open" "xdg-open"))
- (defun my/neotree/setup (_unused)
-   (linum-mode -1)
-   (visual-line-mode -1)
-   (vi-tilde-fringe-mode -1))
- :init
- (setq
-  neo-autorefresh t
-  neo-theme (if (display-graphic-p) 'nerd 'arrow)
-  neo-smart-open t
-  neo-window-width 25
-  neo-auto-indent-point t
-  neo-create-file-auto-open t
-  neo-mode-line-type 'none
-  neo-confirm-create-file 'off-p
-  neo-confirm-delete-file 'off-p
-  neo-confirm-delete-directory-recursively 'off-p
-  neo-confirm-kill-buffers-for-files-in-directory 'off-p
-  neo-default-system-application my/neotree/open-app
-  neo-confirm-create-directory 'off-p
-  neo-confirm-change-root 'off-p)
- :hook
- (neo-after-create . my/neotree/setup)
- :config
- (nmap 'neotree-mode-map
-   "gg" 'evil-goto-first-line
-   "G" 'evil-goto-line
-   "C" 'neotree-change-root)
- (nmap
-   :prefix my/leader
-   "q" 'neotree-show
-   "Q" 'neotree-hide
-   "r" 'neotree-find)
- (when (eq system-type 'darwin)
-   (general-define-key
-    "s-B" 'neotree-toggle)))
+  :after (general)
+  :functions
+  (visual-line-mode)
+  :preface
+  (defvar my/neotree/open-app
+    (if (eq system-type 'darwin)
+        "open" "xdg-open"))
+  (defun my/neotree/setup (_unused)
+    (hide-mode-line-mode +1)
+    (linum-mode -1)
+    (visual-line-mode -1)
+    (setq indicate-buffer-boundaries nil)
+    (vi-tilde-fringe-mode -1))
+  :init
+  (setq
+   neo-autorefresh t
+   neo-theme (if (display-graphic-p) 'nerd 'arrow)
+   neo-smart-open t
+   neo-window-width 25
+   neo-auto-indent-point t
+   neo-create-file-auto-open t
+   neo-mode-line-type 'none
+   neo-confirm-create-file 'off-p
+   neo-confirm-delete-file 'off-p
+   neo-confirm-delete-directory-recursively 'off-p
+   neo-confirm-kill-buffers-for-files-in-directory 'off-p
+   neo-default-system-application my/neotree/open-app
+   neo-confirm-create-directory 'off-p
+   neo-confirm-change-root 'off-p)
+  :hook
+  (neo-after-create . my/neotree/setup)
+  :config
+  (nmap 'neotree-mode-map
+    "gg" 'evil-goto-first-line
+    "G" 'evil-goto-line
+    "C" 'neotree-change-root)
+  (nmap
+    :prefix my/leader
+    "q" 'neotree-show
+    "Q" 'neotree-hide
+    "r" 'neotree-find)
+  (when (eq system-type 'darwin)
+    (general-define-key
+     "s-B" 'neotree-toggle)))
 #+END_SRC
 
 *** Icons
@@ -2819,7 +3155,8 @@ See the [[https://github.com/abo-abo/ace-window][package repo]] for more info.
    "w" 'ace-window))
 #+END_SRC
 
-*** Winner
+*** Windows
+**** Winner
 
 Undo/redo window layout (split pane) config.
 
@@ -2853,13 +3190,35 @@ Undo/redo window layout (split pane) config.
     "C-s-]" 'winner-redo)))
 #+END_SRC
 
+**** Transpose frame
+
+#+BEGIN_SRC emacs-lisp
+(use-package transpose-frame
+  :config
+  (nmap
+    :prefix my/leader
+    "w" 'transpose-frame))
+#+END_SRC
+
+**** Zoom
+
+Zoom a window to display as a single window temporarily.
+
+#+BEGIN_SRC emacs-lisp
+(use-package zoom-window
+  :config
+  (nmap
+    :prefix my/leader
+    "RET" 'zoom-window-zoom))
+#+END_SRC
+
 *** Expand region
 
 Increases the selected region by semantic units.
 
 #+BEGIN_SRC emacs-lisp
 (use-package expand-region
- :after general
+ :after (general)
  :config
  (vmap
    "v" 'er/expand-region)
@@ -2874,66 +3233,100 @@ Setup [[https://github.com/abo-abo/swiper][ivy]].
 
 #+BEGIN_SRC emacs-lisp
 (use-package ivy
- :preface
- (defun my/ivy/switch-buffer-occur ()
-   "Occur function for `ivy-switch-buffer' using `ibuffer'."
-   (ibuffer nil (buffer-name) (list (cons 'name ivy--old-re))))
- :commands
- (ivy-mode ivy-set-occur)
- :custom
- (ivy-count-format "%d/%d " "Show anzu-like counter")
- :custom-face
- ;; (ivy-current-match ((t (:inherit 'hl-line))))
- ;; TODO: Make this theme-dependent (use :inherit)
- (ivy-current-match ((t (:background "#4782b4" :foreground "#fff"))))
- :init
- (setq
-  ;; Enable bookmarks and recentf
-  ;; (add 'recentf-mode' and bookmarks to 'ivy-switch-buffer')
-  ivy-use-virtual-buffers t
-  ;; Display full buffer name
-  ivy-virtual-abbreviate 'full
-  ;; Number of result lines to display
-  ivy-height 10
-  ;; Current input becomes selectable as a candidate
-  ;; solves the issue of creating a file or
-  ;; a directory `foo` when a file `foobar` already exists
-  ;; another way is to use C-M-j
-  ivy-use-selectable-prompt t
-  ;; Wrap around ivy results
-  ivy-wrap t
-  ;; Omit ^ at the beginning of regexp
-  ivy-initial-inputs-alist nil)
- :config
- (ivy-mode 1)
- ;; Enable/disable fuzzy matching
- ;; see: https://oremacs.com/2016/01/06/ivy-flx/
- ;; (setq ivy-re-builders-alist
- ;;       '((ivy-switch-buffer . ivy--regex-plus)
- ;;         (t . ivy--regex-fuzzy)))
- (setq ivy-re-builders-alist '((t . ivy--regex-plus)))
- (ivy-set-occur 'ivy-switch-buffer 'my/ivy/switch-buffer-occur)
- (nmap
-   :prefix my/leader
-   "a" 'ivy-switch-buffer)
- (nmap
-   "C-c v" 'ivy-push-view
-   "C-c V" 'ivy-pop-view)
- (when (eq system-type 'darwin)
-   (general-define-key
-    "s-b" 'ivy-switch-buffer
-    "M-s-b" 'ivy-resume))
- (general-define-key
-  :keymaps 'ivy-minibuffer-map
-  "C-t" 'ivy-toggle-fuzzy
-  "C-j" 'ivy-next-line
-  "C-k" 'ivy-previous-line
-  "C-n" 'ivy-next-history-element
-  "C-p" 'ivy-previous-history-element
-  "<C-return>" 'ivy-immediate-done
-  "C-l" 'ivy-immediate-done
-  "C-w" 'ivy-backward-kill-word)
- :diminish ivy-mode)
+  :preface
+  (defun my/ivy/switch-buffer-occur ()
+    "Occur function for `ivy-switch-buffer' using `ibuffer'."
+    (ibuffer nil (buffer-name) (list (cons 'name ivy--old-re))))
+  :commands
+  (ivy-mode ivy-set-occur)
+  :custom
+  (ivy-count-format "%d/%d " "Show anzu-like counter")
+  :custom-face
+  ;; (ivy-current-match ((t (:inherit 'hl-line))))
+  ;; TODO: Make this theme-dependent (use :inherit)
+  (ivy-current-match ((t (:background "#4782b4" :foreground "#fff"))))
+  :init
+  (setq
+   ;; Enable bookmarks and recentf
+   ;; (add 'recentf-mode' and bookmarks to 'ivy-switch-buffer')
+   ivy-use-virtual-buffers t
+   ;; Display full buffer name
+   ivy-virtual-abbreviate 'full
+   ;; Number of result lines to display
+   ivy-height 12
+   ;; Current input becomes selectable as a candidate
+   ;; solves the issue of creating a file or
+   ;; a directory `foo` when a file `foobar` already exists
+   ;; another way is to use C-M-j
+   ivy-use-selectable-prompt t
+   ;; Wrap around ivy results
+   ivy-wrap t
+   ;; Omit ^ at the beginning of regexp
+   ivy-initial-inputs-alist nil)
+  :config
+  (ivy-mode 1)
+  ;; Enable/disable fuzzy matching
+  ;; see: https://oremacs.com/2016/01/06/ivy-flx/
+  ;; (setq ivy-re-builders-alist
+  ;;       '((ivy-switch-buffer . ivy--regex-plus)
+  ;;         (t . ivy--regex-fuzzy)))
+  (setq ivy-re-builders-alist '((t . ivy--regex-plus)))
+  (ivy-set-occur 'ivy-switch-buffer 'my/ivy/switch-buffer-occur)
+  (nmap
+    :prefix my/leader
+    "a" 'ivy-switch-buffer)
+  (nmap
+    "C-c v" 'ivy-push-view
+    "C-c V" 'ivy-pop-view)
+  (when (eq system-type 'darwin)
+    (general-define-key
+     "s-b" 'ivy-switch-buffer
+     "M-s-b" 'ivy-resume))
+  (general-define-key
+   :keymaps 'ivy-minibuffer-map
+   "C-t" 'ivy-toggle-fuzzy
+   "C-j" 'ivy-next-line
+   "C-k" 'ivy-previous-line
+   "C-n" 'ivy-next-history-element
+   "C-p" 'ivy-previous-history-element
+   "<C-return>" 'ivy-immediate-done
+   "C-l" 'ivy-immediate-done
+   "C-w" 'ivy-backward-kill-word)
+  :diminish ivy-mode)
+#+END_SRC
+
+Ivy posframe.
+
+It doesn't work with evil-mode.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package ivy-posframe
+  :after (posframe)
+  :config
+  (setq ivy-posframe-height-alist
+        '((swiper . 20)
+          (t. 20)))
+
+  (setq
+   ivy-posframe-display-functions-alist
+   '((swiper . nil)
+     (counsel-bookmark . ivy-posframe-display-at-frame-center)
+     (counsel-find-file . ivy-posframe-display-at-frame-center)
+     (counsel-git-grep . ivy-posframe-display-at-frame-center)
+     (counsel-package . ivy-posframe-display-at-frame-center)
+     (counsel-load-theme . ivy-posframe-display-at-frame-center)
+     (counsel-rg . ivy-posframe-display-at-frame-center)
+     (counsel-fzf . ivy-posframe-display-at-frame-center)
+     (counsel-imenu . ivy-posframe-display-at-frame-center)
+     (counsel-describe-variable . ivy-posframe-display-at-frame-center)
+     (counsel-describe-face . ivy-posframe-display-at-frame-center)
+     (counsel-describe-function . ivy-posframe-display-at-frame-center)
+     (counsel-unicode-char . ivy-posframe-display-at-frame-top-center)
+     (counsel-ace-link . ivy-posframe-display-at-frame-top-center)
+     (complete-symbol . ivy-posframe-display-at-point)
+     (counsel-M-x . ivy-posframe-display-at-frame-center)
+     (t . ivy-posframe-display)))
+  (ivy-posframe-mode 1))
 #+END_SRC
 
 Ivy icons.
@@ -3045,7 +3438,8 @@ Setup counsel.
    "f" 'counsel-rg
    "F" 'counsel-fzf
    "h v" 'counsel-describe-variable
-   "h f" 'counsel-describe-function)
+   "h f" 'counsel-describe-function
+   "h F" 'counsel-describe-face)
  (when (eq system-type 'darwin)
    (nmap
      "s-f" 'counsel-rg))
@@ -3172,7 +3566,8 @@ See the [[https://github.com/keith/evil-tmux-navigator][package repo]] for more 
 
 #+BEGIN_SRC emacs-lisp
 (use-package navigate
- :quelpa (navigate :fetcher github :repo "keith/evil-tmux-navigator")
+ :quelpa
+ (navigate :fetcher github :repo "keith/evil-tmux-navigator")
  :config
  (require 'navigate))
 #+END_SRC
@@ -3264,11 +3659,31 @@ the Emacsclient does.
  (evil-set-initial-state 'with-editor-mode 'insert))
 #+END_SRC
 
+*** Git messenger
+
+Popup commit message for current line.
+
+#+BEGIN_SRC emacs-lisp
+(use-package git-messenger
+  :config
+  (nmap
+    :prefix my/leader
+    "g M" 'git-messenger:popup-message))
+#+END_SRC
+
 *** Magit
 
 #+BEGIN_SRC emacs-lisp
 (use-package magit
- :demand t)
+  :demand t
+  :custom
+  (magit-log-buffer-file-locked t)
+  (magit-refs-show-commit-count 'all)
+  (magit-save-repository-buffers 'dontask)
+  (git-messenger:use-magit-popup t)
+  :config
+  ;; Unset pager as it is not supported properly inside emacs.
+  (setenv "GIT_PAGER" ""))
 #+END_SRC
 
 *** Evil-Magit
@@ -3362,7 +3777,11 @@ the Emacsclient does.
 
 #+BEGIN_SRC emacs-lisp
 (use-package gitattributes-mode)
-(use-package gitignore-mode)
+
+(use-package gitignore-mode
+  :mode
+  ("/\\.dockerignore$" . gitignore-mode))
+
 (use-package gitconfig-mode)
 #+END_SRC
 
@@ -3399,20 +3818,30 @@ the Emacsclient does.
 #+END_SRC
 
 ** Shell
+*** Pager
+
+Make less work inside Emacs shells. But disable it as the
+default pager.
+
+#+BEGIN_SRC emacs-lisp
+(setenv "LESS" "--dumb --prompt=s")
+(setenv "PAGER" "")
+#+END_SRC
+
 *** Eshell
 
 #+BEGIN_SRC emacs-lisp
-(use-package eshell
- :ensure nil
- ;; :config
- ;; (unbind-key "C-j" eshell-mode-map)
- ;; (unbind-key "C-k" eshell-mode-map)
- )
+  (use-package eshell
+    :ensure nil
+    ;; :config
+    ;; (unbind-key "C-j" eshell-mode-map)
+    ;; (unbind-key "C-k" eshell-mode-map)
+  )
 #+END_SRC
 
 *** EM-smart
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package em-smart
  :ensure nil
  :config
@@ -3450,6 +3879,16 @@ the Emacsclient does.
  (eshell-prompt-function #'epe-theme-dakrone))
 #+END_SRC
 
+*** Fringe status
+
+Command execution status indicator in the fringe.
+
+#+BEGIN_SRC emacs-lisp
+(use-package eshell-fringe-status
+  :hook
+  (eshell-mode . eshell-fringe-status-mode))
+#+END_SRC
+
 *** EShell toggle
 
 #+BEGIN_SRC emacs-lisp
@@ -3462,10 +3901,6 @@ the Emacsclient does.
  (nmap
    :prefix my/leader
    "`" 'eshell-toggle))
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
-
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -3572,6 +4007,8 @@ Setup =tramp=.
 
 *** Counsel-tramp
 
+Navigate tramp files.
+
 #+BEGIN_SRC emacs-lisp
 (use-package counsel-tramp
  :after (counsel tramp general)
@@ -3624,6 +4061,7 @@ Setup =tramp=.
  (use-package smartparens-config
   :ensure nil
   :demand t)
+ (sp-local-pair 'minibuffer-inactive-mode "'" nil :actions nil)
  (general-define-key
   :keymaps 'sp-keymap
   "M-F" 'sp-forward-symbol
@@ -3707,6 +4145,16 @@ Setup =tramp=.
    "y c" 'aya-create
    "y e" 'aya-expand
    "y o" 'aya-open-line))
+#+END_SRC
+
+*** Yatemplate
+
+Simple file templates for Emacs with =YASnippet=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package yatemplate
+  :init
+  (yatemplate-fill-alist))
 #+END_SRC
 
 ** Org
@@ -3828,16 +4276,10 @@ Custom capture templates.
 #+BEGIN_SRC emacs-lisp
 (setq
  org-capture-templates
- '(("t" "todo" entry (file "todos.org")
-    "* TODO %?\n%U\n%a\n")
-   ("n" "note" entry (file "notes.org")
-    "* %?\n:NOTE:\n%U\n%a\n")
-   ("i" "idea" entry (file "ideas.org")
-    "* %?\n:IDEA:\n%U\n%a\n")
-   ("j" "journal" entry (file+datetree "journal.org")
-    "* %?\n%U\n")
-   ("h" "habit" entry (file "habits.org")
-    "* TODO %?\n%U\n%a\nSCHEDULED: %(format-time-string \"%<<%Y-%m-%d %a .+1d/3d>>\")\n:PROPERTIES:\n:STYLE: habit\n:REPEAT_TO_STATE: TODO\n:END:\n")))
+
+ '(("t" "todo" entry (file "todo.org") "* TODO %^{task name}\n%u\n%a\n")
+   ("n" "note" entry (file "notes.org") "* %^{heading} %t %^g\n  %?\n")
+   ("j" "journal" entry (file "journal.org") "* %U - %^{heading}\n  %?")))
 #+END_SRC
 
 I keep my links in =links.org=, export them to HTML and access
@@ -4018,11 +4460,25 @@ See [[https://github.com/Somelauw/evil-org-mode#keybindings][the repo]] for keyb
 
 *** Bullets
 
+Heading bullets.
+
 #+BEGIN_SRC emacs-lisp
 (use-package org-bullets
  :after org
  :hook
  (org-mode . org-bullets-mode))
+#+END_SRC
+
+*** Cliplink
+
+Paste links from clipboard and automatically fetch title.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-cliplink
+  :config
+  (nmap 'org-mode-map
+    :prefix my/leader
+    "L" 'org-cliplink))
 #+END_SRC
 
 *** Pandoc exporter
@@ -4271,15 +4727,25 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 
 #+BEGIN_SRC emacs-lisp
 (use-package elisp-mode
- :after (general company smartparens)
- :ensure nil
- :config
- (nmap 'emacs-lisp-mode-map
-  "M-." 'find-function-at-point
-  "M-," 'find-variable-at-point)
- (add-to-list 'company-backends 'company-elisp)
- (sp-with-modes 'emacs-lisp-mode
-   (sp-local-pair "'" nil :actions nil)))
+  :after (general company smartparens)
+  :ensure nil
+  :preface
+  (defun my/emacs-lisp-prettify-symbols-setup ()
+    "Prettify `emacs-lisp-mode' specific symbols."
+    (dolist (symbol '(("defun"    . ?ƒ)
+                      ("defmacro" . ?μ)
+                      ("defvar"   . ?ν)
+                      ("defconst" . "ν_")))
+      (cl-pushnew symbol prettify-symbols-alist :test #'equal)))
+  :config
+  (nmap 'emacs-lisp-mode-map
+    "M-." 'find-function-at-point
+    "M-," 'find-variable-at-point)
+  (add-to-list 'company-backends 'company-elisp)
+  (sp-with-modes 'emacs-lisp-mode
+    (sp-local-pair "'" nil :actions nil))
+  :hook
+  (emacs-lisp-mode . my/emacs-lisp-prettify-symbols-setup))
 #+END_SRC
 
 **** Refs
@@ -4341,6 +4807,8 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   :quelpa (prism :fetcher github :repo "alphapapa/prism.el"))
 #+END_SRC
 
+Evaluation Result OverlayS for Emacs Lisp.
+
 #+BEGIN_SRC emacs-lisp
 (use-package eros
  :hook
@@ -4377,6 +4845,23 @@ For example, it changes ~whatever-mode~ to ~:mode~.
    "t n" 'nameless-mode))
 #+END_SRC
 
+Improve readability of escape characters in regular expressions.
+
+#+BEGIN_SRC emacs-lisp
+(use-package easy-escape
+  :diminish easy-escape-minor-mode
+  :hook
+  (emacs-lisp-mode . easy-escape-minor-mode))
+#+END_SRC
+
+**** Package lint
+
+A linting library for elisp package metadata.
+
+#+BEGIN_SRC emacs-lisp
+(use-package package-lint)
+#+END_SRC
+
 Flycheck checker for elisp package metadata.
 
 #+BEGIN_SRC emacs-lisp
@@ -4386,16 +4871,35 @@ Flycheck checker for elisp package metadata.
  (flycheck-package-setup))
 #+END_SRC
 
+**** Suggest
+
+Discover functions.
+
+#+begin_src emacs-lisp :tangle yes
+(use-package suggest
+  :preface
+  (defun my/suggest-popup ()
+    "Open suggest as a popup."
+    (interactive)
+    (let* ((window (selected-window))
+           (dedicated-flag (window-dedicated-p window)))
+      (set-window-dedicated-p window t)
+      (suggest)
+      (set-window-dedicated-p window dedicated-flag)))
+  :config
+  (nmap 'emacs-lisp-mode-map
+    :prefix my/leader
+    "E s" 'my/suggest-popup))
+#+end_src
+
+
 *** Haskell
 **** Hasklig (ligatures)
 
 #+BEGIN_SRC emacs-lisp
 (use-package hasklig-mode
-  :demand t
   :commands
   (hasklig-mode)
-  :hook
-  (haskell-mode . hasklig-mode)
   :delight "hl")
 #+END_SRC
 
@@ -4403,137 +4907,148 @@ Flycheck checker for elisp package metadata.
 
 #+BEGIN_SRC emacs-lisp
 (use-package haskell-mode
- :after
- (general company eldoc)
- ;; :quelpa
- ;; (haskell-mode :fetcher github :repo "haskell/haskell-mode")
- ;; :mode
- ;; (("\\.hs\\(c\\|-boot\\)?\\'" . haskell-mode)
- ;; ("\\.lhs\\'" . literate-haskell-mode)
- ;; ("\\.cabal\\'" . haskell-cabal-mode))
- :commands
- (haskell-compile-cabal-build-command
-  haskell-interactive-mode-map)
- :preface
- (defun my/haskell-mode/setup ()
-   (interactive)
-   (setq buffer-face-mode-face '(:family "Hasklig"))
-   (buffer-face-mode)
-   ;; Treat symbol (e.g. "_") as a word
-   (defalias 'forward-evil-word 'forward-evil-symbol)
-   ;; (subword-mode 1)
-   ;; (eldoc-overlay-mode)       ; annoying
-   ;; (haskell-indentation-mode) ; hi2 ftw
-   ;; There are some tools that dont't work with unicode symbols
-   ;; I use Hasklig instead
-   ;; (turn-on-haskell-unicode-input-method)
-   ;; Affects haskell-indentation-mode
-   (setq-local evil-auto-indent nil)
-   (face-remap-add-relative
-    'font-lock-doc-face
-    'font-lock-comment-face))
- (defvar haskell-process-use-ghci nil)
- (defvar haskell-build-command-use-make nil)
- (defun my/haskell-mode/toggle-build-command ()
-   "Toggle the build command"
-   (interactive)
-   (if haskell-build-command-use-make
-     (setq haskell-compile-cabal-build-command "cd %s && cabal new-build")
-     (setq haskell-compile-cabal-build-command "cd %s && make build")))
- (defun my/haskell-mode/toggle-process-type ()
-   "Toggle GHCi process between cabal and ghci"
-   (interactive)
-   (if haskell-process-use-ghci
-     (progn
-       ;; You could set it to "cabal-repl" if
-       ;; you're using the old cabal workflow
-       (setq haskell-process-type 'cabal-new-repl)
-       (setq haskell-process-use-ghci nil)
-       (message "Using cabal new-repl"))
-     (progn
-       (setq haskell-process-type 'stack-ghci)
-       (setq haskell-process-use-ghci t)
-       (message "Using stack ghci"))))
- (defun my/haskell-mode/show-process-log ()
-   "Display *haskell-process-log* buffer in other window"
-   (interactive)
-   (switch-to-buffer-other-window "*haskell-process-log*"))
- :hook
- (haskell-mode . my/haskell-mode/setup)
- :init
- (setq
-  ;; Enable debug logging to *haskell-process-log* buffer
-  haskell-process-log t
-  ;; Don't generate tags via hasktags after saving
-  haskell-tags-on-save nil
-  ;; Don't run stylish-haskell on the buffer before saving
-  ;; something it just inserts a bunch of spaces at the end of the line for no reason
-  haskell-stylish-on-save nil
-  ;; Don't show debugging tips when starting the process
-  haskell-process-show-debug-tips nil
-  ;; Don't suggest removing import lines as warned by GHC
-  haskell-process-suggest-remove-import-lines nil
-  ;; Don't suggest adding packages to .cabal file
-  haskell-process-suggest-add-package nil
-  ;; Don't suggest restarting the f*****g process
-  haskell-process-suggest-restart nil
-  ;; Don't suggest adding the OverloadedStrings extensions
-  haskell-process-suggest-overloaded-strings nil
-  ;; Auto import the modules reported by GHC to have been loaded
-  haskell-process-auto-import-loaded-modules t
-  ;; Don't popup errors in a separate buffer
-  haskell-interactive-popup-errors nil
-  ;; Make haskell-process-log look better
-  haskell-process-args-ghci '("-ferror-spans" "-fshow-loaded-modules")
-  haskell-process-args-cabal-repl '("--ghc-options=-fdiagnostics-color=never")
-  haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans -fshow-loaded-modules" "--no-build" "--no-load")
-  haskell-process-args-cabal-new-repl '("--ghc-options=-fdiagnostics-color=never")
-  ;; Use "cabal new-repl" as the inferior haskell process
-  haskell-process-type 'cabal-new-repl
-  ;; haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans")
-  ;; haskell-compile-cabal-build-command "stack build --no-library-profiling"
-  haskell-compile-cabal-build-command "cd %s && cabal new-build")
- :config
- ;; Common key bindings
- (nmap '(haskell-mode-map haskell-cabal-mode-map haskell-interactive-mode-map)
-   "C-c C-b" 'haskell-compile
-   "C-c C-k" 'haskell-interactive-mode-kill
-   "C-c C-r" 'haskell-process-restart
-   "C-c C-d" 'haskell-cabal-add-dependency
-   "C-c C-l" 'haskell-interactive-mode-clear
-   "C-c C-h" 'haskell-hoogle
-   "C-c SPC" 'haskell-session-change-target
-   "C-c C-c" 'my/haskell-mode/show-process-log)
- (nmap '(haskell-mode-map haskell-cabal-mode-map)
-   "C-c C-j" 'haskell-interactive-switch)
- (nmap '(haskell-mode-map haskell-interactive-mode-map)
-   "C-c c v" 'haskell-cabal-visit-file
-   "C-c c b" 'haskell-process-cabal-build
-   "C-c c r" 'haskell-process-cabal)
- (nmap 'haskell-compilation-mode-map
-   "C-k" 'windmove-up ;; bind it back
-   "M-k" 'compilation-previous-error
-   "M-j" 'compilation-next-error)
- (nmap 'haskell-mode-map
-   "C-c T" 'my/haskell-mode/toggle-process-type
-   "C-c b" 'my/haskell-mode/toggle-build-command
-   "C-c H" 'haskell-hayoo
-   "C-c C-m" 'haskell-auto-insert-module-template
-   "C-c ." 'haskell-hide-toggle
-   "C-c C-o" 'haskell-process-load-file
-   "C-c C-SPC" 'haskell-interactive-copy-to-prompt
-   "C-c C-f" 'haskell-mode-stylish-buffer
-   "C-c C-t" 'haskell-process-do-type
-   "C-c C-i" 'haskell-process-do-info
-   ;; Hit it repeatedly to jump between groups of imports
-   "C-c C-u" 'haskell-navigate-imports)
- (require 'haskell-interactive-mode)
- (unbind-key "C-j" haskell-interactive-mode-map)
- (nmap 'haskell-interactive-mode-map
-   "C-c C-j" 'haskell-interactive-switch-back)
- (imap 'haskell-interactive-mode-map
-   "C-c C-l" 'haskell-interactive-mode-clear)
- :delight "hs")
+  :after
+  (general company eldoc)
+  ;; :quelpa
+  ;; (haskell-mode :fetcher github :repo "haskell/haskell-mode")
+  ;; :mode
+  ;; (("\\.hs\\(c\\|-boot\\)?\\'" . haskell-mode)
+  ;; ("\\.lhs\\'" . literate-haskell-mode)
+  ;; ("\\.cabal\\'" . haskell-cabal-mode))
+  :commands
+  (haskell-compile-cabal-build-command
+   haskell-interactive-mode-map)
+  :preface
+  (defun my/display-ctrl-D-as-space ()
+    "Display `^D' as newline."
+    (interactive)
+    (setq buffer-display-table (make-display-table))
+    (aset buffer-display-table ?\^D [?\ ]))
+  (defun my/haskell-mode/setup ()
+    (interactive)
+    (setq buffer-face-mode-face '(:family "Hasklig"))
+    (buffer-face-mode)
+    ;; Treat symbol (e.g. "_") as a word
+    (defalias 'forward-evil-word 'forward-evil-symbol)
+    ;; (subword-mode 1)
+    ;; (eldoc-overlay-mode)       ; annoying
+    ;; (haskell-indentation-mode) ; hi2 ftw
+    (with-current-buffer (get-buffer-create "*haskell-process-log*")
+      (my/display-ctrl-D-as-space))
+    (hasklig-mode)
+    ;; There are some tools that dont't work with unicode symbols
+    ;; I use Hasklig instead
+    ;; (turn-on-haskell-unicode-input-method)
+
+    ;; Affects haskell-indentation-mode
+    (setq-local evil-auto-indent nil)
+    (face-remap-add-relative
+     'font-lock-doc-face
+     'font-lock-comment-face))
+  (defvar haskell-process-use-ghci nil)
+  (defvar haskell-build-command-use-make nil)
+  (defun my/haskell-mode/toggle-build-command ()
+    "Toggle the build command"
+    (interactive)
+    (if haskell-build-command-use-make
+        (setq haskell-compile-cabal-build-command "cd %s && cabal new-build")
+      (setq haskell-compile-cabal-build-command "cd %s && make build")))
+  (defun my/haskell-mode/toggle-process-type ()
+    "Toggle GHCi process between cabal and ghci"
+    (interactive)
+    (if haskell-process-use-ghci
+        (progn
+          ;; You could set it to "cabal-repl" if
+          ;; you're using the old cabal workflow
+          (setq haskell-process-type 'cabal-new-repl)
+          (setq haskell-process-use-ghci nil)
+          (message "Using cabal new-repl"))
+      (progn
+        (setq haskell-process-type 'stack-ghci)
+        (setq haskell-process-use-ghci t)
+        (message "Using stack ghci"))))
+  (defun my/haskell-mode/show-process-log ()
+    "Display *haskell-process-log* buffer in other window"
+    (interactive)
+    (switch-to-buffer-other-window "*haskell-process-log*"))
+  :hook
+  (haskell-mode . my/haskell-mode/setup)
+  :init
+  (setq
+   ;; Enable debug logging to *haskell-process-log* buffer
+   haskell-process-log t
+   ;; Don't generate tags via hasktags after saving
+   haskell-tags-on-save nil
+   ;; Don't run stylish-haskell on the buffer before saving
+   ;; something it just inserts a bunch of spaces at the end of the line for no reason
+   haskell-stylish-on-save nil
+   ;; Don't show debugging tips when starting the process
+   haskell-process-show-debug-tips nil
+   ;; Don't suggest removing import lines as warned by GHC
+   haskell-process-suggest-remove-import-lines nil
+   ;; Don't suggest adding packages to .cabal file
+   haskell-process-suggest-add-package nil
+   ;; Don't suggest restarting the f*****g process
+   haskell-process-suggest-restart nil
+   ;; Don't suggest adding the OverloadedStrings extensions
+   haskell-process-suggest-overloaded-strings nil
+   ;; Auto import the modules reported by GHC to have been loaded
+   haskell-process-auto-import-loaded-modules t
+   ;; Show things like type info instead of printing to the message area
+   haskell-process-use-presentation-mode t
+   ;; Don't popup errors in a separate buffer
+   haskell-interactive-popup-errors nil
+   ;; Make haskell-process-log look better
+   haskell-process-args-ghci '("-ferror-spans" "-fshow-loaded-modules")
+   haskell-process-args-cabal-repl '("--ghc-options=-fdiagnostics-color=never")
+   haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans -fshow-loaded-modules" "--no-build" "--no-load")
+   haskell-process-args-cabal-new-repl '("--ghc-options=-fdiagnostics-color=never")
+   ;; Use "cabal new-repl" as the inferior haskell process
+   haskell-process-type 'cabal-new-repl
+   ;; haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans")
+   ;; haskell-compile-cabal-build-command "stack build --no-library-profiling"
+   haskell-compile-cabal-build-command "cd %s && cabal new-build")
+  :config
+  ;; Common key bindings
+  (nmap '(haskell-mode-map haskell-cabal-mode-map haskell-interactive-mode-map)
+    "C-c C-b" 'haskell-compile
+    "C-c C-k" 'haskell-interactive-mode-kill
+    "C-c C-r" 'haskell-process-restart
+    "C-c C-d" 'haskell-cabal-add-dependency
+    "C-c C-l" 'haskell-interactive-mode-clear
+    "C-c C-h" 'haskell-hoogle
+    "C-c SPC" 'haskell-session-change-target
+    "C-c C-c" 'my/haskell-mode/show-process-log)
+  (nmap '(haskell-mode-map haskell-cabal-mode-map)
+    "C-c C-j" 'haskell-interactive-switch)
+  (nmap '(haskell-mode-map haskell-interactive-mode-map)
+    "C-c c v" 'haskell-cabal-visit-file
+    "C-c c b" 'haskell-process-cabal-build
+    "C-c c r" 'haskell-process-cabal)
+  (nmap 'haskell-compilation-mode-map
+    "C-k" 'windmove-up ;; bind it back
+    "M-k" 'compilation-previous-error
+    "M-j" 'compilation-next-error)
+  (nmap 'haskell-mode-map
+    "C-c T" 'my/haskell-mode/toggle-process-type
+    "C-c b" 'my/haskell-mode/toggle-build-command
+    "C-c H" 'haskell-hayoo
+    "C-c C-m" 'haskell-auto-insert-module-template
+    "C-c ." 'haskell-hide-toggle
+    "C-c C-o" 'haskell-process-load-file
+    "C-c C-SPC" 'haskell-interactive-copy-to-prompt
+    "C-c C-f" 'haskell-mode-stylish-buffer
+    "C-c C-t" 'haskell-process-do-type
+    "C-c C-i" 'haskell-process-do-info
+    ;; Hit it repeatedly to jump between groups of imports
+    "C-c C-u" 'haskell-navigate-imports)
+  (require 'haskell-interactive-mode)
+  (unbind-key "C-j" haskell-interactive-mode-map)
+  (nmap 'haskell-interactive-mode-map
+    "C-c C-j" 'haskell-interactive-switch-back)
+  (imap 'haskell-interactive-mode-map
+    "C-c C-l" 'haskell-interactive-mode-clear)
+  :delight "hs")
 #+END_SRC
 **** Literate Haskell
 
@@ -4835,6 +5350,18 @@ A major mode for viewing Nix derivations (=.drv= files).
 (use-package nix-repl
   :ensure nix-mode
   :commands (nix-repl))
+#+END_SRC
+
+**** Update fetch
+
+Command for updating fetch declarations in place.
+
+#+BEGIN_SRC emacs-lisp
+(use-package nix-update
+  :config
+  (nmap 'nix-mode-map
+    :prefix my/leader
+    "n u" 'nix-update-fetch))
 #+END_SRC
 
 **** Company
@@ -5641,6 +6168,12 @@ Other JSON-related packages.
  (flycheck-yamllint-setup))
 #+END_SRC
 
+*** Protobuf
+
+#+BEGIN_SRC emacs-lisp
+(use-package protobuf-mode)
+#+END_SRC
+
 *** Markdown
 
 #+BEGIN_SRC emacs-lisp :tangle no
@@ -5843,7 +6376,12 @@ Other JSON-related packages.
 *** Java
 
 #+BEGIN_SRC emacs-lisp
+(use-package gradle-mode
+  :hook ((java-mode kotlin-mode) . gradle-mode))
+#+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(use-package javadoc-lookup)
 #+END_SRC
 
 *** Kotlin
@@ -5902,6 +6440,16 @@ Other JSON-related packages.
   web-mode-enable-css-colorization t
   web-mode-enable-current-element-highlight t
   web-mode-enable-current-column-highlight nil))
+#+END_SRC
+
+**** Cakecrumbs
+
+Display current path for HTML/XML/CSS.
+
+#+BEGIN_SRC emacs-lisp
+(use-package cakecrumbs
+  :config
+  (cakecrumbs-auto-setup))
 #+END_SRC
 
 **** Company
@@ -5967,8 +6515,8 @@ Other JSON-related packages.
 (use-package go-add-tags)
 
 (use-package go-eldoc
- :hook
- (go-mode . go-eldoc-setup))
+  :hook
+  (go-mode . go-eldoc-setup))
 
 (use-package go-gopath)
 
@@ -5983,6 +6531,14 @@ Other JSON-related packages.
 
 #+BEGIN_SRC emacs-lisp
 
+#+END_SRC
+
+TypeScript REPL.
+
+#+BEGIN_SRC emacs-lisp
+(use-package ts-comint
+  :custom
+  (ts-comint-program-command "ts-node"))
 #+END_SRC
 
 *** Flow
@@ -6147,7 +6703,12 @@ Flow LSP support.
 *** Elm
 
 #+BEGIN_SRC emacs-lisp
-(use-package elm-mode)
+(use-package elm-mode
+  :custom
+  (elm-format-on-save t)
+  (elm-package-json "elm.json")
+  (elm-tags-exclude-elm-stuff nil)
+  (elm-tags-on-save t))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -6291,19 +6852,29 @@ unicode symbols and latex tags.
 
 #+BEGIN_SRC emacs-lisp
 (use-package lua-mode
- :mode "\\.lua\\'"
- :init
- (setq lua-indent-level 2))
+  :preface
+  (defun my/lua-prettify-symbols-setup ()
+    (dolist (symbol '(("~="  . (?\s (Br . Bl) ?\s (Bc . Bc) ?≠))
+                      ("function"  . ?ƒ)
+                      ("math.huge" . ?∞)))
+      (cl-pushnew symbol prettify-symbols-alist :test #'equal)))
+  :mode "\\.lua\\'"
+  :custom
+  (lua-documentation-function 'eww)
+  :init
+  (setq lua-indent-level 2)
+  :hook
+  (lua-mode . my/lua-prettify-symbols-setup))
 
 (use-package lua-block
- :after lua-mode
- :quelpa
- (lua-block
-  :fetcher url
-  :url "http://www.emacswiki.org/emacs/download/lua-block.el")
- :init
- (autoload 'lua-block-mode "lua-block" nil t)
- :delight "lb")
+  :after (lua-mode)
+  :quelpa
+  (lua-block
+   :fetcher url
+   :url "http://www.emacswiki.org/emacs/download/lua-block.el")
+  :init
+  (autoload 'lua-block-mode "lua-block" nil t)
+  :delight "lb")
 #+END_SRC
 
 *** Haml
@@ -6337,28 +6908,28 @@ unicode symbols and latex tags.
 
 #+BEGIN_SRC emacs-lisp
 (use-package csv-mode
- :mode "\\.[Cc][Ss][Vv]$"
- :init
- (setq
-  ;; default separators for CSV files.
-  csv-separators '("," ";" "|" " " "\t")
-  ;; number of lines to consider part of header.
-  csv-header-lines 1))
+  :mode "\\.[Cc][Ss][Vv]$"
+  :init
+  (setq
+   ;; default separators for CSV files.
+   csv-separators '("," ";" "|" " " "\t")
+   ;; number of lines to consider part of header.
+   csv-header-lines 1))
 #+END_SRC
 
 *** Api blueprint
 
 #+BEGIN_SRC emacs-lisp
 (use-package apib-mode
- :after general
- :config
- (nmap 'apib-mode-map
-   :prefix my/leader
-   "z p" 'apib-parse           ; Parse the API Blueprint
-   "z v" 'apib-validate        ; Validate the API Blueprint
-   "z j" 'apib-get-json        ; Print all generated JSON bodies
-   "z s" 'apib-get-json-schema ; Print all generated JSON Schemas
-   ))
+  :after general
+  :config
+  (nmap 'apib-mode-map
+    :prefix my/leader
+    "z p" 'apib-parse           ; Parse the API Blueprint
+    "z v" 'apib-validate        ; Validate the API Blueprint
+    "z j" 'apib-get-json        ; Print all generated JSON bodies
+    "z s" 'apib-get-json-schema ; Print all generated JSON Schemas
+    ))
 #+END_SRC
 
 *** NASM
@@ -6436,6 +7007,51 @@ When gdb debugging, show the many windows (stack trace, break points, etc).
  :config
  (dap-mode 1)
  (dap-ui-mode 1))
+#+END_SRC
+
+** Coverage
+
+Test coverage overlay. Highlights untested lines.
+
+#+BEGIN_SRC emacs-lisp
+(use-package coverlay
+  :preface
+  (defun my/coverlay-mode-enable ()
+    "Turn on `coverlay-mode'."
+    (coverlay-minor-mode 1)
+    (when (and (buffer-file-name) (not (bound-and-true-p coverlay--loaded-filepath)))
+      (let* ((coverage-file
+              (concat
+               (locate-dominating-file (file-name-directory (buffer-file-name)) "coverage")
+               "coverage"
+               "/lcov.info")))
+        (when (file-exists-p coverage-file)
+          (coverlay-watch-file coverage-file)))))
+  :custom
+  (coverlay:mark-tested-lines nil)
+  :diminish coverlay-minor-mode)
+#+END_SRC
+
+** Quickrun
+
+Run command quickly.
+
+#+BEGIN_SRC emacs-lisp
+(use-package quickrun
+  :preface
+  (defun my/display-ctrl-M-as-newline ()
+    "Display `^M' as newline."
+    (interactive)
+    (setq buffer-display-table (make-display-table))
+    (aset buffer-display-table ?\^M [?\n]))
+  :hook
+  (quickrun--mode . my/display-ctrl-M-as-newline)
+  :config
+  (nmap
+    :prefix my/leader
+    "q q" 'quickrun
+    "q r" 'quickrun-region
+    "t q" 'quickrun-autorun-mode))
 #+END_SRC
 
 ** HTTP
@@ -6543,6 +7159,7 @@ highlighting won't work for new regions of Haskell code in the
 (setq mmm-parse-when-idle 't))
 #+end_src
 ** Help
+*** Helpful
 
 See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
 
@@ -6559,6 +7176,18 @@ See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
    "H k" 'helpful-key))
 #+END_SRC
 
+*** Devdocs
+
+Allows to easily search the =DevDocs= documentation.
+
+#+BEGIN_SRC emacs-lisp
+(use-package devdocs
+  :config
+  (nmap
+    :prefix my/leader
+    "h h" 'devdocs-search))
+#+END_SRC
+
 ** Infrastructure
 *** Net utils
 
@@ -6567,15 +7196,15 @@ See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
  :config
  (nmap
    :prefix my/leader
-   "n p" 'ping
-   "n i" 'ifconfig
-   "n w" 'iwconfig
-   "n n" 'netstat
-   "n a" 'arp
-   "n r" 'route
-   "n h" 'nslookup-host
-   "n d" 'dig
-   "n s" 'smbclient))
+   "N p" 'ping
+   "N i" 'ifconfig
+   "N w" 'iwconfig
+   "N n" 'netstat
+   "N a" 'arp
+   "N r" 'route
+   "N h" 'nslookup-host
+   "N d" 'dig
+   "N s" 'smbclient))
 #+END_SRC
 
 *** IX
@@ -6591,12 +7220,15 @@ See the [[https://github.com/Wilfred/helpful][package repo]] for more info.
    "G i d" 'ix-delete))
 #+END_SRC
 
-*** Direnv (disabled)
+*** Direnv
 
 Provides [[https://direnv.net/][=direnv=]] integration for Emacs.
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package direnv
+ :demand t
+ :custom
+ (direnv-always-show-summary nil)
  :config
  (direnv-mode))
 #+END_SRC
@@ -6624,7 +7256,7 @@ Provides [[https://direnv.net/][=direnv=]] integration for Emacs.
 
 ** Email
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package mu4e
  :ensure nil
  :commands
@@ -6747,6 +7379,25 @@ M-x pdf-info-check-epdfinfo RET
 
 #+BEGIN_SRC emacs-lisp
 (use-package djvu)
+#+END_SRC
+
+*** EPUB
+
+Major mode for reading ~EPUB~'s in Emacs.
+
+#+BEGIN_SRC emacs-lisp
+(use-package nov
+  :preface
+  (defun my/nov-delayed-render-setup ()
+    (run-with-idle-timer 0.2 nil 'nov-render-document))
+  (defun my/nov-fringes-setup ()
+    "Hide the fringes for `nov-mode'."
+    (set-window-fringes (get-buffer-window) 0 0 nil))
+  :mode
+  ("\\.epub$" . nov-mode)
+  :hook
+  (nov-mode . my/nov-delayed-render-setup)
+  (nov-mode . my/nov-fringes-setup))
 #+END_SRC
 
 ** Translation
@@ -6951,7 +7602,67 @@ make compile
  (telega-use-notifications t))
 #+END_SRC
 
+*** ERC
+
+#+BEGIN_SRC emacs-lisp
+(use-package erc
+  :preface
+  (defun my/erc-line-setup ()
+    "Line configuration for `erc-mode'."
+    (visual-line-mode 0))
+  (defun my/erc-parens-setup ()
+    "Parenthesis configuration for `erc-mode'."
+    (smartparens-strict-mode 0))
+  :hook
+  (erc-mode . my/erc-line-setup)
+  (erc-mode . my/erc-parens-setup)
+  :custom
+  (erc-hide-list '("JOIN" "PART" "QUIT"))
+  (erc-prompt-for-password nil)
+  (smartparens-mode 1))
+#+END_SRC
+
+Nickname Highlighting for ERC.
+
+#+BEGIN_SRC emacs-lisp
+(use-package erc-hl-nicks)
+#+END_SRC
+
+A hexchat-like activity overview for ERC channels.
+
+#+BEGIN_SRC emacs-lisp
+(use-package erc-status-sidebar)
+#+END_SRC
+
+Shows inline clickable youtube thumbnails, info and description
+in erc buffers. Uses youtube api v3.
+
+#+BEGIN_SRC emacs-lisp
+(use-package erc-yt
+  :config
+  (add-to-list 'erc-modules 'youtube)
+  (erc-update-modules))
+#+END_SRC
+
+Fetch and show received images in a ERC buffer.
+#+BEGIN_SRC emacs-lisp
+(use-package erc-image
+  :config
+  (add-to-list 'erc-modules 'image)
+  (erc-update-modules))
+#+END_SRC
+
+An Emacs mode for viewing ERC logs.
+
+#+BEGIN_SRC emacs-lisp
+(use-package erc-view-log)
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+#+END_SRC
+
 ** Pomodoro
+*** Pomidor
 
 #+BEGIN_SRC emacs-lisp
 (use-package pomidor
@@ -6989,6 +7700,37 @@ make compile
    "s" 'pomidor-stop    ; "RET"
    "b" 'pomidor-break   ; "SPC"
    "r" 'pomidor-reset))
+#+END_SRC
+
+*** RedTick
+
+Provides a little pomodoro timer in the mode-line.
+
+#+BEGIN_SRC emacs-lisp
+(use-package redtick
+ :config
+ (nmap
+   :prefix my/leader
+   "x t" 'redtick))
+#+END_SRC
+
+** Recording
+
+#+BEGIN_SRC emacs-lisp :tangle yes
+(use-package names
+  :demand t)
+
+(use-package camcorder
+  :after (names)
+  :custom
+  (output-directory "~/Videos/camcorder")
+  (gif-output-directory "~/Pictures/camcorder")
+  :config
+  (nmap
+    :prefix my/leader
+    "r r" 'camcorder-record
+    "r R" 'camcorder-mode
+    "r c" 'camcorder-convert-to-gif))
 #+END_SRC
 
 ** Statistics
@@ -7403,9 +8145,15 @@ _G_: github         _p_: pursuit           ^^
 
 ** Diminish
 
+Hide minor modes to save space.
+
 #+BEGIN_SRC emacs-lisp
 (use-package diminish
  :config
+ (diminish 'abbrev-mode)
+ (diminish 'auto-fill-function)
+ (with-eval-after-load 'face-remap (diminish 'buffer-face-mode))
+ (with-eval-after-load 'with-editor (diminish 'with-editor-mode))
  (eval-after-load "purescript-indentation" '(diminish 'purescript-indentation-mode))
  (eval-after-load "dired" '(diminish 'dired-omit-mode))
  (eval-after-load "hideshow" '(diminish 'hs-minor-mode))
