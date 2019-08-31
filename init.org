@@ -358,8 +358,10 @@ minibuffer histories to a file (=~/.emacs-history= by default).
   :custom
   (savehist-additional-variables
    '(kill-ring
+     ;; search entries
      search-ring
      regexp-search-ring))
+  ;; save every minute
   (savehist-autosave-interval 60)
   (savehist-save-minibuffer-history t)
   :init
@@ -762,17 +764,6 @@ Turn-off tooltips on cursor hover-over.
 
 *** Echo area
 
-Adjust the font face used for the echo area.
-
-#+BEGIN_SRC emacs-lisp
-(dolist (buffer-name
-         '(" *Echo Area 0*"
-           " *Echo Area 1*"))
-  (with-current-buffer (get-buffer-create buffer-name)
-    (setq-local face-remapping-alist
-                '((default (:height 0.9) variable-pitch)))))
-#+END_SRC
-
 ** Editor
 *** Customizations
 
@@ -992,7 +983,6 @@ specify these rules.
 (use-package base16-theme
   :config
   ;; (load-theme 'base16-chalk t)
-  (load-theme 'base16-black-metal t)
   ;; (load-theme 'base16-default-dark t)
   ;; (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
@@ -1005,15 +995,26 @@ specify these rules.
   ;; (load-theme 'base16-irblack t)
 #+END_SRC
 
+~base16-black-metal~ + customizations.
+
+#+BEGIN_SRC emacs-lisp
+(load-theme 'base16-black-metal t)
+(custom-set-faces
+ '(proof-queue-face ((t (:foreground "#eee"))))
+ '(proof-locked-face ((t (:background "#001800" :foreground "#4a473d"))))
+ '(proof-locked-face ((t (:background "#0d3360" ))))
+ '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
+#+END_SRC
+
 ~base16-one-light~ + customizations.
 
 #+BEGIN_SRC emacs-lisp :tangle no
-  (load-theme 'base16-one-light t)
-  (custom-set-faces
-   '(proof-queue-face ((t (:foreground "#f0f0f0"))))
-   '(proof-locked-face ((t (:background "#faebd7" :foreground "#4a473d"))))
-   '(proof-locked-face ((t (:background "#faebd7" ))))
-   '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
+(load-theme 'base16-one-light t)
+(custom-set-faces
+ '(proof-queue-face ((t (:foreground "#f0f0f0"))))
+ '(proof-locked-face ((t (:background "#faebd7" :foreground "#4a473d"))))
+ '(proof-locked-face ((t (:background "#faebd7" ))))
+ '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -1359,12 +1360,12 @@ Hide async shell command buffers.
  :test #'equal)
 #+END_SRC
 
-*** Popups
+*** Popups (disabled)
 
 Always display pop up buffers at the bottom and regard all star
-buffers as such buffers.
+buffers as such buffers. (Not always that useful)
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (let ((rule
        `(,(rx bos "*" (one-or-more anything) "*" (optional "<" (one-or-more anything) ">") eos)
          (display-buffer-reuse-window
@@ -1793,8 +1794,6 @@ distracting.
 
 #+BEGIN_SRC emacs-lisp
 (use-package hl-line
-  :hook
-  ((prog-mode conf-mode) . hl-line-mode)
   :custom
   ;; Only highlight in selected window
   (hl-line-sticky-flag nil)
@@ -2045,6 +2044,25 @@ modes displaying documents or presentation.
 (use-package hide-mode-line)
 #+END_SRC
 
+*** Volatile highlights (disabled)
+
+Doesn't seem to work.
+See [[https://github.com/k-talo/volatile-highlights.el/issues/17][this issue]] for more info.
+
+#+BEGIN_SRC emacs-lisp :tangle no
+(use-package volatile-highlights
+  :config
+  (volatile-highlights-mode t)
+  ;; evil
+  (vhl/define-extension
+   'evil 'evil-paste-after 'evil-paste-before
+   'evil-paste-pop 'evil-move)
+  (vhl/install-extension 'evil)
+  ;; undo-tree
+  (vhl/define-extension 'undo-tree 'undo-tree-yank 'undo-tree-move)
+  (vhl/install-extension 'undo-tree))
+#+END_SRC
+
 *** Beacon
 
 Visualizes cursor position. Might slow (or not so), but it works good without
@@ -2129,28 +2147,28 @@ evil mode.
  ;; which breaks evil-mc
  (with-eval-after-load 'evil-maps
    (define-key evil-normal-state-map (kbd "C-n") nil)
-   (define-key evil-normal-state-map (kbd "C-p") nil))
- (nmap
-   "C-M-l" 'evil-window-increase-width
-   "C-M-h" 'evil-window-decrease-width
-   "C-M-k" 'evil-window-increase-height
-   "C-M-j" 'evil-window-decrease-height))
+   (define-key evil-normal-state-map (kbd "C-p") nil)))
 #+END_SRC
 
 *** Evil collection
 
 #+BEGIN_SRC emacs-lisp
 (use-package evil-collection
- :init
- (setq
-  ;; Don't enable vim key bindings in minibuffer
-  ;; its a default setting, just want it to be explicitly stated here
-  evil-collection-setup-minibuffer nil
-  ;; If you don't need everything - uncomment and add everything you want
-  ;; evil-collection-mode-list '()
-  evil-collection-company-use-tgn nil)
- :config
- (evil-collection-init))
+  :init
+  (setq
+   ;; Don't enable vim key bindings in minibuffer
+   ;; its a default setting, just want it to be explicitly stated here
+   evil-collection-setup-minibuffer nil
+   ;; If you don't need everything - uncomment and add everything you want
+   ;; evil-collection-mode-list '()
+   evil-collection-company-use-tgn nil)
+  :config
+  (evil-collection-init)
+  (nmap
+    "C-M-l" 'evil-window-increase-width
+    "C-M-h" 'evil-window-decrease-width
+    "C-M-k" 'evil-window-increase-height
+    "C-M-j" 'evil-window-decrease-height))
 #+END_SRC
 
 *** Alignment
@@ -2227,7 +2245,7 @@ See the [[https://github.com/noctuid/emacs-sentence-navigation][package repo]] f
  :diminish evil-mc-mode)
 #+END_SRC
 
-*** TODO Matchit
+*** Matchit
 
 #+BEGIN_SRC emacs-lisp
 (use-package evil-matchit
@@ -2416,19 +2434,6 @@ Display eldoc in a child frame.
   :custom
   (eldoc-posframe-left-fringe 0)
   (eldoc-posframe-poshandler #'posframe-poshandler-point-bottom-left-corner))
-#+END_SRC
-
-** Secrets
-
-#+BEGIN_SRC emacs-lisp
-(use-package use-package-secrets
-  :custom
-  (use-package-secrets-default-directory "~/.emacs.d/secrets")
-  :quelpa
-  (use-package-secrets
-    :repo "a13/use-package-secrets"
-    :fetcher github
-    :version original))
 #+END_SRC
 
 ** Bookmarks
@@ -3196,8 +3201,11 @@ Undo/redo window layout (split pane) config.
 (use-package transpose-frame
   :config
   (nmap
-    :prefix my/leader
-    "w" 'transpose-frame))
+    "C-M-SPC" 'transpose-frame
+    "C-M-u" 'flip-frame
+    "C-M-i" 'flip-frame
+    "C-M-y" 'flop-frame
+    "C-M-o" 'flop-frame))
 #+END_SRC
 
 **** Zoom
@@ -3499,16 +3507,19 @@ Access your Firefox bookmarks and history in Emacs.
 
 #+BEGIN_SRC emacs-lisp
 (use-package swiper
- :after general
- :init
- ;; Recenter after swiper is finished
- (setq swiper-action-recenter t)
- :config
- (general-define-key
-  :keymaps 'swiper-map
-  "C-r" 'swiper-query-replace)
- (nmap
-   "C-s" 'swiper))
+  :after general
+  :init
+  ;; Recenter after swiper is finished
+  (setq swiper-action-recenter t)
+  :config
+  (general-define-key
+   :keymaps 'swiper-map
+   "C-r" 'swiper-query-replace)
+  (general-define-key
+   :keymaps 'ivy-mode-map
+   "C-k" 'ivy-previous-line)
+  (nmap
+    "C-s" 'swiper))
 #+END_SRC
 
 *** Dumb jump
@@ -3690,35 +3701,36 @@ Popup commit message for current line.
 
 #+BEGIN_SRC emacs-lisp
 (use-package evil-magit
- :after (evil magit fullframe)
- :init
- (setq evil-magit-state 'normal)
- :config
- ;; (fullframe magit-log-all quit-window)
- ;; (fullframe magit-log-current quit-window)
- ;; When commiting, start in evil-insert state
- (with-eval-after-load 'evil
-   (add-hook 'git-commit-mode-hook 'evil-insert-state)
-   (evil-set-initial-state 'magit-log-edit-mode 'insert))
- (nmap
-   :prefix my/leader
-   "g w" 'magit-stage-file      ; "w" - write
-   "g r" 'magit-unstage-file    ; "r" - remove
-   "g R" 'magit-reset-soft      ; "R" - soft reset
-   "g s" 'magit-status          ; "s" - status
-   "g d" 'magit-diff-range      ; "d" - diff
-   "g m" 'magit-merge-plain     ; "m" - merge
-   "g f" 'magit-file-popup      ; "f" - file
-   "g b" 'magit-branch-checkout ; "b" - branch
-   "g B" 'magit-branch-create   ; "B" - create a new branch
-   "g g" 'magit-blame-addition  ; "g" - blame (for a quick access)
-   "g c" 'magit-commit-create   ; "c" - commit
-   "g z" 'magit-rebase-branch   ; "z" - rebase
-   "g l" 'magit-log-all         ; "l" - log
-   "g p" 'magit-push-other)     ; "p" - push
- (when (eq system-type 'darwin)
-   (general-define-key
-    "s-g 'magit-status")))
+  :after (evil magit fullframe)
+  :init
+  (setq evil-magit-state 'normal)
+  :config
+  ;; (fullframe magit-log-all quit-window)
+  ;; (fullframe magit-log-current quit-window)
+  ;; When commiting, start in evil-insert state
+  (with-eval-after-load 'evil
+    (add-hook 'git-commit-mode-hook 'evil-insert-state)
+    (evil-set-initial-state 'magit-log-edit-mode 'insert))
+  (nmap
+    :prefix my/leader
+    "g w" 'magit-stage-file      ; "w" - write
+    "g r" 'magit-unstage-file    ; "r" - remove
+    "g R" 'magit-reset-soft      ; "R" - soft reset
+    "g s" 'magit-status          ; "s" - status
+    "g d" 'magit-diff-range      ; "d" - diff
+    "g m" 'magit-merge-plain     ; "m" - merge
+    "g f" 'magit-file-popup      ; "f" - file
+    "g b" 'magit-branch-checkout ; "b" - branch
+    "g B" 'magit-branch-create   ; "B" - create a new branch
+    "g g" 'magit-blame-addition  ; "g" - blame (for a quick access)
+    "g c" 'magit-commit-create   ; "c" - commit
+    "g z" 'magit-rebase-branch   ; "z" - rebase
+    "g l" 'magit-log-all         ; "l" - log
+    "g p" 'magit-push-other      ; "p" - push
+    "g P" 'magit-pull)           ; "P" - pull
+  (when (eq system-type 'darwin)
+    (general-define-key
+     "s-g 'magit-status")))
 #+END_SRC
 
 *** Magit todos
@@ -3939,9 +3951,9 @@ Command execution status indicator in the fringe.
   undo-tree-visualizer-timestamps t
   undo-tree-enable-undo-in-region nil
   ;; Attempt to fix the "unrecognized entry in undo list" error
-  ;; undo-tree-auto-save-history nil
+  undo-tree-auto-save-history t
   undo-tree-history-directory-alist
-  `(("." . ,(expand-file-name "undo" user-emacs-directory))))
+  `((".*" . ,(expand-file-name "undo" user-emacs-directory))))
  ;; Diff is slow as hell and it doesn't destroy the diff buffer automatically.
  ;; I'd recommend turning it on/off manually when needed.
  ;; (setq undo-tree-visualizer-diff t)
@@ -4184,6 +4196,15 @@ Also, disallow editing invisible areas.
 (setq org-catch-invisible-edits 'error)
 #+END_SRC
 
+This feature came to Org in version 8. It lets you type “normal
+quotes” in the org buffer, as opposed to =“this latex stuff”=,
+and will transform them on export so that your HTML/text output
+looks nice and your latex export looks nice!
+
+#+BEGIN_SRC emacs-lisp
+(setq org-export-with-smart-quotes t)
+#+END_SRC
+
 Forces to mark all child tasks as =DONE= before you can mark the
 parent as =DONE=.
 
@@ -4271,12 +4292,23 @@ drawer:
 (setq org-log-into-drawer t)
 #+END_SRC
 
+Open URLs in Firefox.
+
+#+BEGIN_SRC emacs-lisp
+(setq
+ org-file-apps
+ (quote
+  ((auto-mode . emacs)
+   ("\\.mm\\'" . default)
+   ("\\.x?html?\\'" . "firefox %s")
+   ("\\.pdf\\'" . default))))
+#+END_SRC
+
 Custom capture templates.
 
 #+BEGIN_SRC emacs-lisp
 (setq
  org-capture-templates
-
  '(("t" "todo" entry (file "todo.org") "* TODO %^{task name}\n%u\n%a\n")
    ("n" "note" entry (file "notes.org") "* %^{heading} %t %^g\n  %?\n")
    ("j" "journal" entry (file "journal.org") "* %U - %^{heading}\n  %?")))
@@ -4493,26 +4525,19 @@ Install =ox-hugo= and enable auto export.
 
 #+BEGIN_SRC emacs-lisp
 (use-package ox-hugo
- :after (ox)
- :commands (org-hugo-slug)
- :config
-#+END_SRC
-
-Org Capture template to quickly create posts and generate slugs.
-
-#+BEGIN_SRC emacs-lisp
-;; Populates only the EXPORT_FILE_NAME property in the inserted headline.
-(require 'ox-hugo)
-
-;; Define variable to get rid of 'reference to free variable' warnings.
-(defvar org-capture-templates nil)
-(with-eval-after-load 'org-capture
-  (defun org-hugo-new-subtree-post-capture-template ()
+  :demand t
+  :after (ox org-capture)
+  :commands (org-hugo-slug)
+  :config
+  (require 'ox-hugo)
+  ;; Define variable to get rid of 'reference to free variable' warnings.
+  (defun my/org-hugo/new-subtree-post ()
     "Returns `org-capture' template string for new blog post.
 See `org-capture-templates' for more information."
     (let*
         ;; Prompt to enter the post title
         ((title (read-from-minibuffer "Post Title: "))
+         (date (format-time-string (org-time-stamp-format :long :inactive) (org-current-time)))
          (fname (org-hugo-slug title)))
       (mapconcat
        #'identity
@@ -4520,18 +4545,18 @@ See `org-capture-templates' for more information."
          ,(concat "* TODO " title)
          ":PROPERTIES:"
          ,(concat ":EXPORT_FILE_NAME: " fname)
+         ,(concat ":EXPORT_DATE: " date) ;Enter current date and time
          ":END:"
          "%?\n") ; Place the cursor here finally
        "\n")))
-
+  ;; org-capture template to quickly create posts and generate slugs.
   (add-to-list
    'org-capture-templates
    '("b"
      "blog post"
      entry
-     (file+olp "~/projects/personal/blog/content-org/blog.org" "Blog")
-     (function org-hugo-new-subtree-post-capture-template))))
-)
+     (file "~/projects/personal/blog/content-org/posts.org")
+     (function my/org-hugo/new-subtree-post))))
 #+END_SRC
 
 *** Slim HTML export (disabled)
@@ -4816,11 +4841,6 @@ Evaluation Result OverlayS for Emacs Lisp.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(use-package suggest
- :defer t)
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
 (use-package ipretty
   :defer t
   :commands
@@ -4995,7 +5015,7 @@ Discover functions.
    ;; Auto import the modules reported by GHC to have been loaded
    haskell-process-auto-import-loaded-modules t
    ;; Show things like type info instead of printing to the message area
-   haskell-process-use-presentation-mode t
+   ;; haskell-process-use-presentation-mode t
    ;; Don't popup errors in a separate buffer
    haskell-interactive-popup-errors nil
    ;; Make haskell-process-log look better
@@ -5286,9 +5306,7 @@ A new, simple purescript mode for cheap syntax highlighting.
 (use-package idris-mode
  :custom
  (idris-repl-banner-functions '(idris-repl-text-banner))
- (idris-repl-prompt-style 'short)
- :hook
- (idris-mode . enable-idris-pretty-symbols))
+ (idris-repl-prompt-style 'short))
 #+END_SRC
 
 *** ATS/ATS2 (disabled)
@@ -5456,6 +5474,7 @@ See the [[https://github.com/ocaml/merlin][package repo]] for more info.
 #+BEGIN_SRC emacs-lisp
 (use-package merlin
   :after (company tuareg)
+  :demand t
   :if (and my/merlin-site-elisp (my/ocaml-in-emacs-p))
   :load-path my/merlin-site-elisp
   :init
@@ -7220,11 +7239,12 @@ Allows to easily search the =DevDocs= documentation.
    "G i d" 'ix-delete))
 #+END_SRC
 
-*** Direnv
+*** Direnv (disabled)
 
 Provides [[https://direnv.net/][=direnv=]] integration for Emacs.
+It is very slow.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package direnv
  :demand t
  :custom
@@ -7255,6 +7275,20 @@ Provides [[https://direnv.net/][=direnv=]] integration for Emacs.
 #+END_SRC
 
 ** Email
+*** Notmuch
+
+#+BEGIN_SRC emacs-lisp
+(use-package notmuch)
+#+END_SRC
+
+Search emails in =Notmuch= asynchronously with =Ivy=.
+
+#+BEGIN_SRC emacs-lisp
+(use-package counsel-notmuch
+  :after (notmuch counsel))
+#+END_SRC
+
+*** Mu4e
 
 #+BEGIN_SRC emacs-lisp
 (use-package mu4e
@@ -7408,6 +7442,7 @@ directly from Emacs.
 #+BEGIN_SRC emacs-lisp
 (use-package google-translate
  :after (general)
+ :demand t
  :init
  (setq google-translate-default-source-language "en")
  (setq google-translate-default-target-language "ru")
@@ -7433,7 +7468,7 @@ directly from Emacs.
    "https://duckduckgo.com/?q=%s"
    :keybinding "d")
  (defengine github
-   "https://github.com/search?ref=simplesearch&q=%s"
+   "https://github.com/search?q=%s&type=Code"
    :keybinding "G")
  (defengine google
    "http://www.google.com/search?ie=utf-8&oe=utf-8&q=%s"
@@ -7598,8 +7633,7 @@ make compile
   ("h" . nil)
   ("l" . nil))
  :custom
- (telega-completing-read-function #'ivy-completing-read)
- (telega-use-notifications t))
+ (telega-completing-read-function #'ivy-completing-read))
 #+END_SRC
 
 *** ERC
@@ -7607,19 +7641,125 @@ make compile
 #+BEGIN_SRC emacs-lisp
 (use-package erc
   :preface
-  (defun my/erc-line-setup ()
+  (defvar my/erc/default-nick "vyorkin")
+  (defvar my/erc/default-name "Vasiliy Yorkin")
+  (defun my/erc/line-setup ()
     "Line configuration for `erc-mode'."
     (visual-line-mode 0))
-  (defun my/erc-parens-setup ()
+  (defun my/erc/parens-setup ()
     "Parenthesis configuration for `erc-mode'."
     (smartparens-strict-mode 0))
+  (defun my/erc/setup ()
+    (set (make-local-variable 'scroll-conservatively) 100)
+    (erc-spelling-mode 1)
+    (my/erc/line-setup)
+    (my/erc/parens-setup))
+  (defun my/erc/reset-track-mode ()
+    (interactive)
+    (setq erc-modified-channels-alist nil)
+    (erc-modified-channels-update)
+    (erc-modified-channels-display)
+    (force-mode-line-update))
+  (defun my/erc/connect ()
+    (interactive)
+    (erc
+     :server "irc.freenode.net" :port 6667
+     :nick my/erc/default-nick
+     :password my/erc/default-password)
+    (erc-ssl
+     :server "irc.gitter.im" :port 6667
+     :full-name my/erc/default-name
+     :nick my/erc/default-nick
+     :password my/erc/irc-gitter-password)
+    ;; (erc :server "irc.oftc.net" :port 6667 :nick my/erc/default-nick)
+    )
+  :commands (erc erc-tls)
+  :secret "erc.el"
   :hook
-  (erc-mode . my/erc-line-setup)
-  (erc-mode . my/erc-parens-setup)
+  (erc-mode . my/erc/setup)
   :custom
-  (erc-hide-list '("JOIN" "PART" "QUIT"))
+  (erc-hide-list '("JOIN" "NICK" "PART" "QUIT" "MODE"))
+  ;; autojoin after successful NickServ identification,
+  ;; rather than immediately on connecting
+  (erc-autojoin-timing 'ident)
   (erc-prompt-for-password nil)
-  (smartparens-mode 1))
+  (erc-autojoin-channels-alist
+   '(("freenode.net"
+      "#emacs" "#emacs-beginners"
+      "#haskell" "#haskell-beginners"
+      ;; "#haskell-blah" "#hackage"
+      ;; "#haskell-lang" "#haskell-emacs" "#ghc"
+      ;; "#hspec"
+      ;; "#haskell-in-depth" "#ghcjs" "#haskell-ide-engine"
+      "#ocaml"
+      "#purescript"
+      ;; "#elixir" "#emacs-elixir"
+      "#idris" "#agda" "#coq"
+      "#nix-lang" "#nixos" "#nixos-chat"
+      ;; "#nixos-de" "#nix-darwin"
+      "#lisp"
+      "#i3"
+      ;; "#i3-offtopic"
+      )))
+  (smartparens-mode 1)
+  :config
+  ;; Logging:
+  (setq
+   erc-log-insert-log-on-open nil
+   erc-log-channels t
+   erc-log-channels-directory "~/.irclogs/"
+   erc-save-buffer-on-part t
+   erc-hide-timestamps nil)
+  (add-hook 'erc-insert-post-hook 'erc-save-buffer-in-logs)
+  (add-hook 'erc-mode-hook '(lambda () (when (not (featurep 'xemacs))
+                                    (set (make-variable-buffer-local
+                                          'coding-system-for-write)
+                                         'emacs-mule))))
+  (add-hook 'erc-insert-post-hook 'erc-truncate-buffer)
+  (setq erc-truncate-buffer-on-save t)
+  ;; Truncate buffers so they don't hog core
+  (setq erc-max-buffer-size 20000)
+  (setq erc-track-exclude-types
+        '("JOIN" "NICK" "PART" "QUIT" "MODE"
+          "324" "329" "332" "333" "353" "477"))
+  ;; Channel-specific prompt
+  (setq erc-prompt (lambda () (concat "[" (buffer-name) "]")))
+  ;; By default, ERC selects the channel buffers when it
+  ;; reconnects. This makes it to connect to channels in the background
+  (setq erc-join-buffer 'bury)
+  ;; Appearance-related settings
+  (setq erc-timestamp-only-if-changed-flag nil
+        erc-timestamp-format "%H:%M "
+        erc-fill-prefix "          "
+        erc-fill-column 78
+        erc-insert-timestamp-function 'erc-insert-timestamp-left
+        ivy-use-virtual-buffers nil)
+  ;; When carrying on a conversation in IRC, most typically you
+  ;; want to address the person or people you last addressed.
+  ;; This will automatically insert the last recipient after the
+  ;; prompt, providing it was less than 3 minutes ago
+  (defadvice erc-display-prompt (after conversation-erc-display-prompt activate)
+    "Insert last recipient after prompt."
+    (let ((previous
+           (save-excursion
+             (if (and (search-backward-regexp (concat "^[^<]*<" erc-nick ">") nil t)
+                      (search-forward-regexp (concat "^[^<]*<" erc-nick ">"
+                                                     " *\\([^:]*: ?\\)") nil t))
+                 (match-string 1)))))
+      ;; when we got something, and it was in the last 3 mins, put it in
+      (when (and
+             previous
+             (> 180 (time-to-seconds
+                     (time-since (get-text-property 0 'timestamp previous)))))
+        (set-text-properties 0 (length previous) nil previous)
+        (insert previous))))
+  (erc-track-minor-mode 1)
+  (erc-track-mode 1)
+  (nmap
+    :prefix my/leader
+    "/" 'my/erc/connect)
+  (nmap 'erc-mode-map
+    "C-c r" 'my/erc/reset-track-mode))
 #+END_SRC
 
 Nickname Highlighting for ERC.
@@ -7631,7 +7771,12 @@ Nickname Highlighting for ERC.
 A hexchat-like activity overview for ERC channels.
 
 #+BEGIN_SRC emacs-lisp
-(use-package erc-status-sidebar)
+(use-package erc-status-sidebar
+  :custom
+  (erc-status-sidebar-width 34)
+  :config
+  (nmap 'erc-mode-map
+    "C-c C-s" 'erc-status-sidebar-toggle))
 #+END_SRC
 
 Shows inline clickable youtube thumbnails, info and description
@@ -7645,6 +7790,7 @@ in erc buffers. Uses youtube api v3.
 #+END_SRC
 
 Fetch and show received images in a ERC buffer.
+
 #+BEGIN_SRC emacs-lisp
 (use-package erc-image
   :config
@@ -7656,9 +7802,6 @@ An Emacs mode for viewing ERC logs.
 
 #+BEGIN_SRC emacs-lisp
 (use-package erc-view-log)
-#+END_SRC
-
-#+BEGIN_SRC emacs-lisp
 #+END_SRC
 
 ** Pomodoro
@@ -7716,7 +7859,7 @@ Provides a little pomodoro timer in the mode-line.
 
 ** Recording
 
-#+BEGIN_SRC emacs-lisp :tangle yes
+#+BEGIN_SRC emacs-lisp
 (use-package names
   :demand t)
 
@@ -7761,12 +7904,12 @@ this in details]].
 
 Setup wakatime.
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package wakatime-mode
  :init
  (setq
   wakatime-api-key (getenv "WAKATIME_API_KEY")
-  wakatime-cli-path "/usr/bin/wakatime")
+  wakatime-cli-path "/run/current-system/sw/bin/wakatime")
  :config
  (global-wakatime-mode)
  :diminish wakatime-mode)
