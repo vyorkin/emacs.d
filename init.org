@@ -1002,7 +1002,6 @@ specify these rules.
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
  '(proof-locked-face ((t (:background "#001800" :foreground "#4a473d"))))
- '(proof-locked-face ((t (:background "#0d3360" ))))
  '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
 #+END_SRC
 
@@ -1962,7 +1961,7 @@ Add emoji support. This is useful when working with =HTML=.
 #+END_SRC
 
 *** Mode line
-**** Mood-line (active)
+**** Mood-line
 
 A minimal mode-line configuration that aims to replicate some of the features of
 the =doom-modeline= package.
@@ -2539,37 +2538,91 @@ This only works with the =company-capf= backend.
  (company-flx-mode +1))
 #+END_SRC
 
-** Spellcheck
+** Writing
+*** Spellcheck
 
 #+BEGIN_SRC emacs-lisp
 (use-package ispell
- :ensure nil
- :custom
- (ispell-program-name "aspell")
- ;; (ispell-dictionary "english")
- ;; (ispell-local-dictionary "russian")
- (ispell-really-aspell t)
- (ispell-really-hunspell nil)
- (ispell-extra-args '("--sug-mode=ultra"))
- (ispell-encoding8-command t)
- (ispell-silently-savep t)
- (ispell-have-new-look t)
- (ispell-enable-tex-parser t)
- :config
- ;; Don’t spell check in org source code blocks.
- (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_SRC" . "#\\+END_SRC"))
- (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_LATEX" . "#\\+END_LATEX"))
- (nmap
-   "C-c i w" 'ispell-word
-   "C-c i c" 'ispell-comments-and-strings
-   "C-c i d" 'ispell-change-dictionary
-   "C-c i k" 'ispell-kill-ispell
-   "C-c i m" 'ispell-message
-   "C-c i r" 'ispell-region)
- (when (eq system-type 'darwin)
-   (general-define-key
-    "s-\\" 'ispell-word)))
+  :ensure nil
+  :preface
+  (defun my/ispell/org-setup ()
+    "Skip regions for ispell checking"
+    (make-local-variable 'ispell-skip-region-alist)
+    (add-to-list 'ispell-skip-region-alist '("~" . "~"))
+    (add-to-list 'ispell-skip-region-alist '("=" . "="))
+    (add-to-list 'ispell-skip-region-alist '("\\[" . "\\]"))
+    (add-to-list 'ispell-skip-region-alist '("^ *#\\+OPTIONS:" . "$"))
+    (add-to-list 'ispell-skip-region-alist '("^ *#\\+ATTR_" . "$"))
+    (add-to-list 'ispell-skip-region-alist '(":\\(PROPERTIES\\|LOGBOOK\\):" . ":END:"))
+    ;; Don’t spell check in org source code blocks, example, latex
+    (add-to-list 'ispell-skip-region-alist '("^ *#\\+BEGIN_SRC" . "^ *#\\+END_SRC"))
+    (add-to-list 'ispell-skip-region-alist '("^ *#\\+BEGIN_EXAMPLE" . "^ *#\\+END_EXAMPLE"))
+    (add-to-list 'ispell-skip-region-alist '("#\\+BEGIN_LATEX" . "#\\+END_LATEX")))
+  :hook
+  (org-mode . my/ispell/org-setup)
+  :custom
+  (ispell-program-name "aspell")
+  ;; (ispell-dictionary "english")
+  ;; (ispell-local-dictionary "russian")
+  (ispell-really-aspell t)
+  (ispell-really-hunspell nil)
+  (ispell-extra-args '("--sug-mode=ultra"))
+  (ispell-encoding8-command t)
+  (ispell-silently-savep t)
+  (ispell-have-new-look t)
+  (ispell-enable-tex-parser t)
+  :config
+  (nmap
+    "C-c i w" 'ispell-word
+    "C-c i c" 'ispell-comments-and-strings
+    "C-c i d" 'ispell-change-dictionary
+    "C-c i k" 'ispell-kill-ispell
+    "C-c i m" 'ispell-message
+    "C-c i r" 'ispell-region)
+  (when (eq system-type 'darwin)
+    (general-define-key
+     "s-\\" 'ispell-word)))
 #+END_SRC
+
+*** Writegood
+
+Minor mode for Emacs to improve English writing.
+
+#+BEGIN_SRC emacs-lisp
+(use-package writegood-mode
+  :hook
+  (text-mode)
+  :config
+  (nmap
+    :prefix my/leader
+    "W g" 'writegood-grade-level
+    "W r" 'writegood-reading-ease))
+#+END_SRC
+
+*** Misc
+
+#+begin_src emacs-lisp
+(use-package wc-mode)
+#+end_src
+
+Provides predictive abbreviation expansion with no configuration.
+
+#+begin_src emacs-lisp
+(use-package pabbrev)
+#+end_src
+
+Transform words in Emacs (upcase, downcase, capitalize, etc).
+
+#+begin_src emacs-lisp
+(use-package fix-word)
+#+end_src
+
+Minor mode for typographical editing.
+#+begin_src emacs-lisp
+(use-package typo
+  :hook
+  (text-mode . typo-mode))
+#+end_src
 
 ** Flycheck
 *** Mode
@@ -2624,7 +2677,6 @@ See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more
   (unbind-key "C-j" flycheck-error-list-mode-map)
   :diminish flycheck-mode)
 #+END_SRC
-
 
 *** Posframe
 
@@ -2682,6 +2734,26 @@ Can be used together with the =flyheck-popup-tip=.
   (flycheck-pos-tip-mode))
 #+END_SRC
 
+*** Proselint
+
+Add prose linting to Flycheck.
+Depends on the =proselint= command line tool.
+
+TODO: Find a way to disable it in code regions.
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'flycheck
+  (flycheck-define-checker proselint
+    "A linter for prose."
+    :command ("proselint" source-inplace)
+    :error-patterns
+    ((warning line-start (file-name) ":" line ":" column ": "
+              (id (one-or-more (not (any " "))))
+              (message) line-end))
+    :modes (text-mode markdown-mode gfm-mode))
+  (add-to-list 'flycheck-checkers 'proselint))
+#+end_src
+
 ** Flyspell
 
 #+BEGIN_SRC emacs-lisp
@@ -2698,11 +2770,12 @@ Can be used together with the =flyheck-popup-tip=.
   flyspell-use-meta-tab nil
   flyspell-mode-line-string ""
   flyspell-auto-correct-binding (kbd ""))
- ;; Uncomment to enable spellcheck on the fly for all text modes or just for programming modes
- ;; :hook
- ;; ((text-mode . flyspell-mode)
-  ;; flyspell-prog-mode is useful for spell checking in comments and strings
-  ;; (prog-mode . flyspell-prog-mode))
+ :hook
+ ((text-mode . flyspell-mode)
+  (org-mode . flyspell-mode)
+  (gfm-mode . flyspell-mode)
+  (git-commit-mode . flyspell-mode)
+  (prog-mode . flyspell-prog-mode))
  :config
  (unbind-key "C-." flyspell-mode-map)
  (nmap
@@ -4825,7 +4898,14 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   (lisp-mode . highlight-sexp-mode))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
+=Prism= package disperses lisp forms (and other languages) into
+a spectrum of color by depth.
+
+I've disabled it for now because of error:
+
+~is Error (use-package): prism/:catch: Wrong number of arguments: (3 . 3), 0~
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package anaphora)
 (use-package prism
   :after (anaphora)
@@ -5738,11 +5818,13 @@ OCaml support for Flycheck using Merlin.
 *** Racket
 
 #+BEGIN_SRC emacs-lisp
+(use-package faceup)
 (use-package racket-mode
  :after
  (general
   smartparens
   org
+  faceup
   geiser)
  :if (executable-find "racket")
  :mode ("\\.rkt[dl]?\\'" . racket-mode)
@@ -7479,7 +7561,11 @@ directly from Emacs.
  (defengine google-maps
    "http://maps.google.com/maps?q=%s"
    :docstring "Mappin' it up."
-   :keybinding "m")
+   :keybinding "M")
+ (defengine melpa
+   "https://melpa.org/#/?q=%s"
+   :docstring "Searching on melpa"
+    :keybinding "m")
  (defengine project-gutenberg
    "http://www.gutenberg.org/ebooks/search/?query=%s")
  (defengine rfcs
@@ -8224,10 +8310,10 @@ _f_: install file
 ^Search Online^
 ────────────────────────────────────────────────────────
 _g_: google         _y_: youtube           _t_: twitter
-_t_: translate      _u_: urban dictionary  _m_: google maps
-_w_: wikipedia      _h_: hoogle            _i_: google images
-_s_: stack overflow _H_: hackage           _d_: duckduckgo
-_G_: github         _p_: pursuit           ^^
+_t_: translate      _u_: urban dictionary  _m_: melpa
+_w_: wikipedia      _h_: hoogle            _M_: google maps
+_s_: stack overflow _H_: hackage           _i_: google images
+_G_: github         _p_: pursuit           _d_: duckduckgo
   "
   ("g" engine/search-google)
   ("t" engine/search-google-translate)
@@ -8239,8 +8325,9 @@ _G_: github         _p_: pursuit           ^^
   ("h" engine/search-hoogle)
   ("H" engine/search-hackage)
   ("p" engine/search-pursuit)
+  ("m" engine/search-melpa)
   ("T" engine/search-twitter)
-  ("m" engine/search-google-maps)
+  ("M" engine/search-google-maps)
   ("i" engine/search-google-images)
   ("d" engine/search-duckduckgo))
 #+END_SRC
