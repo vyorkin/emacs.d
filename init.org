@@ -6859,6 +6859,20 @@ Add flycheck support.
  (flycheck-mode . flycheck-irony-setup))
 #+END_SRC
 
+*** CMake
+
+#+BEGIN_SRC emacs-lisp
+(use-package cmake-mode)
+
+(use-package cmake-font-lock
+  :config
+  (autoload 'cmake-font-lock-activate "cmake-font-lock" nil t)
+  (add-hook 'cmake-mode-hook 'cmake-font-lock-activate))
+
+(use-package eldoc-cmake
+  :hook (cmake-mode . eldoc-cmake-enable))
+#+END_SRC
+
 *** Objective C
 
 #+BEGIN_SRC emacs-lisp
