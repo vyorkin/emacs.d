@@ -1936,7 +1936,9 @@ Emacs.
 
 Don't forget to run ~M-x all-the-icons-install-fonts~.
 
-#+BEGIN_SRC emacs-lisp
+Disabled, it slows down dired.
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package all-the-icons
  :config
  (setq
@@ -3205,7 +3207,9 @@ Most of key bindings are provided by the =evil-collection=.
 
 *** Icons
 
-#+BEGIN_SRC emacs-lisp
+Disabled, too fancy for me.
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package all-the-icons-dired
  :hook
  (dired-mode . all-the-icons-dired-mode))
@@ -3410,9 +3414,9 @@ It doesn't work with evil-mode.
   (ivy-posframe-mode 1))
 #+END_SRC
 
-Ivy icons.
+Ivy icons. Disabled, too fancy for me.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package all-the-icons-ivy
  :after (ivy projectile)
  :commands
@@ -7977,6 +7981,13 @@ Provides a little pomodoro timer in the mode-line.
 #+END_SRC
 
 ** Statistics
+*** SLOC
+
+#+BEGIN_SRC emacs-lisp
+(use-package sloc
+  :quelpa (sloc :fetcher github :repo "leoliu/sloc.el"))
+#+END_SRC
+
 *** Uptimes
 
 Provides a simple system for tracking and displaying the uptimes of Emacs
