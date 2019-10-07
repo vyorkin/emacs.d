@@ -982,7 +982,6 @@ specify these rules.
 #+BEGIN_SRC emacs-lisp
 (use-package base16-theme
   :config
-  ;; (load-theme 'base16-chalk t)
   ;; (load-theme 'base16-default-dark t)
   ;; (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
@@ -995,13 +994,25 @@ specify these rules.
   ;; (load-theme 'base16-irblack t)
 #+END_SRC
 
-~base16-black-metal~ + customizations.
+~base16-chalk~ + customizations.
 
 #+BEGIN_SRC emacs-lisp
+(load-theme 'base16-chalk t)
+(custom-set-faces
+ '(proof-queue-face ((t (:foreground "#eee"))))
+ '(company-coq-comment-h1-face ((t (:size 1.5))))
+ '(proof-locked-face ((t (:background "#252525"))))
+ '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
+#+END_SRC
+
+~base16-black-metal~ + customizations.
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (load-theme 'base16-black-metal t)
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
- '(proof-locked-face ((t (:background "#001800" :foreground "#4a473d"))))
+ '(company-coq-comment-h1-face ((t (:size 1.5))))
+ '(proof-locked-face ((t (:background "#151515"))))
  '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
 #+END_SRC
 
@@ -1098,7 +1109,7 @@ why). So the code block below is untangled.
   (with-eval-after-load 'proof-general
     (custom-set-faces
      '(proof-queue-face ((t (:foreground "#eee"))))
-     '(proof-locked-face ((t (:background "#001800" :foreground "#4a473d"))))
+     '(proof-locked-face ((t (:background "#001800" :foreground "#aaccbb"))))
      '(proof-locked-face ((t (:background "#0d3360" ))))
      '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff"))))))
   (with-eval-after-load 'company))
@@ -1897,12 +1908,12 @@ Minor mode that highlights numeric literals in source code.
  (prog-mode . highlight-numbers-mode))
 #+END_SRC
 
-*** VI Tilde fringe
+*** VI Tilde fringe (disabled)
 
 Display tildes on empty lines in the Emacs fringe a la Vi.
 See the package [[https://github.com/syl20bnr/vi-tilde-fringe][repo]] for more info.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package vi-tilde-fringe
  :config
  (global-vi-tilde-fringe-mode)
@@ -3796,7 +3807,6 @@ Popup commit message for current line.
     "g s" 'magit-status          ; "s" - status
     "g d" 'magit-diff-range      ; "d" - diff
     "g m" 'magit-merge-plain     ; "m" - merge
-    "g f" 'magit-file-popup      ; "f" - file
     "g b" 'magit-branch-checkout ; "b" - branch
     "g B" 'magit-branch-create   ; "B" - create a new branch
     "g g" 'magit-blame-addition  ; "g" - blame (for a quick access)
@@ -3810,9 +3820,11 @@ Popup commit message for current line.
      "s-g 'magit-status")))
 #+END_SRC
 
-*** Magit todos
+*** Magit todos (disabled)
 
-#+BEGIN_SRC emacs-lisp
+Might be slow.
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package magit-todos
  :after (magit general)
  :commands
@@ -3874,9 +3886,11 @@ Popup commit message for current line.
 (use-package gitconfig-mode)
 #+END_SRC
 
-*** Magithub
+*** Magithub (disabled)
 
-#+BEGIN_SRC emacs-lisp
+Might be slow for big projects.
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package magithub
  :ensure t
  :after magit
@@ -4195,27 +4209,28 @@ Navigate tramp files.
 
 #+BEGIN_SRC emacs-lisp
 (use-package yasnippet
- :preface
- (defvar my/yasnippet/snippets
-  (my/emacs-path "yasnippet-snippets/snippets"))
- :load-path (lambda () (my/emacs-path "yasnippet-snippets"))
- :ensure nil
- :init
- (setq
-  yas-wrap-around-region t
-  yas-indent-line t
-  yas-snippet-dirs `(,my/yasnippet/snippets))
- :config
- (yas-global-mode 1)
- (nmap
-   :prefix my/leader
-   "y i" 'yas-insert-snippet
-   "y n" 'yas-new-snippet
-   "y v" 'yas-visit-snippet-file
-   "y r" 'yas-reload-all)
- (imap
-   "C-l" 'yas-insert-snippet)
- :diminish yas-minor-mode)
+  :preface
+  (defvar my/yasnippet/snippets
+    (my/emacs-path "yasnippet-snippets/snippets"))
+  :load-path
+  (lambda () (my/emacs-path "yasnippet-snippets"))
+  :ensure nil
+  :init
+  (setq
+   yas-wrap-around-region t
+   yas-indent-line t
+   yas-snippet-dirs `(,my/yasnippet/snippets))
+  :config
+  (yas-global-mode 1)
+  (nmap
+    :prefix my/leader
+    "y i" 'yas-insert-snippet
+    "y n" 'yas-new-snippet
+    "y v" 'yas-visit-snippet-file
+    "y r" 'yas-reload-all)
+  (imap
+    "C-l" 'yas-insert-snippet)
+  :diminish yas-minor-mode)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -5532,7 +5547,8 @@ Usage:
   :mode
   (("\\.ml[ily]?$" . tuareg-mode)
    ("\\.mly$" . tuareg-menhir)
-   ("\\.topml$" . tuareg-mode))
+   ("\\.topml$" . tuareg-mode)
+   ("\\.atd$" . tuareg-mode))
   :init
   (setq tuareg-match-patterns-aligned t)
   :hook
@@ -5676,6 +5692,9 @@ OCaml support for Flycheck using Merlin.
 
 *** Coq
 
+This configuration relies on the Proof General to be cloned here: ~~/.emacs.d/lisp/PG~.
+See the [[https://github.com/ProofGeneral/PG#using-git-manual-compilation-procedure][Proof General docs]] for more info.
+
 #+BEGIN_SRC emacs-lisp
 (use-package proof-site
  :load-path "lisp/PG/generic"
@@ -5684,7 +5703,9 @@ OCaml support for Flycheck using Merlin.
  ;; see: https://github.com/ProofGeneral/PG/issues/404
  ;; (proof-shrink-windows-tofit t)
  :delight "coq")
+#+END_SRC
 
+#+BEGIN_SRC emacs-lisp
 (use-package coq-mode
   :after (proof-site)
   :ensure nil
@@ -5725,6 +5746,8 @@ OCaml support for Flycheck using Merlin.
    company-coq-dynamic-autocompletion t)
   :config
   (nmap 'coq-mode-map
+    "C-C C-t" 'coq-About)
+  (nmap 'coq-mode-map
     :prefix my/leader
     "3" 'coq-SearchAbout
     "4" 'coq-Print
@@ -5736,7 +5759,13 @@ OCaml support for Flycheck using Merlin.
     "0" 'coq-Check)
   :hook
   (coq-mode . my/company-coq/setup))
+#+END_SRC
 
+IDE extensions for Proof General's Coq mode: prettification,
+autocompletion, snippets, outlines, code folding, jumping to
+definition, integrated help, etc.
+
+#+BEGIN_SRC emacs-lisp
 (use-package company-coq
  :after (proof-site coq-mode)
  :commands (company-coq-mode)
@@ -7103,8 +7132,15 @@ unicode symbols and latex tags.
 (use-package scilla
   :after (flycheck)
   :preface
-  (setq scilla-root "~/work/zilliqa/scilla")
+  (setq scilla-root "/home/vyorkin/projects/work/zilliqa/scilla")
   :load-path (lambda () (concat scilla-root "/misc/emacs-mode")))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+;; For enabling flycheck mode for Scilla.
+(setq scilla-root "/home/vyorkin/projects/work/zilliqa/scilla")
+;; Load the Scilla major mode.
+(load-file (concat scilla-root "/misc/emacs-mode/scilla-mode.el"))
 #+END_SRC
 
 ** GDB
