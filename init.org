@@ -302,16 +302,19 @@ On save/write file:
 
 #+BEGIN_SRC emacs-lisp
 (use-package files
- :ensure nil
- :commands
- (generate-new-buffer
-  executable-find
-  file-name-base
-  file-name-extension)
- :custom
- (require-final-newline t)
- :hook
- (before-save . delete-trailing-whitespace))
+  :ensure nil
+  :preface
+  (defun my/files/setup ()
+    (add-hook 'before-save-hook 'delete-trailing-whitespace))
+  :commands
+  (generate-new-buffer
+   executable-find
+   file-name-base
+   file-name-extension)
+  :custom
+  (require-final-newline t)
+  :hook
+  (prog-mode . my/files/setup))
 #+END_SRC
 
 **** Reverting
@@ -1457,8 +1460,8 @@ Unobtrusively trim extraneous whitespace only in lines edited.
 
 #+BEGIN_SRC emacs-lisp
 (use-package ws-butler
- :config
- (ws-butler-global-mode)
+ :hook
+ (prog-mode . ws-butler-mode)
  :diminish ws-butler-mode)
 #+END_SRC
 
@@ -4620,6 +4623,8 @@ Install =ox-hugo= and enable auto export.
   :demand t
   :after (ox org-capture)
   :commands (org-hugo-slug)
+  :custom
+  (org-hugo-delete-trailing-ws nil)
   :config
   (require 'ox-hugo)
   ;; Define variable to get rid of 'reference to free variable' warnings.
@@ -4629,8 +4634,9 @@ See `org-capture-templates' for more information."
     (let*
         ;; Prompt to enter the post title
         ((title (read-from-minibuffer "Post Title: "))
+         (lang (read-from-minibuffer "Lang code (e.g. ru-ru): "))
          (date (format-time-string (org-time-stamp-format :long :inactive) (org-current-time)))
-         (fname (org-hugo-slug title)))
+         (fname (concat (org-hugo-slug title) "." lang)))
       (mapconcat
        #'identity
        `(
@@ -5229,7 +5235,7 @@ operators will be replaced.
 
 **** Ormolu
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package ormolu
   :quelpa
   (ormolu
