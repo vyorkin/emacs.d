@@ -4269,19 +4269,19 @@ Simple file templates for Emacs with =YASnippet=.
 *** Main
 
 #+BEGIN_SRC emacs-lisp
-(use-package org
-  :after (general counsel)
-  :quelpa
-  (org
-   :url
-   "https://code.orgmode.org/bzg/org-mode.git"
-   :fetcher git
-   :files ("lisp/*.el" "contrib/lisp/*.el" "doc/dir" "doc/*.texi")
-   :upgrade nil)
-  :mode ("\\.org\\'" . org-mode)
-  :commands
-  (org-babel-do-load-languages)
-  :init
+  (use-package org
+    :after (general counsel)
+    ;; :quelpa
+    ;; (org
+    ;;  :url
+    ;;  "https://code.orgmode.org/bzg/org-mode.git"
+    ;;  :fetcher git
+    ;;  :files ("lisp/*.el" "contrib/lisp/*.el" "doc/dir" "doc/*.texi")
+    ;;  :upgrade nil)
+    :mode ("\\.org\\'" . org-mode)
+    :commands
+    (org-babel-do-load-languages)
+    :init
 #+END_SRC
 
 Visually indent sections. This looks better for smaller files.
