@@ -1003,6 +1003,7 @@ specify these rules.
 (load-theme 'base16-chalk t)
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
+ '(proof-declaration-name-face ((t (:foreground "#55aaff"))))
  '(company-coq-comment-h1-face ((t (:size 1.5))))
  '(proof-locked-face ((t (:background "#252525"))))
  '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
@@ -5703,12 +5704,13 @@ See the [[https://github.com/ProofGeneral/PG#using-git-manual-compilation-proced
 
 #+BEGIN_SRC emacs-lisp
 (use-package proof-site
- :load-path "lisp/PG/generic"
- :custom
- (proof-delete-empty-windows t)
- ;; see: https://github.com/ProofGeneral/PG/issues/404
- ;; (proof-shrink-windows-tofit t)
- :delight "coq")
+  :load-path "lisp/PG/generic"
+  :custom
+  (proof-delete-empty-windows t)
+  (proof-three-window-mode-policy 'hybrid)
+  ;; see: https://github.com/ProofGeneral/PG/issues/404
+  ;; (proof-shrink-windows-tofit t)
+  :delight "coq")
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
@@ -5749,6 +5751,8 @@ See the [[https://github.com/ProofGeneral/PG#using-git-manual-compilation-proced
    ;; symbols defined in the libraries we load
    company-coq-live-on-the-edge t
    company-coq-disabled-features '()
+  ;; Disable symbol prettification
+   company-coq-disabled-features '(prettify-symbols)
    company-coq-dynamic-autocompletion t)
   :config
   (nmap 'coq-mode-map
@@ -5773,10 +5777,13 @@ definition, integrated help, etc.
 
 #+BEGIN_SRC emacs-lisp
 (use-package company-coq
- :after (proof-site coq-mode)
- :commands (company-coq-mode)
- :hook
- (coq-mode . company-coq-mode))
+  :after (proof-site coq-mode)
+  :commands (company-coq-mode)
+  :hook
+  (coq-mode . company-coq-mode)
+  :config
+  (nmap 'coq-mode-map
+    "g d" 'company-coq-jump-to-definition))
 #+END_SRC
 
 *** Minizinc
@@ -7112,6 +7119,13 @@ unicode symbols and latex tags.
   :mode
   (("\\.cu\\'" . cuda-mode)
    ("\\.cuh\\'" . cuda-mode)))
+#+END_SRC
+
+*** APL
+
+#+BEGIN_SRC emacs-lisp
+(use-package gnu-apl-mode)
+(use-package dyalog-mode)
 #+END_SRC
 
 *** Ansible
