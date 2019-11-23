@@ -5422,10 +5422,7 @@ ATS2 mode.
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package ats-mode
- :quelpa
- (ats-mode
-  :fetcher file
-  :path "https://raw.githubusercontent.com/githwxi/ATS-Postiats/master/utils/emacs/ats2-mode.el"))
+  :load-path "lisp")
 #+END_SRC
 
 **** Flycheck.
