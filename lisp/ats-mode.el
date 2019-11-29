@@ -1,4 +1,7 @@
-;; ats-mode.el -- Major mode to edit ATS2 source code
+;;; MODIFIED by shigeki karita 2016
+;; - change to use client-side colors
+
+;;; ats2-mode.el --- Major mode to edit ATS2 source code
 
 ;; Copyright (C) 2007  Stefan Monnier
 ;; updated and modified by Matthew Danish <mrd@debian.org> 2008-2013
@@ -185,9 +188,8 @@
   (interactive)
   (when (null limit) (setq limit (point-max)))
   (let (foundp begin end (key-begin 0) (key-end 0) pt)
-    (cl-letf
-        ((store ()
-                (store-match-data (list begin end key-begin key-end))))
+    (flet ((store ()
+                  (store-match-data (list begin end key-begin key-end))))
       ;; attempt to find some statics to highlight and store the
       ;; points beginning and ending the region to highlight.  needs
       ;; to be a loop in order to handle cases like ( foo : type )
@@ -269,62 +271,18 @@
     pt))
 
 (defvar ats-word-keywords
-  '(
-    "absprop"
-    "absview"
-    "abstype"
-    "abst0ype"
-    "abstbox"
-    "absvtbox"
-    "abstflt"
-    "absvtflt"
-    "abstflat"
-    "absvtflat"
-    "absvtype"
-    "absvt0ype"
-    "absviewtype"
-    "absviewt0ype"
-    "assume" "absimpl"
-    "reassume" "absreimpl"
-    "staload" "dynload"
-    "as" "in"
-    "of" "op"
-    "and" "end"
-    ;;  "endlet"
-    ;;  "endwhere"
-    ;;  "endlocal"
-    "begin" "break" "continue"
-    "classdec"
-    "datasort"
-    "datatype"
-    "dataprop"
-    "dataview"
-    "datavtype"
-    "dataviewtype"
-    "exception"
-    "extern" "extype" "extval"
-    "fn" "fnx" "fun"
-    "prfn" "prfun" "praxi" "castfn"
-    "rec" "val" "prval" "var" "prvar"
-    "case" "scase"
-    "if" "sif" "then" "else"
-    "nonfix"
-    "prefix" "postfix"
-    "infix" "infixl" "infixr"
-    "symelim" "symintr" "overload"
-    "implmnt" "implement"
-    "primplmnt" "primplement"
-    "lam" "llam" "fix" "let" "local"
-    "macdef" "macrodef"
-    "sortdef" "sexpdef" "tkindef"
-    "sta" "stacst" "stadef" "stavar"
-    "type" "t0ype"
-    "vtype" "vt0ype"
-    "viewtype" "viewt0ype"
-    "try" "with"
-    "when" "where" "for" "while"
-    "typedef" "propdef" "viewdef" "vtypedef" "viewtypedef"
-    "withtype" "withprop" "withview" "withvtype" "withviewtype"))
+  '("abstype" "abst0ype" "absprop" "absview" "absvtype" "absviewtype" "absvt0ype" "absviewt0ype"
+    "and" "as" "assume" "begin" "break" "continue" "classdec" "datasort"
+    "datatype" "dataprop" "dataview" "datavtype" "dataviewtype" "do" "dynload" "else"
+    "end" "exception" "extern" "extype" "extval" "fn" "fnx" "fun"
+    "prfn" "prfun" "praxi" "castfn" "if" "in" "infix" "infixl"
+    "infixr" "prefix" "postfix" "implmnt" "implement" "primplmnt" "primplement" "lam"
+    "llam" "fix" "let" "local" "macdef" "macrodef" "nonfix" "overload"
+    "of" "op" "rec" "scase" "sif" "sortdef" "sta" "stacst"
+    "stadef" "stavar" "staload" "symelim" "symintr" "then" "try" "tkindef"
+    "type" "typedef" "propdef" "viewdef" "vtypedef" "viewtypedef" "val" "prval"
+    "var" "prvar" "when" "where" "for" "while" "with" "withtype"
+    "withprop" "withview" "withvtype" "withviewtype"))
 
 (defun wrap-word-keyword (w)
   (concat "\\<" w "\\>"))
@@ -336,7 +294,7 @@
     "$record" "$record_t" "$record_vt" "$tup" "$tup_t" "$tup_vt" "$tuple" "$tuple_t"
     "$tuple_vt" "$raise" "$showtype" "$myfilename" "$mylocation" "$myfunction" "#assert" "#define"
     "#elif" "#elifdef" "#elifndef" "#else" "#endif" "#error" "#if" "#ifdef"
-    "#ifndef" "#print" "#then" "#undef" "#include" "#staload" "#dynload" "#require"))
+    "#ifndef" "#include" "#print" "#then" "#undef"))
 
 (defun wrap-special-keyword (w)
   (concat "\\" w "\\>"))
@@ -372,11 +330,11 @@
 
 (define-derived-mode c/ats-mode c-mode "C/ATS"
   "Major mode to edit C code embedded in ATS code."
-  (unless (local-variable-p 'compile-command)
-    (set (make-local-variable 'compile-command)
-         (let ((file buffer-file-name))
-           (format "patscc -tcats %s" file)))
-    (put 'compile-command 'permanent-local t))
+  ;; (unless (local-variable-p 'compile-command)
+  ;;   (set (make-local-variable 'compile-command)
+  ;;        (let ((file buffer-file-name))
+  ;;          (format "patsopt -tc -d %s" file)))
+  ;;   (put 'compile-command 'permanent-local t))
   (setq indent-line-function 'c/ats-mode-indent-line))
 
 (defun c/ats-mode-indent-line (&optional arg)
@@ -400,8 +358,8 @@
   "Major mode to edit ATS2 source code."
   (set (make-local-variable 'font-lock-defaults)
        '(ats-font-lock-keywords nil nil ((?_ . "w") (?= . "_")) nil
-                                (font-lock-syntactic-keywords . ats-font-lock-syntactic-keywords)
-                                (font-lock-mark-block-function . ats-font-lock-mark-block)))
+                             (font-lock-syntactic-keywords . ats-font-lock-syntactic-keywords)
+                             (font-lock-mark-block-function . ats-font-lock-mark-block)))
   (set (make-local-variable 'comment-start) "(*")
   (set (make-local-variable 'comment-continue)  " *")
   (set (make-local-variable 'comment-end) "*)")
@@ -409,11 +367,11 @@
   (setq tab-stop-list (loop for x from 2 upto 120 by 2 collect x))
   (setq indent-tabs-mode nil)
   (local-set-key (kbd "RET") 'newline-and-indent-relative)
-  (unless (local-variable-p 'compile-command)
-    (set (make-local-variable 'compile-command)
-         (let ((file buffer-file-name))
-           (format "patscc -tcats %s" file)))
-    (put 'compile-command 'permanent-local t))
+  ;; (unless (local-variable-p 'compile-command)
+  ;;   (set (make-local-variable 'compile-command)
+  ;;        (let ((file buffer-file-name))
+  ;;          (format "patsopt -tc -d %s" file)))
+  ;;  (put 'compile-command 'permanent-local t))
   (local-set-key (kbd "C-c C-c") 'compile)
   (cond
    ;; Emacs 21
@@ -445,8 +403,7 @@
                       (back-to-indentation)
                       (current-column))))
 
-;;;autoload
-(add-to-list 'auto-mode-alist '("\\.\\(s\\|d\\|h\\)ats\\'" . ats-mode))
+;;;###autoload
+(add-to-list 'auto-mode-alist '("\\.\\(d\\|s\\)ats\\'" . ats-mode))
 
 (provide 'ats-mode)
-;;; end of [ats-mode.el]

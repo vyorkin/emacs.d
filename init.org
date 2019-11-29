@@ -2775,29 +2775,33 @@ TODO: Find a way to disable it in code regions.
 
 #+BEGIN_SRC emacs-lisp
 (use-package flyspell
- :ensure nil
- :after (general ispell)
- :custom
- (flyspell-delay 1)
- (flyspell-always-use-popup t)
- :init
- (setq
-  ;; flyspell-default-dictionary "russian"
-  ;; flyspell-dictionary "russian"
-  flyspell-use-meta-tab nil
-  flyspell-mode-line-string ""
-  flyspell-auto-correct-binding (kbd ""))
- :hook
- ((text-mode . flyspell-mode)
-  (org-mode . flyspell-mode)
-  (gfm-mode . flyspell-mode)
-  (git-commit-mode . flyspell-mode)
-  (prog-mode . flyspell-prog-mode))
- :config
- (unbind-key "C-." flyspell-mode-map)
- (nmap
-   "C-c i b" 'flyspell-buffer
-   "C-c i f" 'flyspell-mode))
+  :ensure nil
+  :after (general ispell)
+  :custom
+  (flyspell-delay 1)
+  (flyspell-always-use-popup t)
+  :init
+  (setq
+   ;; flyspell-default-dictionary "russian"
+   ;; flyspell-dictionary "russian"
+   flyspell-use-meta-tab nil
+   flyspell-mode-line-string ""
+   flyspell-auto-correct-binding (kbd ""))
+  :hook
+  ((text-mode . flyspell-mode)
+   ;; Don’t check comments, thats too annoying
+   ;; (prog-mode . flyspell-prog-mode)
+   (org-mode . flyspell-mode)
+   (gfm-mode . flyspell-mode)
+   (git-commit-mode . flyspell-mode))
+  :config
+  (unbind-key "C-." flyspell-mode-map)
+  (nmap
+    :prefix my/leader
+    "t f" 'flyspell-mode)
+  (nmap
+    "C-c i b" 'flyspell-buffer
+    "C-c i f" 'flyspell-mode))
 #+END_SRC
 
 ** Compilation
@@ -4545,6 +4549,7 @@ Other useful keybindings.
 #+BEGIN_SRC emacs-lisp
 (nmap
   :prefix my/leader
+  "t L" 'org-toggle-link-display
   "o" 'org-todo-list
   "O" 'counsel-org-goto-all
   "c" 'counsel-org-capture
@@ -5420,16 +5425,16 @@ A new, simple purescript mode for cheap syntax highlighting.
 
 ATS2 mode.
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package ats-mode
   :load-path "lisp")
 #+END_SRC
 
 **** Flycheck.
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package flycheck-ats2
- :after (ats2-mode))
+ :after (ats-mode))
 #+END_SRC
 
 *** Nix
