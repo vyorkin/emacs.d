@@ -36,7 +36,8 @@ If one wishes to make changes to the repo-version of =init.el= start tracking ag
 git update-index --no-assume-unchanged init.el
 #+END_SRC
 
-When this configuration is loaded for the first time, the =init.el= is the file that is loaded. It looks like this:
+When this configuration is loaded for the first time, the
+=init.el= is the file that is loaded. It looks like this:
 
 #+BEGIN_SRC emacs-lisp :tangle no
 ;; We can't tangle without org!
@@ -51,6 +52,19 @@ When this configuration is loaded for the first time, the =init.el= is the file 
 (byte-compile-file (concat user-emacs-directory "init.el"))
 #+END_SRC
 
+Startup timer
+
+#+begin_src emacs-lisp
+(add-hook 'emacs-startup-hook
+  (lambda ()
+    (message
+     "Emacs ready in %s with %d garbage collections."
+     (format
+      "%.2f seconds"
+      (float-time (time-subtract after-init-time before-init-time)))
+     gcs-done)))
+#+end_src
+
 * Config
 ** Intro
 
@@ -60,6 +74,14 @@ This is the first line of the actual configuration.
 #+BEGIN_SRC emacs-lisp
 ;;; -*- lexical-binding: t -*-
 #+END_SRC
+
+Make startup faster by reducing the frequency of garbage
+collection. The default is 800 kilobytes. Measured in bytes.
+These are the first lines of the actual configuration.
+
+#+begin_src emacs-lisp
+(setq gc-cons-threshold (* 50 1000 1000))
+#+end_src
 
 ** Auto-tangling
 
@@ -1818,6 +1840,27 @@ distracting.
     "t l" 'hl-line-mode))
 #+END_SRC
 
+*** Col highlight
+
+#+begin_src emacs-lisp
+(use-package vline
+  :quelpa
+  (vline :fetcher github :repo "emacsmirror/vline"))
+
+(use-package col-highlight
+  :after (vline)
+  :quelpa
+  (col-highlight :fetcher github :repo "emacsmirror/col-highlight"))
+#+end_src
+
+*** Column marker
+
+#+begin_src emacs-lisp
+(use-package column-marker
+  :quelpa
+  (column-marker :fetcher github :repo "emacsmirror/column-marker"))
+#+end_src
+
 *** Hl-todo
 
 Highlight TODO and similar keywords in comments and strings.
@@ -2832,11 +2875,24 @@ automatically.
 If you got the =error in process filter= chances are the =wordnik.com= is down,
 try again later ;)
 
+*** Synosaurus
+
+#+begin_src emacs-lisp :tangle no
+(use-package synosaurus
+ :after (general)
+ :config
+ (nmap
+  :prefix my/leader
+  "; ;" 'synosaurus-lookup
+  "; '" 'synosaurus-choose-and-replace))
+#+end_src
+
 *** Define word
 
 #+BEGIN_SRC emacs-lisp
 (use-package define-word
  :after general
+ :defer 1
  :config
  (nmap
    :prefix my/leader
@@ -3633,7 +3689,7 @@ Access your Firefox bookmarks and history in Emacs.
 
 #+BEGIN_SRC emacs-lisp
 (use-package avy
- :demand t
+ :defer 1
  :config
  (mmap
    :prefix "C-c j"
@@ -4223,6 +4279,7 @@ Navigate tramp files.
   :load-path
   (lambda () (my/emacs-path "yasnippet-snippets"))
   :ensure nil
+  :defer 1
   :init
   (setq
    yas-wrap-around-region t
@@ -4617,7 +4674,8 @@ Paste links from clipboard and automatically fetch title.
 *** Pandoc exporter
 
 #+BEGIN_SRC emacs-lisp
-(use-package ox-pandoc)
+(use-package ox-pandoc
+ :defer 2)
 #+END_SRC
 
 *** Blogging with hugo
@@ -4626,13 +4684,13 @@ Install =ox-hugo= and enable auto export.
 
 #+BEGIN_SRC emacs-lisp
 (use-package ox-hugo
-  :demand t
   :after (ox org-capture)
+  :defer 1
   :commands (org-hugo-slug)
   :custom
   (org-hugo-delete-trailing-ws nil)
   :config
-  (require 'ox-hugo)
+  ;; (require 'ox-hugo)
   ;; Define variable to get rid of 'reference to free variable' warnings.
   (defun my/org-hugo/new-subtree-post ()
     "Returns `org-capture' template string for new blog post.
@@ -4669,8 +4727,10 @@ See `org-capture-templates' for more information."
 transcoders for common =org= elements which outputs minimal =HTML=.
 
 #+BEGIN_SRC emacs-lisp :tangle no
-(use-package htmlize)
-(use-package ox-slimhtml)
+(use-package htmlize
+ :defer 2)
+(use-package ox-slimhtml
+ :defer 2)
 
 (defun org-html-export-as-slimhtml
 (&optional async subtreep visible-only body-only ext-plist)
@@ -4696,6 +4756,7 @@ Drag and drop images to =org= files.
 
 #+BEGIN_SRC emacs-lisp
 (use-package org-download
+  :defer 2
   :config
   ;; Org-download creates links, but I need to change the path
   ;; for my blog. This simple hook runs on every save.
@@ -5894,6 +5955,7 @@ definition, integrated help, etc.
 #+BEGIN_SRC emacs-lisp
 (use-package clojure-mode
  :after (general company org)
+ :defer 1
  :commands
  (define-clojure-indent
   put-clojure-indent)
@@ -5919,6 +5981,7 @@ definition, integrated help, etc.
 #+BEGIN_SRC emacs-lisp
 (use-package clojure-mode-extra-font-locking
  :after (clojure-mode)
+ :defer 1
  :init
  (font-lock-add-keywords
   nil
@@ -5931,6 +5994,7 @@ definition, integrated help, etc.
 #+BEGIN_SRC emacs-lisp
 (use-package cider
  :after (clojure-mode)
+ :defer 1
  :commands (cider-mode)
  :custom
  (cider-repl-result-prefix ";; => ")
@@ -5948,12 +6012,14 @@ definition, integrated help, etc.
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-(use-package kibit-helper)
+(use-package kibit-helper
+ :defer 1)
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck-clojure
   :after (flycheck clojure-mode)
+  :defer 1
   :commands
   (flycheck-clojure-setup)
   :config
@@ -6328,6 +6394,7 @@ Other JSON-related packages.
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package markdown-mode
  :disabled
+ :defer 1
  :commands (markdown-mode gfm-mode)
  :mode
  (("README\\.md\\'" . gfm-mode)
@@ -6368,6 +6435,7 @@ Other JSON-related packages.
 #+BEGIN_SRC emacs-lisp
 (use-package emmet-mode
  :after (general sgml-mode)
+ :defer 1
  :commands
  emmet-mode
  :hook
@@ -6615,6 +6683,12 @@ Display current path for HTML/XML/CSS.
 #+BEGIN_SRC emacs-lisp
 (use-package css-mode)
 #+END_SRC
+
+**** Counsel CSS
+
+#+begin_src emacs-lisp
+(use-package counsel-css)
+#+end_src
 
 **** LSP-CSS
 
@@ -7683,6 +7757,23 @@ directly from Emacs.
    :keybinding "y"))
 #+END_SRC
 
+*** Counsel web
+
+#+begin_src emacs-lisp
+(use-package counsel-web
+ :after (general)
+ :quelpa
+ (counsel-web :fetcher github :repo "mnewt/counsel-web")
+ :custom
+ (counsel-web-search-action 'browse-url)
+ (counsel-web-suggest-function 'counsel-web-suggest--google)
+ (counsel-web-search-function 'counsel-web-search--google)
+ :config
+ (nmap
+  :prefix my/leader
+  "S" 'counsel-web-suggest))
+#+end_src
+
 *** Google this
 
 I use =engine-mode= instead.
@@ -8473,3 +8564,8 @@ Hide minor modes to save space.
  (eval-after-load "eldoc" '(diminish 'eldoc-mode))
  (eval-after-load "hi-lock" '(diminish 'hi-lock-mode)))
 #+END_SRC
+* Finalize
+
+#+begin_src emacs-lisp
+(setq gc-cons-threshold (* 2 1000 1000))
+#+end_src
