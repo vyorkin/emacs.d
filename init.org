@@ -788,6 +788,11 @@ Turn-off tooltips on cursor hover-over.
 #+END_SRC
 
 *** Echo area
+*** Alert
+
+#+begin_src emacs-lisp
+(use-package alert)
+#+end_src
 
 ** Editor
 *** Customizations
@@ -960,7 +965,7 @@ second (the first is the original one) argument to the default updater.
 #+BEGIN_SRC emacs-lisp
 (use-package use-package-secrets
  :custom
- (use-package-secrets-default-directory "~/.emacs.d/secrets")
+ (use-package-secrets-directories '("~/.emacs.d/secrets"))
  :quelpa
  (use-package-secrets
    :repo "a13/use-package-secrets"
@@ -1002,6 +1007,16 @@ specify these rules.
 #+END_SRC
 
 ** Theme
+*** Advice
+
+#+begin_src emacs-lisp
+(define-advice load-theme (:before disable-before-load)
+"Disable any loaded themes before enabling a new theme.
+This prevents overlapping themes; something I would rarely want."
+(dolist (theme custom-enabled-themes)
+    (disable-theme theme)))
+#+end_src
+
 *** Base-16 themes
 
 #+BEGIN_SRC emacs-lisp
@@ -1012,7 +1027,7 @@ specify these rules.
   ;; (load-theme 'base16-grayscale-light t)
   ;; (load-theme 'base16-gruvbox-light-hard t)
   ;; (load-theme 'base16-material-palenight t) ;; ****
-  ;; (load-theme 'base16-rebecca t)
+  (load-theme 'base16-rebecca t)
   ;; (load-theme 'base16-pop t)
   ;; (load-theme 'base16-tomorrow-night t)
   ;; (load-theme 'base16-twilight t)
@@ -1021,7 +1036,7 @@ specify these rules.
 
 ~base16-chalk~ + customizations.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (load-theme 'base16-chalk t)
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
@@ -1111,7 +1126,7 @@ why). So the code block below is untangled.
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package apropospriate-theme
  :config
- (load-theme 'apropospriate-light))
+ (load-theme 'apropospriate-dark))
 #+END_SRC
 
 *** Nord theme
@@ -2814,6 +2829,15 @@ TODO: Find a way to disable it in code regions.
   (add-to-list 'flycheck-checkers 'proselint))
 #+end_src
 
+*** Colorguard
+
+#+begin_src emacs-lisp
+(use-package flycheck-css-colorguard
+  :after (flycheck)
+  :hook
+  (flycheck-mode . flycheck-css-colorguard-setup))
+#+end_src
+
 ** Flyspell
 
 #+BEGIN_SRC emacs-lisp
@@ -4481,7 +4505,7 @@ every save.
     (when (equal (buffer-file-name) "~/Dropbox/org/links.org")
       (progn
         (org-html-export-to-html)
-        (message "HTML exported"))))
+        (alert "HTML exported" :severity 'trivial :title "ORG"))))
 
   (add-hook 'after-save-hook 'org-mode-export-links)
 #+END_SRC
@@ -5084,7 +5108,6 @@ Discover functions.
     "E s" 'my/suggest-popup))
 #+end_src
 
-
 *** Haskell
 **** Hasklig (ligatures)
 
@@ -5143,8 +5166,12 @@ Discover functions.
     "Toggle the build command"
     (interactive)
     (if haskell-build-command-use-make
-        (setq haskell-compile-cabal-build-command "cd %s && cabal new-build")
-      (setq haskell-compile-cabal-build-command "cd %s && make build")))
+        (progn
+          (setq haskell-compile-cabal-build-command "cd %s && cabal new-build")
+          (alert "Setting build command to:\n cabal new-build" :severity 'normal :title "Haskell"))
+      (progn
+        (setq haskell-compile-cabal-build-command "cd %s && make build")
+        (alert "Setting build command to:\n make build" :severity 'normal :title "Haskell"))))
   (defun my/haskell-mode/toggle-process-type ()
     "Toggle GHCi process between cabal and ghci"
     (interactive)
@@ -5154,11 +5181,11 @@ Discover functions.
           ;; you're using the old cabal workflow
           (setq haskell-process-type 'cabal-new-repl)
           (setq haskell-process-use-ghci nil)
-          (message "Using cabal new-repl"))
+          (alert "Using cabal new-repl" :severity 'normal :title "Haskell"))
       (progn
         (setq haskell-process-type 'stack-ghci)
         (setq haskell-process-use-ghci t)
-        (message "Using stack ghci"))))
+        (alert "Using stack ghci" :severity 'normal :title "Haskell"))))
   (defun my/haskell-mode/show-process-log ()
     "Display *haskell-process-log* buffer in other window"
     (interactive)
@@ -5573,31 +5600,7 @@ Company backend for NixOS options.
 
 TODO: https://github.com/travisbhartwell/nix-emacs#flycheck
 
-**** Helpers
-
-Predicate function that checks if all of the required
-environment variables are set.
-
-See my NixOS config for OCaml for the usage example.
-
-#+BEGIN_SRC emacs-lisp
-(defun my/ocaml-in-emacs-p ()
-  (string-equal (getenv "OCAML_IN_EMACS") "1"))
-#+END_SRC
-
 *** Ocaml
-
-Nix(OS)-specific.
-The main idea is [[https://blog.jethro.dev/blog/ocaml_with_nix/][described here.]]
-
-**** Variables
-
-#+BEGIN_SRC emacs-lisp
-(defconst my/merlin-site-elisp (getenv "MERLIN_SITE_LISP"))
-(defconst my/utop-site-elisp (getenv "UTOP_SITE_LISP"))
-(defconst my/ocp-site-elisp (getenv "OCP_INDENT_SITE_LISP"))
-#+END_SRC
-
 **** Tuareg
 
 [[https://github.com/ocaml/tuareg][Tuareg]] is an Emacs OCaml mode.
@@ -5626,6 +5629,21 @@ Usage:
   :delight "ocaml")
 #+END_SRC
 
+**** Ocp-index
+
+#+begin_src emacs-lisp
+(defvar my/opam-config/share (string-trim-right (shell-command-to-string "opam config var share")))
+
+;; (with-eval-after-load 'tuareg
+;;   (add-to-list 'load-path (concat my/opam-config/share "/emacs/site-lisp"))
+;;   (require 'ocp-index))
+
+(use-package ocp-index
+  :after (tuareg)
+  :load-path (lambda () (concat my/opam-config/share "/emacs/site-lisp")))
+
+#+end_src
+
 **** Smartparens
 
 #+BEGIN_SRC emacs-lisp
@@ -5645,15 +5663,13 @@ See the [[https://github.com/ocaml/merlin][package repo]] for more info.
 (use-package merlin
   :after (company tuareg)
   :demand t
-  :if (and my/merlin-site-elisp (my/ocaml-in-emacs-p))
-  :load-path my/merlin-site-elisp
   :init
   ;; Disable merlin's own error checking
   ;; We'll use flycheck-ocaml for that
   (setq
+   ;; merlin-command "/run/current-system/sw/bin/ocamlmerlin"
    merlin-error-after-save nil
-   merlin-completion-with-doc t
-   merlin-command "/run/current-system/sw/bin/ocamlmerlin")
+   merlin-completion-with-doc t)
   :config
   (add-to-list 'company-backends 'merlin-company-backend)
   (nmap 'merlin-mode-map
@@ -5711,8 +5727,6 @@ https://github.com/diml/utop#integration-with-emacs
 #+BEGIN_SRC emacs-lisp
 (use-package utop
   :after (tuareg)
-  :if (and my/utop-site-elisp (my/ocaml-in-emacs-p))
-  :load-path my/utop-site-elisp
   :commands
   (utop-command)
   :config
@@ -5730,8 +5744,6 @@ https://github.com/diml/utop#integration-with-emacs
 #+BEGIN_SRC emacs-lisp
 (use-package ocp-indent
   :after (tuareg)
-  :if (and my/ocp-site-elisp (my/ocaml-in-emacs-p))
-  :load-path my/ocp-site-elisp
   :config
   (nmap 'tuareg-mode-map
     "C-c r" 'ocp-indent-buffer))
@@ -6875,7 +6887,7 @@ A JavaScript refactoring library.
  (add-to-list 'auto-mode-alist '("\\.jsx\\'" . rjsx-mode)))
 #+END_SRC
 
-**** TODO LSP
+**** LSP
 
 Typescript LSP support.
 
@@ -7222,7 +7234,13 @@ unicode symbols and latex tags.
 (use-package glsl-mode)
 #+END_SRC
 
-*** Scilla (disabled)
+*** Kconfig
+
+#+begin_src emacs-lisp
+(use-package kconfig-mode)
+#+end_src
+
+*** Scilla
 
 #+BEGIN_SRC emacs-lisp :tangle no
 (use-package scilla
@@ -7300,9 +7318,9 @@ Run command quickly.
   :config
   (nmap
     :prefix my/leader
-    "q q" 'quickrun
-    "q r" 'quickrun-region
-    "t q" 'quickrun-autorun-mode))
+    "i q" 'quickrun
+    "i r" 'quickrun-region
+    "i a" 'quickrun-autorun-mode))
 #+END_SRC
 
 ** HTTP
@@ -7471,12 +7489,11 @@ Allows to easily search the =DevDocs= documentation.
    "G i d" 'ix-delete))
 #+END_SRC
 
-*** Direnv (disabled)
+*** Direnv
 
 Provides [[https://direnv.net/][=direnv=]] integration for Emacs.
-It is very slow.
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (use-package direnv
  :demand t
  :custom
@@ -8164,7 +8181,7 @@ this in details]].
 
 Setup wakatime.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package wakatime-mode
  :init
  (setq
