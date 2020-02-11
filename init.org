@@ -7889,21 +7889,30 @@ make compile
 
 #+BEGIN_SRC emacs-lisp
 (use-package telega
- :quelpa
- (telega
+  :quelpa
+  (telega
    :fetcher github
    :repo "zevlg/telega.el"
    :branch "master"
    :files (:defaults "README.md" "etc" "server" "Makefile" "test.el"))
- :load-path "~/.emacs.d/quelpa/build/telega"
- :bind
- (:map telega-msg-button-map
-  ("j" . nil)
-  ("k" . nil)
-  ("h" . nil)
-  ("l" . nil))
- :custom
- (telega-completing-read-function #'ivy-completing-read))
+  :config
+  (setq
+   telega-proxies
+   (list
+    '(:server
+      "proxy.digitalresistance.dog"
+      :port 443
+      :enable :true
+      :type (:@type "proxyTypeMtproto" :secret "d41d8cd98f00b204e9800998ecf8427e"))))
+  :load-path "~/.emacs.d/quelpa/build/telega"
+  :bind
+  (:map telega-msg-button-map
+    ("j" . nil)
+    ("k" . nil)
+    ("h" . nil)
+    ("l" . nil))
+  :custom
+  (telega-completing-read-function #'ivy-completing-read))
 #+END_SRC
 
 *** ERC
