@@ -11,6 +11,7 @@ Inspired by [[https://github.com/freetonik/emacs-dotfiles][freetonik's]] setup.
 * Warning
 
 This config is not intended to be used by anyone other than me.
+I would not recommend using this configuration as-is.
 
 * Setup
 
@@ -359,8 +360,8 @@ Diminish [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Autorevert.
 The =forward= buffer name style includes part of the file's directory
 name at the beginning of the buffer name. Using this method, buffers
 visiting the files =/u/rms/tmp/Makefile= and
-=/usr/projects/zaphod/Makefile= would be named =‘tmp/Makefile’= and
-=‘zaphod/Makefile’=.
+=/usr/projects/hooy/Makefile= would be named =‘tmp/Makefile’= and
+=‘hooy/Makefile’=.
 
 #+BEGIN_SRC emacs-lisp
 (use-package uniquify
@@ -1007,15 +1008,6 @@ specify these rules.
 #+END_SRC
 
 ** Theme
-*** Advice
-
-#+begin_src emacs-lisp
-(define-advice load-theme (:before disable-before-load)
-"Disable any loaded themes before enabling a new theme.
-This prevents overlapping themes; something I would rarely want."
-(dolist (theme custom-enabled-themes)
-    (disable-theme theme)))
-#+end_src
 
 *** Base-16 themes
 
@@ -1027,7 +1019,7 @@ This prevents overlapping themes; something I would rarely want."
   ;; (load-theme 'base16-grayscale-light t)
   ;; (load-theme 'base16-gruvbox-light-hard t)
   ;; (load-theme 'base16-material-palenight t) ;; ****
-  (load-theme 'base16-rebecca t)
+  ;; (load-theme 'base16-rebecca t)
   ;; (load-theme 'base16-pop t)
   ;; (load-theme 'base16-tomorrow-night t)
   ;; (load-theme 'base16-twilight t)
@@ -1036,7 +1028,7 @@ This prevents overlapping themes; something I would rarely want."
 
 ~base16-chalk~ + customizations.
 
-#+BEGIN_SRC emacs-lisp :tangle no
+#+BEGIN_SRC emacs-lisp
 (load-theme 'base16-chalk t)
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
@@ -1356,7 +1348,7 @@ Leader-prefixed.
 #+END_SRC
 
 ** Behavior
-*** Server
+*** Sevrer
 
 #+BEGIN_SRC emacs-lisp
 (use-package server
@@ -1373,7 +1365,7 @@ Leader-prefixed.
 
 *** Trashing
 
-#+BEGIN_SRC emacs-lisp
+#+EBGIN_SRC emacs-lisp
 (setq
   delete-by-moving-to-trash t
   trash-directory (my/emacs-path "trash"))
@@ -2535,6 +2527,27 @@ Most of the keybindings are set by the =evil-collection= package.
 
 Some of the key bindings are provided by the =evil-collection=.
 
+#+begin_src emacs-lisp
+(defun my/company-mode/setup-faces ()
+  "Style company-mode nicely"
+  (let* ((bg (face-attribute 'default :background))
+         (bg-light (color-lighten-name bg 2))
+         (bg-lighter (color-lighten-name bg 5))
+         (bg-lightest (color-lighten-name bg 10))
+         (ac (face-attribute 'match :foreground)))
+    (custom-set-faces
+     `(company-tooltip
+       ((t (:inherit default :background ,bg-light))))
+     `(company-scrollbar-bg ((t (:background ,bg-lightest))))
+     `(company-scrollbar-fg ((t (:background ,bg-lighter))))
+     `(company-tooltip-selection
+       ((t (:inherit font-lock-function-name-face))))
+     `(company-tooltip-common
+       ((t (:inherit font-lock-constant-face))))
+     `(company-preview-common
+       ((t (:foreground ,ac :background ,bg-lightest)))))))
+#+end_src
+
 #+BEGIN_SRC emacs-lisp
 (use-package company
  :hook
@@ -2549,23 +2562,7 @@ Some of the key bindings are provided by the =evil-collection=.
  ;; Disable in org
  (company-global-modes '(not org-mode))
  :config
- ;; Style nicely
- (let* ((bg (face-attribute 'default :background))
-       (bg-light (color-lighten-name bg 2))
-       (bg-lighter (color-lighten-name bg 5))
-       (bg-lightest (color-lighten-name bg 10))
-       (ac (face-attribute 'match :foreground)))
-  (custom-set-faces
-   `(company-tooltip
-     ((t (:inherit default :background ,bg-light))))
-   `(company-scrollbar-bg ((t (:background ,bg-lightest))))
-   `(company-scrollbar-fg ((t (:background ,bg-lighter))))
-   `(company-tooltip-selection
-     ((t (:inherit font-lock-function-name-face))))
-   `(company-tooltip-common
-     ((t (:inherit font-lock-constant-face))))
-   `(company-preview-common
-     ((t (:foreground ,ac :background ,bg-lightest))))))
+ (my/company-mode/setup-faces)
  (unbind-key "C-SPC")
  (imap
   "C-SPC" 'company-complete
@@ -3568,7 +3565,7 @@ More friendly interface for ivy. Here is the [[https://github.com/Yevgnen/ivy-ri
  (setq flyspell-correct-interface 'flyspell-correct-ivy)
  :config
  (nmap 'flyspell-mode-map
-   "C-;" 'flyspell-correct-previous-word-generic))
+   "C-;" 'flyspell-correct-next))
 #+END_SRC
 
 *** IBuffer VC
@@ -4350,6 +4347,14 @@ Simple file templates for Emacs with =YASnippet=.
   (yatemplate-fill-alist))
 #+END_SRC
 
+
+
+
+
+
+
+
+
 ** Org
 *** Main
 
@@ -4796,6 +4801,15 @@ Drag and drop images to =org= files.
   :hook
   (dired-mode-hook . org-download-enable))
 #+END_SRC
+
+
+
+
+
+
+
+
+
 
 ** LSP
 *** Mode
@@ -5631,7 +5645,7 @@ Usage:
 
 **** Ocp-index
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defvar my/opam-config/share (string-trim-right (shell-command-to-string "opam config var share")))
 
 ;; (with-eval-after-load 'tuareg
@@ -5641,7 +5655,6 @@ Usage:
 (use-package ocp-index
   :after (tuareg)
   :load-path (lambda () (concat my/opam-config/share "/emacs/site-lisp")))
-
 #+end_src
 
 **** Smartparens
@@ -5739,9 +5752,23 @@ https://github.com/diml/utop#integration-with-emacs
   ((tuareg-mode reason-mode) . utop-minor-mode))
 #+END_SRC
 
-**** Indentation
+**** Formatting
 
-#+BEGIN_SRC emacs-lisp
+TODO
+
+#+begin_src emacs-lisp :tangle no
+(require 'ocamlformat)
+(add-hook 'tuareg-mode-hook (lambda ()
+  (general-define-key
+    :states '(normal)
+    :keymaps 'tuareg-mode-map
+    "C-c r" 'ocamlformat)
+  (add-hook 'before-save-hook #'ocamlformat-before-save)))
+#+end_src
+
+ocp-indent is disabled, I use ~ocamlformat~ instead
+
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package ocp-indent
   :after (tuareg)
   :config
@@ -6046,7 +6073,7 @@ definition, integrated help, etc.
  :if (executable-find "scala"))
 #+END_SRC
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package ensime
  :after (general scala-mode)
  :commands (ensime-mode)
@@ -6985,6 +7012,22 @@ Add company mode support.
  (add-to-list 'company-backends 'company-irony))
 #+END_SRC
 
+Auto-completion for C/C++ headers using Company.
+See: https://github.com/yuutayamada/company-arduino/tree/d7e369702b8eee63e6dfdeba645ce28b6dc66fb1#note
+
+#+begin_src emacs-lisp
+(use-package company-c-headers
+  :after (irony company-irony)
+  :config
+  (defun company-c-headers-path-user-irony ()
+    "Return the user include paths for the current buffer."
+    (when irony-mode
+      (irony--extract-user-search-paths
+       irony--compile-options
+       irony--working-directory)))
+  (setq company-c-headers-path-user 'company-c-headers-path-user-irony))
+#+end_src
+
 Add flycheck support.
 
 #+BEGIN_SRC emacs-lisp
@@ -7227,6 +7270,18 @@ unicode symbols and latex tags.
 #+BEGIN_SRC emacs-lisp
 (use-package arduino-mode)
 #+END_SRC
+
+#+begin_src emacs-lisp
+(use-package company-arduino
+  :after (irony company company-irony company-c-headers)
+  :config
+  (add-hook 'irony-mode-hook 'company-arduino-turn-on)
+  (defun my-company-c-headers-get-system-path ()
+    "Return the system include path for the current buffer."
+    (let ((default '("/usr/include/" "/usr/local/include/")))
+      (company-arduino-append-include-dirs default t)))
+  (setq company-c-headers-path-system 'my-company-c-headers-get-system-path))
+#+end_src
 
 *** GLSL
 
@@ -7889,21 +7944,30 @@ make compile
 
 #+BEGIN_SRC emacs-lisp
 (use-package telega
- :quelpa
- (telega
+  :quelpa
+  (telega
    :fetcher github
    :repo "zevlg/telega.el"
    :branch "master"
    :files (:defaults "README.md" "etc" "server" "Makefile" "test.el"))
- :load-path "~/.emacs.d/quelpa/build/telega"
- :bind
- (:map telega-msg-button-map
-  ("j" . nil)
-  ("k" . nil)
-  ("h" . nil)
-  ("l" . nil))
- :custom
- (telega-completing-read-function #'ivy-completing-read))
+  :config
+  (setq
+   telega-proxies
+   (list
+    '(:server
+      "proxy.digitalresistance.dog"
+      :port 443
+      :enable t
+      :type (:@type "proxyTypeMtproto" :secret "d41d8cd98f00b204e9800998ecf8427e"))))
+  :load-path "~/.emacs.d/quelpa/build/telega"
+  :bind
+  (:map telega-msg-button-map
+    ("j" . nil)
+    ("k" . nil)
+    ("h" . nil)
+    ("l" . nil))
+  :custom
+  (telega-completing-read-function #'ivy-completing-read))
 #+END_SRC
 
 *** ERC
@@ -8159,7 +8223,7 @@ Provides a little pomodoro timer in the mode-line.
 Provides a simple system for tracking and displaying the uptimes of Emacs
 sessions.
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package uptimes)
 #+END_SRC
 
@@ -8168,7 +8232,7 @@ sessions.
 Measure how many time you execute commands. The [[http://blog.binchen.org/posts/how-to-be-extremely-efficient-in-emacs.html][following blog post explains
 this in details]].
 
-#+BEGIN_SRC emacs-lisp
+#+BEGIN_SRC emacs-lisp :tangle no
 (use-package keyfreq
  :commands
  (keyfreq-mode keyfreq-autosave-mode)
@@ -8581,6 +8645,18 @@ Hide minor modes to save space.
  (eval-after-load "eldoc" '(diminish 'eldoc-mode))
  (eval-after-load "hi-lock" '(diminish 'hi-lock-mode)))
 #+END_SRC
+
+** Theme advice
+
+#+begin_src emacs-lisp :tangle no
+(defadvice load-theme (before disable-before-load)
+  "Disable any loaded themes before enabling a new theme. This prevents overlapping themes; something I would rarely want."
+  (dolist (theme custom-enabled-themes)
+    (disable-theme theme))
+  (my/company-mode/setup-faces))
+(ad-activate 'load-theme)
+#+end_src
+
 * Finalize
 
 #+begin_src emacs-lisp
