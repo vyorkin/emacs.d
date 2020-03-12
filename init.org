@@ -7957,7 +7957,7 @@ make compile
     '(:server
       "proxy.digitalresistance.dog"
       :port 443
-      :enable t
+      :enable :true
       :type (:@type "proxyTypeMtproto" :secret "d41d8cd98f00b204e9800998ecf8427e"))))
   :load-path "~/.emacs.d/quelpa/build/telega"
   :bind
