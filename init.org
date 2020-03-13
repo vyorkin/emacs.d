@@ -4904,67 +4904,42 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 
 #+begin_src emacs-lisp
 (use-package lsp-ui
- :after (lsp-mode)
- :commands (lsp-ui-mode general)
- :init
- (setq-default
-  lsp-ui-doc-frame-parameters
-  '((left . -1)
-    (top . -1)
-    (no-accept-focus . t)
-    (min-width . 0)
-    (width . 0)
-    (min-height . 0)
-    (height . 0)
-    (internal-border-width . 5)
-    (vertical-scroll-bars)
-    (horizontal-scroll-bars)
-    (left-fringe . 0)
-    (right-fringe . 0)
-    (menu-bar-lines . 0)
-    (tool-bar-lines . 0)
-    (line-spacing . 0.1)
-    (unsplittable . t)
-    (undecorated . t)
-    (minibuffer . nil)
-    (visibility . nil)
-    (mouse-wheel-frame . nil)
-    (no-other-frame . t)
-    (cursor-type)
-    (no-special-glyphs . t)
-    (visual-line-mode . -1)))
- :config
- (add-hook 'lsp-mode-hook 'lsp-ui-mode)
- (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
- (add-hook 'lsp-ui-doc-frame-hook
-  (lambda (frame _w)
-    (set-face-attribute 'default frame :font "Fira Code" :height 110)))
- (setq
-  lsp-ui-sideline-enable nil
-  lsp-enable-completion-at-point t
-  lsp-ui-doc-position 'bottom
-  ; lsp-ui-doc-position 'at-point
-  lsp-ui-doc-header nil
-  lsp-ui-doc-enable nil
-  lsp-ui-doc-delay 0.5
-  lsp-ui-doc-use-webkit nil
-  ;; lsp-ui-doc-max-width 160
-  ;; lsp-ui-doc-max-height 20
-  ;; lsp-ui-doc-use-childframe t
-  lsp-ui-doc-include-signature t
-  lsp-ui-doc-border "#222"
-  ;; lsp-ui-flycheck-enable t
-  lsp-ui-peek-fontify nil
-  lsp-ui-peek-expand-function (lambda (xs) (mapcar #'car xs)))
- (nmap 'haskell-mode-map
-   :prefix my/leader
-   "t d" 'lsp-ui-doc-mode
-   "t S" 'lsp-ui-sideline-mode)
- (general-def 'lsp-ui-peek-mode-map
-   "h" 'lsp-ui-peek--select-next-file
-   "l" 'lsp-ui-peek--select-prev-file
-   "j" 'lsp-ui-peek--select-next
-   "k" 'lsp-ui-peek--select-prev))
+  :after (lsp-mode)
+  :commands (lsp-ui-mode general)
+  :config
+  (add-hook 'lsp-mode-hook 'lsp-ui-mode)
+  (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
+  (add-hook 'lsp-ui-doc-frame-hook
+    (lambda (frame _w)
+      (set-face-attribute 'default frame :font "Hack" :height 100)))
+  (setq
+   lsp-ui-sideline-enable t
+   lsp-ui-sideline-delay 0.5
+   ;; Show hover messages in sideline
+   lsp-ui-show-hover t
+   ;; Show code actions in sideline
+   lsp-ui-show-code-actions t
+   lsp-enable-completion-at-point t
+   lsp-ui-doc-position 'at-point
+   lsp-ui-doc-header nil
+   lsp-ui-doc-enable t
+   lsp-ui-doc-delay 0.25
+   lsp-ui-doc-use-webkit nil
+   lsp-ui-doc-include-signature t
+   lsp-ui-doc-border "#222"
+   lsp-ui-peek-fontify nil
+   lsp-ui-peek-expand-function (lambda (xs) (mapcar #'car xs)))
+  (nmap 'haskell-mode-map
+    :prefix my/leader
+    "i" 'lsp-ui-doc-focus-frame
+    "I" 'lsp-ui-imenu
+    "t d" 'lsp-ui-doc-mode
+    "t s" 'lsp-ui-sideline-mode)
+  (general-def 'lsp-ui-peek-mode-map
+    "h" 'lsp-ui-peek--select-next-file
+    "l" 'lsp-ui-peek--select-prev-file
+    "j" 'lsp-ui-peek--select-next
+    "k" 'lsp-ui-peek--select-prev))
 #+end_src
 
 *** Company LSP
@@ -4980,7 +4955,9 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   ;; Don't filter results on the client side
   company-transformers nil
   company-lsp-cache-candidates 'auto
+  ;; Fetch completion candidates asynchronously.
   company-lsp-async t
+  ;; Enable snippet expansion on completion
   company-lsp-enable-snippet t)
  :config
  (push 'company-lsp company-backends))
@@ -5005,6 +4982,15 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 (use-package makefile-executor
   :config
   (add-hook 'makefile-mode-hook 'makefile-executor-mode))
+#+end_src
+
+*** Ivy
+
+Provides an interactive =ivy= interface to the workspace symbol
+functionality offered by =lsp-mode=.
+
+#+begin_src emacs-lisp
+(use-package lsp-ivy)
 #+end_src
 
 ** Languages
@@ -5482,11 +5468,8 @@ It works, but I still prefer to run it from inside the terminal.
   (ormolu
    :fetcher github
    :repo "vyorkin/ormolu.el")
-  :commands
-  (ormolu-mode)
-  :hook (haskell-mode)
   :custom
-  (ormolu-reformat-buffer-on-save t)
+  (ormolu-reformat-buffer-on-save nil)
   :config
   (nmap 'haskell-mode-map
     "C-c r" 'ormolu-format-buffer))
