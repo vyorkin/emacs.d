@@ -583,7 +583,7 @@ Setup [[https://www.emacswiki.org/emacs/EmacsTags][Emacs tags]].
  :ensure nil
  :custom
  ;; Reread a TAGS table without querying, if it has changed
- (tag-revert-without-query 1)
+ ;; (tag-revert-without-query 1)
  ;; Don't add a new tags to the current list.
  ;; Always start a new list.
  (tags-add-tables nil))
@@ -4929,6 +4929,9 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
    lsp-ui-doc-border "#222"
    lsp-ui-peek-fontify nil
    lsp-ui-peek-expand-function (lambda (xs) (mapcar #'car xs)))
+  (nmap 'lsp-ui-mode-map
+    :prefix my/leader
+    "=" 'lsp-ui-sideline-apply-code-actions)
   (nmap 'haskell-mode-map
     :prefix my/leader
     "i" 'lsp-ui-doc-focus-frame
@@ -5230,7 +5233,6 @@ Discover functions.
     (electric-layout-mode)
     (electric-pair-local-mode)
     (electric-indent-local-mode)
-    (next-error-follow-minor-mode)
     ;; There are some tools that dont't work with unicode symbols
     ;; I use Hasklig instead
     ;; (turn-on-haskell-unicode-input-method)
@@ -5378,6 +5380,13 @@ sections.
   auto-mode-alist))
 
 (add-to-list 'auto-mode-alist '("\\.lhs$" . latex-mode))
+#+end_src
+
+**** Happy
+
+#+begin_src emacs-lisp
+(use-package happy-mode
+  :quelpa (happy-mode :fetcher github :repo "sergv/happy-mode"))
 #+end_src
 
 **** Hi2
@@ -5554,7 +5563,23 @@ Currently disabled, too.
     (lsp))
   :init
   (setq lsp-haskell-set-completion-snippets-on t)
+  :config
+  (setq lsp-haskell-process-path-hie "ghcide")
+  (setq lsp-haskell-process-args-hie '())
+  ;; Comment/uncomment this line to see interactions between lsp client/server.
+  ;;(setq lsp-log-io t)
   :hook (haskell-mode . my/lsp-haskell/start))
+#+end_src
+
+**** Eglot
+
+I use =lsp-haskell= instead.
+
+#+begin_src emacs-lisp :tangle no
+(use-package eglot
+  :ensure t
+  :config
+  (add-to-list 'eglot-server-programs '(haskell-mode . ("ghcide" "--lsp"))))
 #+end_src
 
 *** PureScript
@@ -7245,7 +7270,10 @@ unicode symbols and latex tags.
 
 *** Bison
 
-#+begin_src emacs-lisp
+Conflicts with =happy-mode=, so make sure to manually enable the
+=happy-mode= when working with ~.y~ parser files.
+
+#+begin_src emacs-lisp :tangle no
 (use-package bison-mode)
 #+end_src
 
