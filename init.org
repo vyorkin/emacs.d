@@ -1083,7 +1083,7 @@ second (the first is the original one) argument to the default updater.
 
 ~base16-chalk~ + customizations.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (load-theme 'base16-chalk t)
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
@@ -1095,11 +1095,12 @@ second (the first is the original one) argument to the default updater.
 
 ~base16-black-metal~ + customizations.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (load-theme 'base16-black-metal t)
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
  '(company-coq-comment-h1-face ((t (:size 1.5))))
+ '(font-lock-comment-face ((t (:foreground "#999"))))
  '(proof-locked-face ((t (:background "#151515"))))
  '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
 #+end_src
@@ -1217,6 +1218,12 @@ Just another Tango theme based on =linux.org.ru= colors.
  (load-theme 'lor)
  :quelpa
  (lor-theme :repo "a13/lor-theme" :fetcher github :version original))
+#+end_src
+
+*** Sorcery
+
+#+begin_src emacs-lisp :tangle no
+(use-package sorcery-theme)
 #+end_src
 
 *** Other themes
@@ -1409,6 +1416,22 @@ Leader-prefixed.
 #+end_src
 
 ** Behavior
+*** Garbage collection
+
+Enforce a sneaky Garbage Collection strategy to minimize GC
+interference with the activity. During normal use a high GC
+threshold is set. When idling GC is immediately triggered and
+a low threshold is set.
+
+A more detailed explanation of the rationale behind this can be
+found at: http://akrl.sdf.org/
+
+#+begin_src emacs-lisp
+(use-package gcmh
+  :config
+  (gcmh-mode 1))
+#+end_src
+
 *** Server
 
 #+begin_src emacs-lisp
@@ -2079,7 +2102,7 @@ Don't forget to run ~M-x all-the-icons-install-fonts~.
 
 Disabled, it slows down dired.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package all-the-icons
  :config
  (setq
@@ -2104,6 +2127,38 @@ Add emoji support. This is useful when working with =HTML=.
 #+end_src
 
 *** Mode line
+**** Simple-modeline
+
+#+begin_src emacs-lisp :tangle no
+(use-package simple-modeline
+ ;; TODO: https://github.com/melpa/melpa/pull/6818
+ :quelpa
+ (simple-modeline :fetcher github :repo "gexplorer/simple-modeline")
+  :hook (after-init . simple-modeline-mode))
+#+end_src
+
+**** Telephone-line
+
+#+begin_src emacs-lisp :tangle no
+(use-package telephone-line
+  :init
+  (setq
+   telephone-line-lhs
+   '((evil . (telephone-line-evil-tag-segment))
+     (accent . (telephone-line-vc-segment
+                telephone-line-erc-modified-channels-segment
+                telephone-line-process-segment))
+     (nil . (telephone-line-minor-mode-segment
+             telephone-line-buffer-segment))))
+  (setq
+   telephone-line-rhs
+   '((nil . (telephone-line-misc-info-segment))
+     (accent . (telephone-line-major-mode-segment))
+     (evil . (telephone-line-airline-position-segment))))
+  :config
+  :hook (after-init . telephone-line-mode))
+#+end_src
+
 **** Mood-line
 
 A minimal mode-line configuration that aims to replicate some of the features of
@@ -2183,7 +2238,11 @@ Support hiding the mode line, this can be useful for different
 modes displaying documents or presentation.
 
 #+begin_src emacs-lisp
-(use-package hide-mode-line)
+(use-package hide-mode-line
+ :config
+ (nmap
+   :prefix my/leader
+   "m h" 'hide-mode-line))
 #+end_src
 
 *** Volatile highlights (disabled)
@@ -2603,7 +2662,7 @@ Most of the keybindings are set by the =evil-collection= package.
 
 Some of the key bindings are provided by the =evil-collection=.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (defun my/company-mode/setup-faces ()
   "Style company-mode nicely"
   (let* ((bg (face-attribute 'default :background))
@@ -2624,7 +2683,7 @@ Some of the key bindings are provided by the =evil-collection=.
        ((t (:foreground ,ac :background ,bg-lightest)))))))
 #+end_src
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package company
  :hook
  ;; Use company-mode in all buffers
@@ -2656,7 +2715,7 @@ Some of the key bindings are provided by the =evil-collection=.
 
 *** Company quickhelp
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package company-quickhelp
  :after company
  :custom
@@ -2672,7 +2731,7 @@ Some of the key bindings are provided by the =evil-collection=.
 FLX fuzzy matching for =company=.
 This only works with the =company-capf= backend.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package flx)
 
 (use-package company-flx
@@ -2826,7 +2885,16 @@ See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more
   :diminish flycheck-mode)
 #+end_src
 
+*** Flycheck indicator
+
+#+begin_src emacs-lisp
+(use-package flycheck-indicator
+  :hook (flycheck-mode . flycheck-indicator-mode))
+#+end_src
+
 *** Posframe
+
+Cool package, but I prefer to enable it manually, when needed.
 
 #+begin_src emacs-lisp
 (use-package flycheck-posframe
@@ -2837,13 +2905,14 @@ See the [[https://www.flycheck.org/en/latest/index.html][flycheck.org]] for more
    'flycheck-posframe-inhibit-functions
    #'(lambda () (bound-and-true-p company-backend)))
   (setq flycheck-posframe-border-width 1)
-  (set-face-attribute 'flycheck-posframe-background-face nil :inherit nil :background "#282a36")
+  (set-face-attribute 'flycheck-posframe-background-face nil :inherit nil :background "#111")
   (set-face-attribute 'flycheck-posframe-error-face nil :inherit nil :foreground "red")
   (set-face-attribute 'flycheck-posframe-warning-face nil :foreground "skyblue")
   (set-face-attribute 'flycheck-posframe-info-face nil :foreground "white")
-  :custom-face (flycheck-posframe-border-face ((t (:foreground "#dc752f"))))
-  :hook
-  (flycheck-mode . flycheck-posframe-mode))
+  :custom-face (flycheck-posframe-border-face ((t (:foreground "#353535"))))
+  ;; :hook
+  ;; (flycheck-mode . flycheck-posframe-mode)
+)
 #+end_src
 
 *** Popup (flycheck-popup-tip)
@@ -2931,7 +3000,8 @@ TODO: Find a way to disable it in code regions.
   ((text-mode . flyspell-mode)
    ;; Don’t check comments, thats too annoying
    ;; (prog-mode . flyspell-prog-mode)
-   (org-mode . flyspell-mode)
+   ;; Might be slow in large org-files
+   ;; (org-mode . flyspell-mode)
    (gfm-mode . flyspell-mode)
    (git-commit-mode . flyspell-mode))
   :config
@@ -3379,9 +3449,7 @@ Most of key bindings are provided by the =evil-collection=.
 
 *** Icons
 
-Disabled, too fancy for me.
-
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package all-the-icons-dired
  :hook
  (dired-mode . all-the-icons-dired-mode))
@@ -3535,7 +3603,7 @@ Setup [[https://github.com/abo-abo/swiper][ivy]].
   (ivy-set-occur 'ivy-switch-buffer 'my/ivy/switch-buffer-occur)
   (nmap
     :prefix my/leader
-    "a" 'ivy-switch-buffer)
+    "b" 'ivy-switch-buffer)
   (nmap
     "C-c v" 'ivy-push-view
     "C-c V" 'ivy-pop-view)
@@ -3590,9 +3658,9 @@ It doesn't work with evil-mode.
   (ivy-posframe-mode 1))
 #+end_src
 
-Ivy icons. Disabled, too fancy for me.
+Ivy icons
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package all-the-icons-ivy
  :after (ivy projectile)
  :commands
@@ -3740,7 +3808,29 @@ Package for selecting a link to jump to.
 
 #+begin_src emacs-lisp
 (use-package counsel-etags
-  :after (general counsel))
+  :after (general counsel)
+  :init
+  ;; Don't ask before rereading the TAGS files if they have changed
+  (setq tags-revert-without-query t)
+  ;; Don't warn when TAGS files are large
+  (setq large-file-warning-threshold nil)
+  ;; (setq counsel-etags-extra-tags-files '("./codex.tags"))
+  ;; Use a custom command to update tags
+  ;; (setq counsel-etags-update-tags-backend
+  ;;       (lambda (src-dir) (shell-command "make tags")))
+  :config
+  (nmap
+    "C-]" 'counsel-etags-find-tag-at-point)
+  :init
+  (add-hook 'prog-mode-hook
+    (lambda ()
+      (add-hook 'after-save-hook
+        'counsel-etags-virtual-update-tags 'append 'local)))
+  :config
+  ;; (with-eval-after-load 'counsel-etags
+  ;;   (push "TAGS" counsel-etags-ignore-filenames)
+  ;;   (push "build" counsel-etags-ignore-directories))
+  (setq counsel-etags-update-interval 60))
 #+end_src
 
 *** Counsel ffdata
@@ -4887,17 +4977,18 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 
 #+begin_src emacs-lisp
 (use-package lsp-mode
- :after (general projectile)
- :commands (lsp)
- :init
- ;; Uncomment to inspect communication between client and the server
- (setq lsp-print-io t)
- (setq lsp-prefer-flymake nil)
- :config
- (nmap
-  :prefix my/leader
-  "l r" 'lsp-restart-workspace)
- :delight "lsp")
+  :after (general projectile)
+  :commands (lsp)
+  :init
+  ;; Uncomment to inspect communication between client and the server
+  (setq lsp-print-io t)
+  (setq lsp-prefer-flymake nil)
+  :config
+  (dolist (dir '("vendor")) (push dir lsp-file-watch-ignored))
+  (nmap
+    :prefix my/leader
+    "l r" 'lsp-restart-workspace)
+  :delight "lsp")
 #+end_src
 
 *** LSP UI
@@ -4922,7 +5013,7 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
    lsp-enable-completion-at-point t
    lsp-ui-doc-position 'at-point
    lsp-ui-doc-header nil
-   lsp-ui-doc-enable t
+   lsp-ui-doc-enable nil
    lsp-ui-doc-delay 0.25
    lsp-ui-doc-use-webkit nil
    lsp-ui-doc-include-signature t
@@ -5269,53 +5360,53 @@ Discover functions.
     (switch-to-buffer-other-window "*haskell-process-log*"))
   :hook
   (haskell-mode . my/haskell-mode/setup)
-  :init
-  (setq
-   ;; Enable debug logging to *haskell-process-log* buffer
-   haskell-process-log t
-   ;; Don't generate tags via hasktags after saving
-   haskell-tags-on-save nil
-   ;; Don't run stylish-haskell on the buffer before saving.
-   ;; It just inserts a bunch of spaces at the end of the line for no reason
-   haskell-stylish-on-save nil
-   ;; Suggest to add import statements using Hoogle as a backend
-   haskell-process-suggest-hoogle-imports t
-   ;; Suggest to add import statements using Hayoo as a backend
-   haskell-process-suggest-hayoo-imports t
-   ;; Replace SVG image text with actual images
-   haskell-svg-render-images t
-   ;; Don't eliminate the context part in a Haskell type
-   haskell-doc-chop-off-context nil
-   ;; Suggest removing import lines as warned by GHC
-   haskell-process-suggest-haskell-docs-imports t
-   ;; Search for the types of global functions by loading the files
-   haskell-doc-show-global-types t
-   ;; Don't show debugging tips when starting the process
-   haskell-process-show-debug-tips nil
-   ;; Don't suggest removing import lines as warned by GHC
-   haskell-process-suggest-remove-import-lines nil
-   ;; Don't suggest adding packages to .cabal file
-   haskell-process-suggest-add-package nil
-   ;; Don't suggest restarting the f*****g process
-   haskell-process-suggest-restart nil
-   ;; Don't suggest adding the OverloadedStrings extensions
-   haskell-process-suggest-overloaded-strings nil
-   ;; Auto import the modules reported by GHC to have been loaded
-   haskell-process-auto-import-loaded-modules t
-   ;; Show things like type info instead of printing to the message area
-   ;; haskell-process-use-presentation-mode t
-   ;; Don't popup errors in a separate buffer
-   haskell-interactive-popup-errors nil
-   ;; Make haskell-process-log look better
-   haskell-process-args-ghci '("-ferror-spans" "-fshow-loaded-modules")
-   haskell-process-args-cabal-repl '("--ghc-options=-fdiagnostics-color=never")
-   haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans -fshow-loaded-modules" "--no-build" "--no-load")
-   haskell-process-args-cabal-new-repl '("--ghc-options=-fdiagnostics-color=never")
-   ;; Use "cabal new-repl" as the inferior haskell process
-   haskell-process-type 'cabal-new-repl
-   ;; haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans")
-   ;; haskell-compile-cabal-build-command "stack build --no-library-profiling"
-   haskell-compile-cabal-build-command "cd %s && cabal new-build")
+  :custom
+  ;; Enable debug logging to *haskell-process-log* buffer
+  (haskell-process-log t)
+  ;; Don't generate tags via hasktags after saving
+  (haskell-tags-on-save nil)
+  ;; Don't run stylish-haskell on the buffer before saving.
+  ;; It just inserts a bunch of spaces at the end of the line for no reason
+  (haskell-stylish-on-save nil)
+  ;; Suggest to add import statements using Hoogle as a backend
+  (haskell-process-suggest-hoogle-imports t)
+  ;; Suggest to add import statements using Hayoo as a backend
+  (haskell-process-suggest-hayoo-imports t)
+  ;; Replace SVG image text with actual images
+  (haskell-svg-render-images t)
+  ;; Don't eliminate the context part in a Haskell type
+  (haskell-doc-chop-off-context nil)
+  ;; Suggest removing import lines as warned by GHC
+  (haskell-process-suggest-haskell-docs-imports t)
+  ;; Search for the types of global functions by loading the files
+  (haskell-doc-show-global-types t)
+  ;; Don't show debugging tips when starting the process
+  (haskell-process-show-debug-tips nil)
+  ;; Don’t suggest removing import lines as warned by GHC
+  ;; It is too annoying, sometimes I want to keep unused imports
+  (haskell-process-suggest-remove-import-lines nil)
+  ;; Don't suggest adding packages to .cabal file
+  (haskell-process-suggest-add-package nil)
+  ;; Don't suggest restarting the f*****g process
+  (haskell-process-suggest-restart nil)
+  ;; Don't suggest adding the OverloadedStrings extensions
+  (haskell-process-suggest-overloaded-strings nil)
+  ;; Auto import the modules reported by GHC to have been loaded
+  (haskell-process-auto-import-loaded-modules t)
+  ;; Show things like type info instead of printing to the message area
+  ;; haskell-process-use-presentation-mode t
+  ;; Don't popup errors in a separate buffer
+  (haskell-interactive-popup-errors nil)
+  ;; Make haskell-process-log look better
+  (haskell-process-args-ghci '("-ferror-spans" "-fhide-source-paths"))
+  (haskell-process-args-cabal-repl '("--ghc-options=-ferror-spans -fhide-source-paths"))
+  (haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans" "--no-build" "--no-load"))
+  (haskell-process-args-cabal-new-repl '("--ghc-options=-ferror-spans -fhide-source-paths"))
+  ;; Use "cabal new-repl" as the inferior haskell process
+  (haskell-process-type 'cabal-new-repl)
+  ;; haskell-process-args-stack-ghci '("--ghci-options=-ferror-spans")
+  ;; haskell-compile-cabal-build-command "stack build --no-library-profiling"
+  (haskell-compile-cabal-build-command "cd %s && cabal new-build")
   :config
   (add-to-list
    'electric-layout-rules
@@ -5420,7 +5511,7 @@ operators will be replaced.
  :hook
  (haskell-mode . hindent-mode)
  :config
- ;; "r" - reformat
+ ;; "r " - reformat
  (vmap 'haskell-mode-map
    "C-c r" 'hindent-reformat-region)
  (nmap 'haskell-mode-map
@@ -5554,11 +5645,14 @@ Currently disabled, too.
 
 **** LSP
 
-#+begin_src emacs-lisp
+I don’t use it currently. It might be slow when opening files.
+And it interferes with ~haskell-mode~.
+
+#+begin_src emacs-lisp :tangle no
 (use-package lsp-haskell
   :preface
   (defun my/lsp-haskell/start ()
-    (require 'lsp)
+    (require 'lsp-mode)
     (require 'lsp-haskell)
     (lsp))
   :init
@@ -5668,7 +5762,7 @@ A new, simple purescript mode for cheap syntax highlighting.
  (idris-repl-prompt-style 'short))
 #+end_src
 
-*** ATS/ATS2 (disabled)
+*** ATS/ATS2
 **** Mode
 
 ATS2 mode.
@@ -6476,14 +6570,9 @@ TODO: add https://github.com/flycheck/flycheck-mercury
 
 *** Dhall
 
-Idk how to prevent its popup to show up.
-Also, it fails to validate =spago= dhall files for some reason.
-
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package dhall-mode
  :custom
- (dhall-command (substitute-in-file-name "$HOME/.local/bin/dhall"))
- (dhall-format-command nil)
  (dhall-format-at-save t)
  :mode "\\.dhall\\'")
 #+end_src
@@ -7090,9 +7179,11 @@ Flow LSP support.
  (graphql-url "http://localhost:8000/api/graphql/query"))
 #+end_src
 
-**** company-tern
+**** company-tern (disabled)
 
-#+begin_src emacs-lisp
+Something is borken.
+
+#+begin_src emacs-lisp :tangle no
 (use-package company-tern
  :after (company tern)
  :demand t
@@ -7158,6 +7249,29 @@ Add company mode support.
  (add-to-list 'company-backends 'company-irony))
 #+end_src
 
+#+begin_src emacs-lisp
+(use-package irony-cdb
+  :ensure nil
+  :hook (irony-mode . irony-cdb-autosetup-compile-options))
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package irony-eldoc
+  :hook (irony-mode . irony-eldoc))
+#+end_src
+
+Company mode backend for C/C++ header files with Irony.
+
+#+begin_src emacs-lisp
+(use-package company-irony-c-headers
+  :after (irony)
+  :config
+  (add-to-list 'company-backends '(company-irony-c-headers company-irony)))
+#+end_src
+
+TODO: Use company-irony-c-headers to replace company-c-headers
+see https://github.com/yuutayamada/company-arduino/issues/3
+
 Auto-completion for C/C++ headers using Company.
 See: https://github.com/yuutayamada/company-arduino/tree/d7e369702b8eee63e6dfdeba645ce28b6dc66fb1#note
 
@@ -7185,7 +7299,9 @@ Add flycheck support.
 *** CMake
 
 #+begin_src emacs-lisp
-(use-package cmake-mode)
+(use-package cmake-mode
+  :mode (("\\.cmake\\'" . cmake-mode)
+         ("\\CMakeLists.txt$" . cmake-mode)))
 
 (use-package cmake-font-lock
   :config
@@ -7417,14 +7533,37 @@ Conflicts with =happy-mode=, so make sure to manually enable the
 *** Arduino
 
 #+begin_src emacs-lisp
-(use-package arduino-mode)
+(use-package arduino-mode
+  :init
+  ;; TODO: irony-arduino-includes-options
+  ;; see https://github.com/yuutayamada/company-arduino/issues/5
+  ;; TODO: https://github.com/yuutayamada/company-arduino/issues/6
+  :config
+  ;; Activate irony-mode on arduino-mode
+  (add-hook 'arduino-mode-hook 'irony-mode)
+  (nmap
+    :prefix my/leader
+    "a v" 'arduino-verify
+    "a u" 'arduino-upload
+    "a i" 'arduino-install-library
+    "a m" 'arduino-menu
+    "a n" 'arduino-sketch-new
+    "a b" 'arduino-install-boards
+    "a s" 'arduino-serial-monitor))
 #+end_src
 
 #+begin_src emacs-lisp
 (use-package company-arduino
   :after (irony company company-irony company-c-headers)
   :config
+  ;; Add arduino's include options to irony-mode's variable
   (add-hook 'irony-mode-hook 'company-arduino-turn-on)
+  ;; Configuration for company-c-headers.el
+  ;; The `company-arduino-append-include-dirs' function appends
+  ;; Arduino's include directories to the default directories
+  ;; if `default-directory' is inside `company-arduino-home'. Otherwise
+  ;; just returns the default directories.
+  ;; Please change the default include directories accordingly.
   (defun my-company-c-headers-get-system-path ()
     "Return the system include path for the current buffer."
     (let ((default '("/usr/include/" "/usr/local/include/")))
@@ -7436,6 +7575,8 @@ Conflicts with =happy-mode=, so make sure to manually enable the
 
 #+begin_src emacs-lisp
 (use-package glsl-mode)
+
+(use-package company-glsl)
 #+end_src
 
 *** Kconfig
@@ -7559,6 +7700,9 @@ Run command quickly.
 
 ** Docker
 
+Emacs integration for Docker. Supports docker containers,
+images, volumes, networks, docker-machine and docker-compose.
+
 #+begin_src emacs-lisp
 (use-package docker
  :diminish docker-mode
@@ -7631,6 +7775,16 @@ highlighting won't work for new regions of Haskell code in the
 #+begin_src emacs-lisp
 (setq mmm-parse-when-idle 't))
 #+end_src
+** Tools
+*** carbon-now-sh
+
+#+begin_src emacs-lisp
+(use-package carbon-now-sh
+  :config
+  (vmap 'prog-mode
+    "C-c c" 'carbon-now-sh))
+#+end_src
+
 ** Help
 *** Helpful
 
@@ -7701,7 +7855,7 @@ Provides [[https://direnv.net/][=direnv=]] integration for Emacs.
 (use-package direnv
  :demand t
  :custom
- (direnv-always-show-summary nil)
+ (direnv-always-show-summary t)
  :config
  (direnv-mode))
 #+end_src
