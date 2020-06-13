@@ -5756,6 +5756,13 @@ A new, simple purescript mode for cheap syntax highlighting.
  (idris-repl-prompt-style 'short))
 #+end_src
 
+*** Agda
+
+#+begin_src emacs-lisp
+(use-package agda2-mode
+  :load-path "lisp/agda/src/data/emacs-mode")
+#+end_src
+
 *** ATS/ATS2
 **** Mode
 
