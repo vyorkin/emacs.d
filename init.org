@@ -17,7 +17,7 @@ This config is not intended to be used by anyone other than me. I would not reco
 Clone the repo:
 
 #+begin_src sh :tangle no
-git clone https://github.com/vyorkin/emacs.d
+git clone --recurse-submodules -j8 --depth=1 https://github.com/vyorkin/emacs.d
 #+end_src
 
 Make a backup of your old =.emacs.d=:
@@ -193,12 +193,6 @@ be less verbose.
   (package-install 'use-package))
 
 (eval-when-compile (require 'use-package))
-
-;; For ~:diminish~ functionality of the =use-package=
-(require 'diminish)
-
-;; For ~:bind~ functionality of the =use-package=
-(require 'bind-key)
 
 (setq
  use-package-always-ensure t
@@ -6045,8 +6039,7 @@ This configuration relies on the Proof General to be cloned here: ~~/.emacs.d/li
 See the [[https://github.com/ProofGeneral/PG#using-git-manual-compilation-procedure][Proof General docs]] for more info.
 
 #+begin_src emacs-lisp
-(use-package proof-site
-  :load-path "lisp/PG/generic"
+(use-package proof-general
   :custom
   (proof-delete-empty-windows t)
   (proof-three-window-mode-policy 'hybrid)
@@ -6522,15 +6515,6 @@ Some of key bindings are provided by ==evil-collection=.
 #+begin_src emacs-lisp
 (use-package flycheck-elixir
   :after (flycheck elixir-mode))
-#+end_src
-
-#+begin_src emacs-lisp
-(use-package flycheck-mix
- :after (flycheck elixir-mode)
- :commands
- (flycheck-mix-setup)
- :config
- (flycheck-mix-setup))
 #+end_src
 
 #+begin_src emacs-lisp
@@ -7177,20 +7161,6 @@ Flow LSP support.
  :mode "\\.graphql\\'"
  :custom
  (graphql-url "http://localhost:8000/api/graphql/query"))
-#+end_src
-
-**** company-tern (disabled)
-
-Something is borken.
-
-#+begin_src emacs-lisp :tangle no
-(use-package company-tern
- :after (company tern)
- :demand t
- :custom
- (company-tern-meta-as-single-line t)
- :config
- (add-to-list 'company-backends 'company-tern))
 #+end_src
 
 *** Vue
