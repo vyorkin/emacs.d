@@ -4,6 +4,3 @@
 [submodule "purescript-mode"]
 	path = purescript-mode
 	url = https://github.com/vyorkin-forks/purescript-mode.git
-[submodule "lisp/PG"]
-	path = lisp/PG
-	url = https://github.com/ProofGeneral/PG
