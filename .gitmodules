@@ -4,3 +4,6 @@
 [submodule "purescript-mode"]
 	path = purescript-mode
 	url = https://github.com/vyorkin-forks/purescript-mode.git
+[submodule "lisp/agda"]
+	path = lisp/agda
+	url = https://github.com/agda/agda.git
