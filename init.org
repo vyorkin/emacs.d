@@ -1079,6 +1079,9 @@ second (the first is the original one) argument to the default updater.
 
 #+begin_src emacs-lisp :tangle no
 (load-theme 'base16-chalk t)
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
  '(proof-declaration-name-face ((t (:foreground "#55aaff"))))
@@ -1091,6 +1094,9 @@ second (the first is the original one) argument to the default updater.
 
 #+begin_src emacs-lisp
 (load-theme 'base16-black-metal t)
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
  '(company-coq-comment-h1-face ((t (:size 1.5))))
@@ -1189,13 +1195,17 @@ why). So the code block below is untangled.
     ;; (set-face-background 'idle-highlight "#c51060")
     (set-face-foreground 'idle-highlight "#999")
     (set-face-background 'idle-highlight "#222"))
-  (with-eval-after-load 'proof-general
+
+  (with-eval-after-load 'company))
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(with-eval-after-load 'proof-general
     (custom-set-faces
      '(proof-queue-face ((t (:foreground "#eee"))))
      '(proof-locked-face ((t (:background "#001800" :foreground "#aaccbb"))))
      '(proof-locked-face ((t (:background "#0d3360" ))))
      '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff"))))))
-  (with-eval-after-load 'company))
 #+end_src
 
 *** Lor theme
@@ -5760,6 +5770,7 @@ A new, simple purescript mode for cheap syntax highlighting.
 
 #+begin_src emacs-lisp
 (use-package agda2-mode
+  :demand t
   :load-path "lisp/agda/src/data/emacs-mode")
 #+end_src
 
@@ -6049,9 +6060,9 @@ See the [[https://github.com/ProofGeneral/PG#using-git-manual-compilation-proced
 (use-package proof-general
   :custom
   (proof-delete-empty-windows t)
-  (proof-three-window-mode-policy 'hybrid)
+  ;; (proof-three-window-mode-policy 'smart)
   ;; see: https://github.com/ProofGeneral/PG/issues/404
-  ;; (proof-shrink-windows-tofit t)
+  (proof-shrink-windows-tofit t)
   :delight "coq")
 #+end_src
 
