@@ -5771,7 +5771,11 @@ A new, simple purescript mode for cheap syntax highlighting.
 #+begin_src emacs-lisp
 (use-package agda2-mode
   :demand t
-  :load-path "lisp/agda/src/data/emacs-mode")
+  :load-path "lisp/agda/src/data/emacs-mode"
+  :config
+  (nmap 'agda2-mode-map
+    "gd" 'agda2-goto-definition-keyboard
+    "C-c C-SPC" 'agda2-give))
 #+end_src
 
 *** ATS/ATS2
@@ -6138,6 +6142,13 @@ definition, integrated help, etc.
   (nmap 'coq-mode-map
     "g d" 'company-coq-jump-to-definition))
 #+end_src
+
+*** Lean
+
+Emacs mode for the Lean theorem prover.
+Keybindings: https://github.com/leanprover/lean-mode#key-bindings-and-commands
+
+(use-package lean-mode)
 
 *** Minizinc
 
