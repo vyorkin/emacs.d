@@ -8274,7 +8274,7 @@ make compile
 
 *** ERC
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package erc
   :preface
   (defvar my/erc/default-nick "vyorkin")
