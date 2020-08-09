@@ -7065,6 +7065,8 @@ TypeScript mode.
     (defun colorize-compilation-buffer ()
       (ansi-color-apply-on-region compilation-filter-start (point-max)))
     (add-hook 'compilation-filter-hook 'colorize-compilation-buffer))
+  :custom
+  (typescript-indent-level 2)
   :hook
   (typescript-mode . my/typescript-mode/setup))
 #+end_src
@@ -7082,8 +7084,14 @@ TypeScript IDE.
     (eldoc-mode +1)
     (tide-hl-identifier-mode +1)
     (company-mode +1))
+  :custom
+  (tide-format-options
+   '(:indentSize 2 :tabSize 2 :indentStyle 2))
   :config
   (flycheck-add-next-checker 'javascript-eslint 'jsx-tide 'append)
+  (nmap tide-mode-map
+    :prefix my/leader
+    "0" 'tide-jsdoc-template)
   :hook
   ((typescript-mode . my/tide/setup)
    (before-save . tide-format-before-save)))
