@@ -2698,6 +2698,8 @@ Some of the key bindings are provided by the =evil-collection=.
  (company-dabbrev-downcase nil)
  (company-idle-delay 0.2 "adjust this setting according to your typing speed")
  (company-minimum-prefix-length 1)
+ (company-tooltip-align-annotations t)
+
  ;; Disable in org
  (company-global-modes '(not org-mode))
  :config
@@ -5768,7 +5770,7 @@ A new, simple purescript mode for cheap syntax highlighting.
 
 *** Agda
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package agda2-mode
   :demand t
   :load-path "lisp/agda/src/data/emacs-mode"
@@ -6906,44 +6908,54 @@ Other JSON-related packages.
 
 #+begin_src emacs-lisp
 (use-package web-mode
- :mode
- (("\\.html?\\'" . web-mode)
-  ("\\.html\\.erb\\'" . web-mode)
-  ("\\.erb\\'" . web-mode)
-  ("\\.djhtml\\'" . web-mode)
-  ("\\.tsx\\'" . web-mode)
-  ("\\.jsx\\'" . web-mode)
-  ("\\.mustache\\'" . web-mode)
-  ("\\.jinja\\'" . web-mode)
+  :after (tide)
+  :preface
+  (defun my/web-mode/setup ()
+    (interactive)
+    (when (string-equal "tsx" (file-name-extension buffer-file-name))
+      (setup-tide-mode)))
+  :mode
+  (("\\.html?\\'" . web-mode)
+   ("\\.html\\.erb\\'" . web-mode)
+   ("\\.erb\\'" . web-mode)
+   ("\\.djhtml\\'" . web-mode)
+   ("\\.tsx\\'" . web-mode)
+   ("\\.jsx\\'" . web-mode)
+   ("\\.mustache\\'" . web-mode)
+   ("\\.jinja\\'" . web-mode)
 
-  ("\\.css\\'" . web-mode)
-  ("\\.scss\\'" . web-mode)
+   ("\\.css\\'" . web-mode)
+   ("\\.scss\\'" . web-mode)
 
-  ("\\.[agj]sp\\'" . web-mode)
-  ("\\.as[cp]x\\'" . web-mode)
-  ("\\.as\\'" . web-mode)
+   ("\\.[agj]sp\\'" . web-mode)
+   ("\\.as[cp]x\\'" . web-mode)
+   ("\\.as\\'" . web-mode)
 
-  ("\\.phtml\\'" . web-mode)
-  ("\\.tpl\\.php\\'" . web-mode)
-  ("\\.php\\'" . web-mode))
+   ("\\.phtml\\'" . web-mode)
+   ("\\.tpl\\.php\\'" . web-mode)
+   ("\\.php\\'" . web-mode))
 
- :init
- (setq
-  ;; indent HTML automatically
-  web-mode-indent-style 2
-  ;; offsets
-  web-mode-markup-indent-offset 2
-  web-mode-css-indent-offset 2
-  web-mode-code-indent-offset 2
+  :init
+  (setq
+   ;; indent HTML automatically
+   web-mode-indent-style 2
+   ;; offsets
+   web-mode-markup-indent-offset 2
+   web-mode-css-indent-offset 2
+   web-mode-code-indent-offset 2
 
-  web-mode-engines-alist
-  '(("\\.jinja\\'"  . "django")
-    ("php" . "\\.php[3-5]?"))
+   web-mode-engines-alist
+   '(("\\.jinja\\'"  . "django")
+     ("php" . "\\.php[3-5]?"))
 
-  web-mode-enable-auto-pairing t
-  web-mode-enable-css-colorization t
-  web-mode-enable-current-element-highlight t
-  web-mode-enable-current-column-highlight nil))
+   web-mode-enable-auto-pairing t
+   web-mode-enable-css-colorization t
+   web-mode-enable-current-element-highlight t
+   web-mode-enable-current-column-highlight nil)
+  :config
+  (flycheck-add-mode 'javascript-eslint 'web-mode)
+  :hook
+  (web-mode . my/web-mode/setup))
 #+end_src
 
 **** Cakecrumbs
@@ -7039,8 +7051,42 @@ Display current path for HTML/XML/CSS.
 
 *** TypeScript
 
-#+begin_src emacs-lisp
+TypeScript mode.
 
+#+begin_src emacs-lisp
+(use-package typescript-mode
+  :preface
+  (defun my/typescript-mode/setup ()
+    ;; The error messages produced by tsc when its pretty flag
+    ;; is turned on include ANSI color escapes, which by default
+    ;; compilation-mode does not interpret. In order to get the
+    ;; escapes parsed we do the following:
+    (require 'ansi-color)
+    (defun colorize-compilation-buffer ()
+      (ansi-color-apply-on-region compilation-filter-start (point-max)))
+    (add-hook 'compilation-filter-hook 'colorize-compilation-buffer))
+  :hook
+  (typescript-mode . my/typescript-mode/setup))
+#+end_src
+
+TypeScript IDE.
+
+#+begin_src emacs-lisp
+(use-package tide
+  :after (typescript-mode flycheck company)
+  :preface
+  (defun my/tide/setup ()
+    (interactive)
+    (tide-setup)
+    (flycheck-mode +1)
+    (eldoc-mode +1)
+    (tide-hl-identifier-mode +1)
+    (company-mode +1))
+  :config
+  (flycheck-add-next-checker 'javascript-eslint 'jsx-tide 'append)
+  :hook
+  ((typescript-mode . my/tide/setup)
+   (before-save . tide-format-before-save)))
 #+end_src
 
 TypeScript REPL.
