@@ -1064,7 +1064,7 @@ second (the first is the original one) argument to the default updater.
 (use-package base16-theme
   :config
   ;; (load-theme 'base16-default-dark t)
-  ;; (load-theme 'base16-grayscale-dark t)
+  (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
   ;; (load-theme 'base16-gruvbox-light-hard t)
   ;; (load-theme 'base16-material-palenight t) ;; ****
@@ -1092,7 +1092,7 @@ second (the first is the original one) argument to the default updater.
 
 ~base16-black-metal~ + customizations.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (load-theme 'base16-black-metal t)
 #+end_src
 
@@ -1166,7 +1166,9 @@ why). So the code block below is untangled.
  (doom-themes-visual-bell-config)
  (doom-themes-neotree-config)
  ;; Corrects (and improves) org-mode's native fontification
- (doom-themes-org-config))
+ (doom-themes-org-config)
+ (load-theme 'doom-moonlight)
+)
 #+end_src
 
 *** Apropospriate theme
@@ -7209,11 +7211,13 @@ A JavaScript refactoring library.
 
 **** rjxs-mode
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package rjsx-mode
+ :demand t
  :commands rjsx-mode
+ :mode "\\\.js$"
  :config
- (add-to-list 'auto-mode-alist '("\\.jsx\\'" . rjsx-mode)))
+ (setq js-indent-level 2))
 #+end_src
 
 **** LSP
@@ -8549,7 +8553,7 @@ Provides a little pomodoro timer in the mode-line.
 
 ** Recording
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package names
   :demand t)
 
