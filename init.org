@@ -5268,7 +5268,7 @@ Discover functions.
 *** Haskell
 **** Hasklig (ligatures)
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package hasklig-mode
   :commands
   (hasklig-mode)
@@ -5300,7 +5300,7 @@ Discover functions.
     (aset buffer-display-table ?\^D [?\ ]))
   (defun my/haskell-mode/setup ()
     (interactive)
-    (setq buffer-face-mode-face '(:family "Hasklig"))
+    ;; (setq buffer-face-mode-face '(:family "Hasklig"))
     (buffer-face-mode)
     ;; Treat symbol (e.g. "_") as a word
     (defalias 'forward-evil-word 'forward-evil-symbol)
@@ -5311,7 +5311,7 @@ Discover functions.
     ;; (setq-local evil-auto-indent nil)
     (with-current-buffer (get-buffer-create "*haskell-process-log*")
       (my/display-ctrl-D-as-space))
-    (hasklig-mode)
+    ;; (hasklig-mode)
     (haskell-doc-mode)
     (haskell-collapse-mode)
     (haskell-decl-scan-mode)
@@ -5319,7 +5319,7 @@ Discover functions.
     (electric-pair-local-mode)
     (electric-indent-local-mode)
     ;; There are some tools that dont't work with unicode symbols
-    ;; I use Hasklig instead
+    ;; I (sometimes) use Hasklig instead
     ;; (turn-on-haskell-unicode-input-method)
     (face-remap-add-relative 'font-lock-doc-face 'font-lock-comment-face))
   (defvar my/haskell-process-use-ghci nil)
@@ -6044,7 +6044,7 @@ See the [[https://github.com/ProofGeneral/PG#using-git-manual-compilation-proced
   (proof-delete-empty-windows t)
   (proof-three-window-mode-policy 'hybrid)
   ;; see: https://github.com/ProofGeneral/PG/issues/404
-  ;; (proof-shrink-windows-tofit t)
+  (proof-shrink-windows-tofit t)
   :delight "coq")
 #+end_src
 
@@ -8466,7 +8466,7 @@ Provides a little pomodoro timer in the mode-line.
 
 ** Recording
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package names
   :demand t)
 
