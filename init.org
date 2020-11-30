@@ -1064,7 +1064,7 @@ second (the first is the original one) argument to the default updater.
 (use-package base16-theme
   :config
   ;; (load-theme 'base16-default-dark t)
-  ;; (load-theme 'base16-grayscale-dark t)
+  (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
   ;; (load-theme 'base16-gruvbox-light-hard t)
   ;; (load-theme 'base16-material-palenight t) ;; ****
@@ -1079,6 +1079,9 @@ second (the first is the original one) argument to the default updater.
 
 #+begin_src emacs-lisp :tangle no
 (load-theme 'base16-chalk t)
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
  '(proof-declaration-name-face ((t (:foreground "#55aaff"))))
@@ -1089,8 +1092,11 @@ second (the first is the original one) argument to the default updater.
 
 ~base16-black-metal~ + customizations.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (load-theme 'base16-black-metal t)
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
  '(company-coq-comment-h1-face ((t (:size 1.5))))
@@ -1160,7 +1166,9 @@ why). So the code block below is untangled.
  (doom-themes-visual-bell-config)
  (doom-themes-neotree-config)
  ;; Corrects (and improves) org-mode's native fontification
- (doom-themes-org-config))
+ (doom-themes-org-config)
+ (load-theme 'doom-moonlight)
+)
 #+end_src
 
 *** Apropospriate theme
@@ -1189,13 +1197,17 @@ why). So the code block below is untangled.
     ;; (set-face-background 'idle-highlight "#c51060")
     (set-face-foreground 'idle-highlight "#999")
     (set-face-background 'idle-highlight "#222"))
-  (with-eval-after-load 'proof-general
+
+  (with-eval-after-load 'company))
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(with-eval-after-load 'proof-general
     (custom-set-faces
      '(proof-queue-face ((t (:foreground "#eee"))))
      '(proof-locked-face ((t (:background "#001800" :foreground "#aaccbb"))))
      '(proof-locked-face ((t (:background "#0d3360" ))))
      '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff"))))))
-  (with-eval-after-load 'company))
 #+end_src
 
 *** Lor theme
@@ -2688,6 +2700,8 @@ Some of the key bindings are provided by the =evil-collection=.
  (company-dabbrev-downcase nil)
  (company-idle-delay 0.2 "adjust this setting according to your typing speed")
  (company-minimum-prefix-length 1)
+ (company-tooltip-align-annotations t)
+
  ;; Disable in org
  (company-global-modes '(not org-mode))
  :config
@@ -5756,6 +5770,18 @@ A new, simple purescript mode for cheap syntax highlighting.
  (idris-repl-prompt-style 'short))
 #+end_src
 
+*** Agda
+
+#+begin_src emacs-lisp :tangle no
+(use-package agda2-mode
+  :demand t
+  :load-path "lisp/agda/src/data/emacs-mode"
+  :config
+  (nmap 'agda2-mode-map
+    "gd" 'agda2-goto-definition-keyboard
+    "C-c C-SPC" 'agda2-give))
+#+end_src
+
 *** ATS/ATS2
 **** Mode
 
@@ -6042,7 +6068,7 @@ See the [[https://github.com/ProofGeneral/PG#using-git-manual-compilation-proced
 (use-package proof-general
   :custom
   (proof-delete-empty-windows t)
-  (proof-three-window-mode-policy 'hybrid)
+  ;; (proof-three-window-mode-policy 'smart)
   ;; see: https://github.com/ProofGeneral/PG/issues/404
   (proof-shrink-windows-tofit t)
   :delight "coq")
@@ -6120,6 +6146,13 @@ definition, integrated help, etc.
   (nmap 'coq-mode-map
     "g d" 'company-coq-jump-to-definition))
 #+end_src
+
+*** Lean
+
+Emacs mode for the Lean theorem prover.
+Keybindings: https://github.com/leanprover/lean-mode#key-bindings-and-commands
+
+(use-package lean-mode)
 
 *** Minizinc
 
@@ -6877,44 +6910,54 @@ Other JSON-related packages.
 
 #+begin_src emacs-lisp
 (use-package web-mode
- :mode
- (("\\.html?\\'" . web-mode)
-  ("\\.html\\.erb\\'" . web-mode)
-  ("\\.erb\\'" . web-mode)
-  ("\\.djhtml\\'" . web-mode)
-  ("\\.tsx\\'" . web-mode)
-  ("\\.jsx\\'" . web-mode)
-  ("\\.mustache\\'" . web-mode)
-  ("\\.jinja\\'" . web-mode)
+  :after (tide)
+  :preface
+  (defun my/web-mode/setup ()
+    (interactive)
+    (when (string-equal "tsx" (file-name-extension buffer-file-name))
+      (setup-tide-mode)))
+  :mode
+  (("\\.html?\\'" . web-mode)
+   ("\\.html\\.erb\\'" . web-mode)
+   ("\\.erb\\'" . web-mode)
+   ("\\.djhtml\\'" . web-mode)
+   ("\\.tsx\\'" . web-mode)
+   ("\\.jsx\\'" . web-mode)
+   ("\\.mustache\\'" . web-mode)
+   ("\\.jinja\\'" . web-mode)
 
-  ("\\.css\\'" . web-mode)
-  ("\\.scss\\'" . web-mode)
+   ("\\.css\\'" . web-mode)
+   ("\\.scss\\'" . web-mode)
 
-  ("\\.[agj]sp\\'" . web-mode)
-  ("\\.as[cp]x\\'" . web-mode)
-  ("\\.as\\'" . web-mode)
+   ("\\.[agj]sp\\'" . web-mode)
+   ("\\.as[cp]x\\'" . web-mode)
+   ("\\.as\\'" . web-mode)
 
-  ("\\.phtml\\'" . web-mode)
-  ("\\.tpl\\.php\\'" . web-mode)
-  ("\\.php\\'" . web-mode))
+   ("\\.phtml\\'" . web-mode)
+   ("\\.tpl\\.php\\'" . web-mode)
+   ("\\.php\\'" . web-mode))
 
- :init
- (setq
-  ;; indent HTML automatically
-  web-mode-indent-style 2
-  ;; offsets
-  web-mode-markup-indent-offset 2
-  web-mode-css-indent-offset 2
-  web-mode-code-indent-offset 2
+  :init
+  (setq
+   ;; indent HTML automatically
+   web-mode-indent-style 2
+   ;; offsets
+   web-mode-markup-indent-offset 2
+   web-mode-css-indent-offset 2
+   web-mode-code-indent-offset 2
 
-  web-mode-engines-alist
-  '(("\\.jinja\\'"  . "django")
-    ("php" . "\\.php[3-5]?"))
+   web-mode-engines-alist
+   '(("\\.jinja\\'"  . "django")
+     ("php" . "\\.php[3-5]?"))
 
-  web-mode-enable-auto-pairing t
-  web-mode-enable-css-colorization t
-  web-mode-enable-current-element-highlight t
-  web-mode-enable-current-column-highlight nil))
+   web-mode-enable-auto-pairing t
+   web-mode-enable-css-colorization t
+   web-mode-enable-current-element-highlight t
+   web-mode-enable-current-column-highlight nil)
+  :config
+  (flycheck-add-mode 'javascript-eslint 'web-mode)
+  :hook
+  (web-mode . my/web-mode/setup))
 #+end_src
 
 **** Cakecrumbs
@@ -7010,8 +7053,50 @@ Display current path for HTML/XML/CSS.
 
 *** TypeScript
 
-#+begin_src emacs-lisp
+TypeScript mode.
 
+#+begin_src emacs-lisp
+(use-package typescript-mode
+  :preface
+  (defun my/typescript-mode/setup ()
+    ;; The error messages produced by tsc when its pretty flag
+    ;; is turned on include ANSI color escapes, which by default
+    ;; compilation-mode does not interpret. In order to get the
+    ;; escapes parsed we do the following:
+    (require 'ansi-color)
+    (defun colorize-compilation-buffer ()
+      (ansi-color-apply-on-region compilation-filter-start (point-max)))
+    (add-hook 'compilation-filter-hook 'colorize-compilation-buffer))
+  :custom
+  (typescript-indent-level 2)
+  :hook
+  (typescript-mode . my/typescript-mode/setup))
+#+end_src
+
+TypeScript IDE.
+
+#+begin_src emacs-lisp
+(use-package tide
+  :after (typescript-mode flycheck company)
+  :preface
+  (defun my/tide/setup ()
+    (interactive)
+    (tide-setup)
+    (flycheck-mode +1)
+    (eldoc-mode +1)
+    (tide-hl-identifier-mode +1)
+    (company-mode +1))
+  :custom
+  (tide-format-options
+   '(:indentSize 2 :tabSize 2 :indentStyle 2))
+  :config
+  (flycheck-add-next-checker 'javascript-eslint 'jsx-tide 'append)
+  (nmap tide-mode-map
+    :prefix my/leader
+    "0" 'tide-jsdoc-template)
+  :hook
+  ((typescript-mode . my/tide/setup)
+   (before-save . tide-format-before-save)))
 #+end_src
 
 TypeScript REPL.
@@ -7126,11 +7211,13 @@ A JavaScript refactoring library.
 
 **** rjxs-mode
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package rjsx-mode
+ :demand t
  :commands rjsx-mode
+ :mode "\\\.js$"
  :config
- (add-to-list 'auto-mode-alist '("\\.jsx\\'" . rjsx-mode)))
+ (setq js-indent-level 2))
 #+end_src
 
 **** LSP
@@ -8245,7 +8332,7 @@ make compile
 
 *** ERC
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package erc
   :preface
   (defvar my/erc/default-nick "vyorkin")
