@@ -5765,9 +5765,19 @@ A new, simple purescript mode for cheap syntax highlighting.
 
 #+begin_src emacs-lisp
 (use-package idris-mode
- :custom
- (idris-repl-banner-functions '(idris-repl-text-banner))
- (idris-repl-prompt-style 'short))
+  :custom
+  (idris-repl-banner-functions '(idris-repl-text-banner))
+  (idris-repl-prompt-style 'short)
+  :config
+  (idris-define-evil-keys)
+  (nmap 'idris-mode-map
+    "C-c C-h" 'idris-type-search
+    "C-c h"   'idris-apropos
+    "C-c SPC" 'idris-add-clause
+    "C-c C-o" 'idris-load-file
+    "C-c C-i" 'idris-info-show
+    "C-c C-f" 'idris-list-holes
+    "C-c C-j" 'idris-repl))
 #+end_src
 
 *** Agda
@@ -5787,7 +5797,7 @@ A new, simple purescript mode for cheap syntax highlighting.
 
 ATS2 mode.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package ats-mode
   :load-path "lisp")
 #+end_src
@@ -5875,6 +5885,12 @@ Company backend for NixOS options.
 TODO: https://github.com/travisbhartwell/nix-emacs#flycheck
 
 *** Ocaml
+**** Env
+
+#+begin_src emacs-lisp
+(defvar my/opam-config/share (string-trim-right (shell-command-to-string "opam config var share")))
+#+end_src
+
 **** Tuareg
 
 [[https://github.com/ocaml/tuareg][Tuareg]] is an Emacs OCaml mode.
@@ -6003,8 +6019,12 @@ https://github.com/diml/utop#integration-with-emacs
   :commands
   (utop-command)
   :config
-  (setq utop-command "opam config exec utop -- -emacs")
+  ;; (setq utop-command "opam config exec utop -- -emacs")
+  (setq utop-command "opam config exec -- dune utop . -- -emacs")
   (autoload 'utop-minor-mode "utop" "Minor mode for utop" t)
+  (nmap 'merlin-mode-map
+    "C-c C-j" 'utop
+    "C-c C-o" 'utop-eval-buffer)
   (nmap 'utop-mode-map
     "C-c C-j" 'utop
     "C-c C-SPC" 'utop-eval-phrase)
@@ -6016,14 +6036,30 @@ https://github.com/diml/utop#integration-with-emacs
 
 TODO
 
-#+begin_src emacs-lisp :tangle no
-(require 'ocamlformat)
-(add-hook 'tuareg-mode-hook (lambda ()
-  (general-define-key
-    :states '(normal)
-    :keymaps 'tuareg-mode-map
-    "C-c r" 'ocamlformat)
-  (add-hook 'before-save-hook #'ocamlformat-before-save)))
+#+begin_src emacs-lisp
+(use-package ocamlformat
+  :after (tuareg)
+  :ensure nil
+  ;; :load-path (lambda () (concat my/opam-config/share "emacs/site-lisp"))
+  :preface
+  (defun my/deactivate-ocamlformat ()
+    (interactive)
+    (setq ocamlformat-enable 'disable))
+  (defun my/activate-ocamlformat ()
+    (interactive)
+    (setq ocamlformat-enable 'enable))
+  :custom
+  (ocamlformat-show-errors 'echo)
+  (ocamlformat-enable 'enable)
+  :config
+  (add-hook 'tuareg-mode-hook
+    (lambda ()
+      (general-define-key
+       :states '(normal)
+       :keymaps 'tuareg-mode-map
+       "C-c r" 'ocamlformat)))
+
+  :hook ((before-save . 'ocamlformat-before-save)))
 #+end_src
 
 ocp-indent is disabled, I use ~ocamlformat~ instead
@@ -6202,8 +6238,14 @@ Keybindings: https://github.com/leanprover/lean-mode#key-bindings-and-commands
 
 #+begin_src emacs-lisp
 (use-package sml-mode
- :quelpa (sml-mode :fetcher github :repo "emacsmirror/sml-mode")
- :mode "\\.sml$")
+  :quelpa (sml-mode :fetcher github :repo "emacsmirror/sml-mode")
+  :mode "\\.sml$"
+  :custom
+  (sml-indent-level 2)
+  :config
+  (nmap 'sml-mode-map
+    "C-c C-o" 'sml-prog-proc-load-file
+    "C-c C-j" 'sml-prog-proc-switch-to))
 #+end_src
 
 *** Scheme
@@ -8125,7 +8167,7 @@ directly from Emacs.
 (use-package engine-mode
  :config
  (engine-mode t)
- (engine/set-keymap-prefix (kbd "C-c C-s"))
+ (engine/set-keymap-prefix (kbd "C-SPC C-SPC"))
  (defengine amazon
    "http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=%s")
  (defengine duckduckgo
