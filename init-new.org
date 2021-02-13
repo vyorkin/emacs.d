@@ -1,0 +1,880 @@
+#+title: Emacs configuration file
+#+author: Vasiliy Yorkin
+#+babel: :cache yes
+#+property: header-args :tangle yes
+#+startup: overview
+
+* Credits
+
+Inspired by [[https://github.com/freetonik/emacs-dotfiles][freetonik's]] setup.
+
+* Warning
+
+This config is not intended to be used by anyone other than me. I would not recommend using this configuration as-is.
+
+* Setup
+
+Clone the repo:
+
+#+begin_src sh :tangle no
+git clone --recurse-submodules -j8 --depth=1 https://github.com/vyorkin/emacs.d
+#+end_src
+
+Make a backup of your old =.emacs.d=:
+
+#+begin_src sh :tangle no
+mv ~/.emacs.d ~/.emacs.d-bak
+#+end_src
+
+- Symlink =init.org= to =~/.emacs.d/init.org=
+- Symlink =init.el= to =~/.emacs.d/init.el=
+
+#+begin_src sh :tangle no
+ln -sf $(pwd)/init.org ~/.emacs.d/init.org
+ln -sf $(pwd)/init.el ~/.emacs.d/init.el
+#+end_src
+
+On the first run Emacs will install some packages. It's best to restart Emacs after that process is done for the first time.
+
+There is no reason to track the =init.el= that is generated; by running the following command =git= will not bother tracking it:
+
+#+begin_src sh :tangle no
+git update-index --assume-unchanged init.el
+#+end_src
+
+If one wishes to make changes to the repo-version of =init.el= start tracking again with:
+
+#+begin_src sh :tangle no
+git update-index --no-assume-unchanged init.el
+#+end_src
+
+When this configuration is loaded for the first time, the
+=init.el= is the file that is loaded. It looks like this:
+
+#+begin_src emacs-lisp :tangle no
+;; We can't tangle without org!
+(require 'org)
+;; Open the configuration
+(find-file (concat user-emacs-directory "init.org"))
+;; tangle it
+(org-babel-tangle)
+;; load it
+(load-file (concat user-emacs-directory "init.el"))
+;; finally byte-compile it
+(byte-compile-file (concat user-emacs-directory "init.el"))
+#+end_src
+
+* Startup timer
+
+#+begin_src emacs-lisp
+(add-hook 'emacs-startup-hook
+  (lambda ()
+    (message
+     "Emacs ready in %s with %d GC's."
+     (format
+      "%.2f seconds"
+      (float-time (time-subtract after-init-time before-init-time)))
+     gcs-done)))
+#+end_src
+
+* Config
+** Intro
+
+[[https://www.emacswiki.org/emacs/LexicalBinding][Lexical binding]] for the init-file is needed, it can be specified in the header. This is the first line of the actual configuration.
+
+#+begin_src emacs-lisp
+;;; -*- lexical-binding: t -*-
+#+end_src
+
+Make startup faster by reducing the frequency of garbage
+collection. The default is 800 kilobytes. Measured in bytes.
+These are the first lines of the actual configuration.
+
+#+begin_src emacs-lisp
+(setq gc-cons-threshold most-positive-fixnum)
+#+end_src
+
+In noninteractive sessions, prioritize non-byte-compiled source
+files to prevent the use of stale byte-code.
+
+#+begin_src emacs-lisp
+(setq load-prefer-newer noninteractive)
+#+end_src
+
+** Customization
+
+Let's keep all customizations in one place.
+
+*** Location
+
+Location name and coordinates.
+
+#+begin_src emacs-lisp
+(defvar my/lat 55.84)
+(defvar my/lon 37.34)
+(defvar my/location "Moscow, RU")
+#+end_src
+
+** Utils
+
+Utility functions.
+
+#+begin_src emacs-lisp
+(defun my/emacs-path (path)
+  "Expands `path` with Emacs home directory."
+  (expand-file-name path user-emacs-directory))
+
+(defun my/tmp-path (path)
+  "Expand `path` with Emacs temporary directory."
+  (my/emacs-path (format "tmp/%s" path)))
+
+(defun my/lisp-path (path)
+  "Expand `path` with Emacs `/lisp` directory."
+  (my/emacs-path (format "lisp/%s" path)))
+#+end_src
+
+** Auto-tangling (disabled)
+
+I don’t use auto-tangling since I don’t want to tangle every
+time I save my ~init.org~. Instead I call ~org-babel-tangle~
+manually once at the very end of making changes.
+
+Tangle and compile this file on save automatically:
+
+#+begin_src emacs-lisp
+(defun tangle-init ()
+  "If the current buffer is 'init.org' the code-blocks are
+tangled, and the tangled file is compiled."
+  (when (equal (buffer-file-name)
+               (file-truename (concat user-emacs-directory "init.org")))
+    ;; Avoid running hooks when tangling.
+    (let ((prog-mode-hook nil))
+      (org-babel-tangle)
+      (byte-compile-file (concat user-emacs-directory "init.el")))))
+
+(add-hook 'after-save-hook 'tangle-init)
+#+end_src
+** Package management
+*** Init
+
+Initialize package and add package archives.
+
+#+begin_src emacs-lisp
+(require 'package)
+#+end_src
+
+Tangle the following line if you have TLS-related issues:
+
+#+begin_src emacs-lisp :tangle no
+(setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+#+end_src
+
+#+begin_src emacs-lisp
+;; Try to uncomment this if you have TLS-related issues
+;; (setq gnutls-algorithm-priority "NORMAL:-VERS-TLS1.3")
+
+(let* ((no-ssl (and (memq system-type '(windows-nt ms-dos))
+                    (not (gnutls-available-p))))
+    (proto (if no-ssl "http" "https")))
+    (add-to-list 'package-archives (cons "melpa" (concat proto "://melpa.org/packages/")) t))
+#+end_src
+
+It is ok to use both ~package-initialize~ and ~use-package~ for a well behaved
+package: ~package-initialize~ will not load the whole package, but only autoload
+functions selected by the package author.
+
+#+begin_src emacs-lisp
+(package-initialize)
+#+end_src
+
+*** Use package
+**** Install
+
+Install =use-package=.
+
+#+begin_src emacs-lisp
+(unless (package-installed-p 'use-package)
+  (package-refresh-contents)
+  (package-install 'use-package))
+
+(eval-when-compile (require 'use-package))
+#+end_src
+
+**** Config
+
+Install missing packages automatically if not already present on the system and
+be less verbose.
+
+#+begin_src emacs-lisp
+(setq
+ use-package-always-ensure t
+ use-package-verbose nil)
+#+end_src
+
+**** Statistics gathering (disabled)
+
+Enable tangling and run the ~M-x use-package-report~ command to
+see the results. Read the [[https://github.com/jwiegley/use-package#gathering-statistics][docs]] for more info.
+
+#+begin_src emacs-lisp :tangle no
+(use-package-compute-statistics)
+#+end_src
+*** Quelpa
+
+Setup [[https://github.com/quelpa/quelpa][quelpa]].
+
+#+begin_src emacs-lisp
+(if (require 'quelpa nil t)
+  ;; Prevent quelpa from doing anyting that requires network connection.
+  (setq
+   quelpa-update-melpa-p nil    ; Don't update MELPA git repo
+   quelpa-checkout-melpa-p nil  ; Don't clone MELPA git repo
+   quelpa-upgrade-p nil         ; Don't try to update packages automatically
+   quelpa-self-upgrade-p nil)   ; Don't upgrade quelpa automatically
+
+(unless (package-installed-p 'quelpa)
+  (with-temp-buffer
+    (url-insert-file-contents "https://github.com/quelpa/quelpa/raw/master/quelpa.el")
+    (eval-buffer)
+    ;; Comment/uncomment line below to disable/enable quelpa auto-upgrade.
+    (quelpa-self-upgrade))))
+#+end_src
+
+Install =use-package= and the =quelpa= handler.
+
+#+begin_src emacs-lisp
+(quelpa
+ '(quelpa-use-package
+   :fetcher github
+   :repo "quelpa/quelpa-use-package"))
+(require 'quelpa-use-package)
+#+end_src
+
+Advice setting ~:ensure nil~ for =use-package= + =quelpa=.
+
+#+begin_src emacs-lisp
+(quelpa-use-package-activate-advice)
+#+end_src
+** System shell env
+
+Pass system shell environment to Emacs. This is important primarily for shell
+inside Emacs, but also things like Org mode export to Tex PDF don't work, since
+it relies on running external command =pdflatex=, which is loaded from =PATH=.
+Also this is required for [[https://github.com/jwiegley/use-package#use-package-ensure-system-package][use-package-ensure-system-package]] extension.
+
+#+begin_src emacs-lisp
+(use-package exec-path-from-shell
+ :commands
+ (exec-path-from-shell-copy-envs
+  exec-path-from-shell-initialize)
+ :init
+ (setq exec-path-from-shell-check-startup-files nil)
+ :config
+ (exec-path-from-shell-copy-envs '("WAKATIME_API_KEY"))
+ (when (memq window-system '(mac ns x))
+   (exec-path-from-shell-initialize)))
+#+end_src
+** Warnings
+
+Decrease the =obsolete= warnings annoyance level.
+
+#+begin_src emacs-lisp
+(setq byte-compile-warnings '(not obsolete))
+#+end_src
+
+This helps to get rid of =functions might not be defined at runtime= warnings.
+See [[https://github.com/jwiegley/use-package/issues/590][this issue]] for details.
+
+#+begin_src emacs-lisp
+(eval-when-compile
+  (setq use-package-expand-minimally byte-compile-current-file))
+#+end_src
+
+Suppress ~ad-handle-definition~ warnings.
+
+#+begin_src emacs-lisp
+(setq ad-redefinition-action 'accept)
+#+end_src
+** Defaults
+*** Backups & lock files
+
+Don't create lock files.
+
+#+begin_src emacs-lisp
+(setq create-lockfiles nil)
+#+end_src
+
+I don't care about auto save and backup files.
+Also I don't like distracting alarms.
+
+#+begin_src emacs-lisp
+(setq
+ make-backup-files nil        ; disable backup files
+ auto-save-list-file-name nil ; disable .saves files
+ auto-save-default nil        ; disable auto saving
+ ring-bell-function 'ignore)  ; turn off alarms completely
+#+end_src
+
+*** Performance
+
+Disable bidirectional text for a tiny performance boost.
+
+#+begin_src emacs-lisp
+(setq-default bidi-display-reordering nil)
+#+end_src
+
+Update UI less frequently (disabled).
+
+#+begin_src emacs-lisp :tangle no
+(setq
+ idle-update-delay 2
+ jit-lock-defer-time 0
+ jit-lock-stealth-time 0.2
+ jit-lock-stealth-verbose nil)
+#+end_src
+*** Misc
+
+Use =y/n= instead of =yes/no=.
+
+#+begin_src emacs-lisp
+(fset 'yes-or-no-p 'y-or-n-p)
+#+end_src
+
+Don't prompt for non existent name when creating new buffers.
+
+#+begin_src emacs-lisp
+(setq-default confirm-nonexistent-file-or-buffer t)
+#+end_src
+
+Enable =recentf-mode= and remember a lot of files.
+
+#+begin_src emacs-lisp
+(setq
+ recentf-auto-cleanup 'never
+ recentf-max-menu-items 0
+ recentf-max-saved-items 300
+ recentf-filename-handlers '(file-truename abbreviate-file-name))
+
+(recentf-mode 1)
+#+end_src
+
+Automatically save place in each file.
+
+#+begin_src emacs-lisp
+(setq
+ save-place-forget-unreadable-files t
+ save-place-limit 400)
+
+(save-place-mode 1)
+#+end_src
+
+** Location
+
+Set the location name and coordinates.
+
+#+begin_src emacs-lisp
+(setq
+ calendar-location-name my/location
+ calendar-latitude my/lat
+ calendar-longitude my/lon)
+#+end_src
+** Core
+*** Builtin
+**** Files
+
+On save/write file:
+- Automatically delete trailing whitespace.
+- Silently put a newline at the end of file if there isn't already one there.
+
+#+begin_src emacs-lisp
+(use-package files
+  :ensure nil
+  :preface
+  (defun my/files/setup ()
+    (add-hook 'before-save-hook 'delete-trailing-whitespace))
+  :commands
+  (generate-new-buffer
+   executable-find
+   file-name-base
+   file-name-extension)
+  :custom
+  (require-final-newline t)
+  :hook
+  (prog-mode . my/files/setup))
+#+end_src
+**** Reverting
+
+Diminish [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Autorevert.html#Autorevert][autorevert]] mode.
+
+#+begin_src emacs-lisp
+(use-package autorevert
+ :ensure nil
+ :custom
+ ;; Don't generate any messages whenever a buffer is reverted
+ (auto-revert-verbose nil)
+ ;; Operate only on file-visiting buffers
+ (global-auto-revert-non-file-buffers t)
+ :diminish auto-revert-mode)
+#+end_src
+
+**** Uniquify
+
+The =forward= buffer name style includes part of the file's directory
+name at the beginning of the buffer name. Using this method, buffers
+visiting the files =/u/rms/tmp/Makefile= and
+=/usr/projects/hooy/Makefile= would be named =‘tmp/Makefile’= and
+=‘hooy/Makefile’=.
+
+#+begin_src emacs-lisp
+(use-package uniquify
+ :ensure nil
+ :custom
+ ;; use "foo/bar/qux"
+ (uniquify-buffer-name-style 'forward))
+#+end_src
+
+**** History
+
+Many editors (e.g. Vim) have the feature of saving minibuffer
+history to an external file after exit. This package provides
+the same feature in Emacs. When set up, it saves recorded
+minibuffer histories to a file (=~/.emacs-history= by default).
+
+#+begin_src emacs-lisp
+(use-package savehist
+  :ensure nil
+  :custom
+  (savehist-additional-variables
+   '(kill-ring
+     ;; search entries
+     search-ring
+     regexp-search-ring))
+  ;; save every minute
+  (savehist-autosave-interval 60)
+  (savehist-save-minibuffer-history t)
+  :init
+  (savehist-mode 1))
+#+end_src
+
+**** Frame
+
+- Disable blinking cursor.
+- Disable suspending on =C-z=.
+
+#+begin_src emacs-lisp
+(use-package frame
+ :ensure nil
+ :config
+ (blink-cursor-mode 0)
+ :bind
+ ("C-z" . nil))
+#+end_src
+
+**** Delsel
+
+=C-c C-g= always quits minibuffer.
+
+#+begin_src emacs-lisp
+(use-package delsel
+ :ensure nil
+ :bind
+ ("C-c C-g" . minibuffer-keyboard-quit))
+#+end_src
+
+**** Simple
+
+#+begin_src emacs-lisp
+(use-package simple
+  :ensure nil
+  :diminish
+  ((visual-line-mode . " ↩")
+   (auto-fill-function . " ↵"))
+  :bind
+  ;; remap ctrl-w/ctrl-h
+  (("C-c h" . help-command)
+   ("C-x C-k" . kill-region)
+   ("C-h" . delete-backward-char)))
+#+end_src
+
+**** VC hooks
+
+#+begin_src emacs-lisp
+(use-package vc-hooks
+  :ensure nil
+  :config
+  (setq
+   vc-follow-symlinks t
+   vc-make-backup-files nil))
+#+end_src
+
+**** Prog mode
+
+Prettify symbols.
+
+#+begin_src emacs-lisp
+(use-package prog-mode
+ :ensure nil
+ :commands
+ (global-prettify-symbols-mode)
+ :init
+ (setq prettify-symbols-unprettify-at-point 'right-edge)
+ :config
+ ;; convert certain words into symbols, e.g. lambda becomes λ.
+ (global-prettify-symbols-mode t))
+#+end_src
+
+**** IBuffer
+
+Use the ~ibuffer~ in place of the default ~list-buffers~
+command. This provides tremendous amount of additional
+functionality in terms of filtering, grouping, and acting upon
+the listed buffers. Also, it opens the list of buffers in the
+same window.
+
+#+begin_src emacs-lisp
+(use-package ibuffer
+ :ensure nil
+ :bind
+ ;; Set all global list-buffers bindings to use ibuffer
+ ([remap list-buffers] . ibuffer))
+#+end_src
+
+**** Mule
+
+#+begin_src emacs-lisp
+(use-package mule
+ :commands
+ (set-terminal-coding-system)
+ :ensure nil
+ :config
+ (prefer-coding-system 'utf-8)
+ (set-terminal-coding-system 'utf-8)
+ (set-language-environment "UTF-8"))
+#+end_src
+
+**** ETags
+
+Setup [[https://www.emacswiki.org/emacs/EmacsTags][Emacs tags]].
+
+#+begin_src emacs-lisp
+(use-package etags
+ :ensure nil
+ :custom
+ ;; Don't add a new tags to the current list.
+ ;; Always start a new list.
+ (tags-add-tables nil))
+#+end_src
+
+**** Man
+
+#+begin_src emacs-lisp
+(use-package man
+ :ensure nil
+ :custom-face
+ (Man-overstrike ((t (:inherit font-lock-type-face :bold t))))
+ (Man-underline ((t (:inherit font-lock-keyword-face :underline t)))))
+#+end_src
+
+**** Calendar
+
+#+begin_src emacs-lisp
+(use-package calendar
+ :ensure nil
+ :custom
+ (calendar-week-start-day 1))
+#+end_src
+
+**** Face remap
+
+#+begin_src emacs-lisp
+(use-package face-remap
+ :commands
+ (buffer-face-mode-face
+  face-remap-add-relative
+  buffer-face-mode)
+ :ensure nil
+ :diminish buffer-face-mode)
+#+end_src
+
+**** CC mode
+
+Note that ".m" conflicts with =mercury-mode=.
+
+#+begin_src emacs-lisp
+(use-package cc-mode
+ :ensure nil
+ :config
+ ;; (add-to-list 'auto-mode-alist '("\\.m\\'" . objc-mode))
+ (add-to-list 'auto-mode-alist '("\\.mm\\'" . objc-mode)))
+#+end_src
+
+**** Compile
+
+Kill compilation process before starting another and save all
+buffers on compile.
+
+#+begin_src emacs-lisp
+(use-package compile
+  :custom
+  (compilation-always-kill t)
+  (compilation-ask-about-save nil)
+  (compilation-scroll-output t)
+  :init
+  (make-variable-buffer-local 'compile-command)
+  (put 'compile-command 'safe-local-variable 'stringp))
+#+end_src
+
+**** Shell
+
+Hide the "Indentation setup for shell type sh" message in the
+minibuffer.
+
+#+begin_src emacs-lisp
+(advice-add
+ 'sh-set-shell :around
+ (lambda (orig-fun &rest args)
+   (let ((inhibit-message t))
+     (apply orig-fun args))))
+#+end_src
+** UI
+*** Basics
+
+#+begin_src emacs-lisp
+(setq
+ inhibit-startup-screen t ; Don't show splash screen
+ use-dialog-box nil       ; Disable dialog boxes
+ use-file-dialog nil)     ; Disable file dialog
+#+end_src
+
+*** Titlebar
+
+Make titlebar transparent.
+
+#+begin_src emacs-lisp
+(when (memq window-system '(mac ns))
+  (add-to-list 'default-frame-alist '(ns-appearance . dark)) ;; {light, dark}
+  (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t)))
+#+end_src
+
+*** Scroll
+
+More procedural scrolling.
+
+#+begin_src emacs-lisp
+(setq
+ auto-window-vscroll nil
+ hscroll-margin 5
+ hscroll-step 5
+ scroll-conservatively 101
+ scroll-margin 0
+ scroll-preserve-screen-position t)
+
+(setq-default
+ scroll-down-aggressively 0.01
+ scroll-up-aggressively 0.01)
+#+end_src
+
+*** UI elements
+
+Hide toolbar and scrollbars.
+
+#+begin_src emacs-lisp
+(tool-bar-mode -1)
+(scroll-bar-mode -1)
+(when (fboundp 'horizontal-scroll-bar-mode)
+  (horizontal-scroll-bar-mode -1))
+#+end_src
+
+I generally prefer to hide the menu bar, but doing this on OS X simply makes it
+update unreliably in GUI frames, so we make an exception.
+
+#+begin_src emacs-lisp
+(if (eq system-type 'darwin)
+    (add-hook 'after-make-frame-functions
+              (lambda (frame)
+                (set-frame-parameter frame 'menu-bar-lines
+                                     (if (display-graphic-p frame) 1 0))))
+  (when (fboundp 'menu-bar-mode)
+    (menu-bar-mode -1)))
+#+end_src
+
+Don't [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Blinking.html][blink matching paren]], it's too distracting.
+
+#+begin_src emacs-lisp
+(setq-default blink-matching-paren nil)
+#+end_src
+
+*** Cursor
+
+Hide cursor in inactive windows.
+
+#+begin_src emacs-lisp
+(setq-default cursor-in-non-selected-windows nil)
+#+end_src
+
+- Display vertical bar cursor with default width.
+- Draw block cursor as wide as the glyph under it.
+
+#+begin_src emacs-lisp
+(setq-default
+ cursor-type 'bar
+ x-stretch-cursor t)
+#+end_src
+
+Show full path in the title bar.
+
+#+begin_src emacs-lisp
+(setq-default frame-title-format "%b (%f)")
+#+end_src
+
+Don't implicitly resize the frame's display area in order to
+preserve the number of columns or lines the frame displays when
+changing font, menu bar, tool bar, internal borders, fringes or
+scroll bars. Read [[https://www.gnu.org/software/emacs/manual/html_node/elisp/Implied-Frame-Resizing.html][this]] for more info.
+
+#+begin_src emacs-lisp
+(setq-default frame-inhibit-implied-resize t)
+#+end_src
+
+*** Fringe
+
+Set fringe size.
+
+#+begin_src emacs-lisp
+(fringe-mode '(12 . 12))
+#+end_src
+
+Setup fringes on both sides and display an indicator for buffer
+boundaries on the left side. Display fringes outside margins to
+have the padding on the inside.
+
+#+begin_src emacs-lisp
+(setq-default
+ fringes-outside-margins t
+ left-fringe-width 8
+ right-fringe-width 8
+ indicate-buffer-boundaries 'left)
+#+end_src
+
+Remove continuation arrow on right fringe.
+
+#+begin_src emacs-lisp
+(setq-default
+ fringe-indicator-alist
+ (delq (assq 'continuation fringe-indicator-alist) fringe-indicator-alist))
+#+end_src
+
+*** Window-divider
+
+Hide the =window-divider= (a line separating windows).
+
+#+begin_src emacs-lisp
+(when (boundp 'window-divider-mode)
+  (setq window-divider-default-places t
+        window-divider-default-bottom-width 0
+        window-divider-default-right-width 0)
+  (window-divider-mode +1))
+#+end_src
+
+*** Line-spacing
+
+Non-zero values for =line-spacing= can mess up ansi-term and co, so we
+zero it explicitly in those cases.
+
+#+begin_src emacs-lisp
+(add-hook
+ 'term-mode-hook
+ (lambda () (setq line-spacing 0)))
+#+end_src
+
+Highlight parens.
+
+#+begin_src emacs-lisp
+(setq show-paren-style 'parenthesis)
+(show-paren-mode 1)
+#+end_src
+
+Treat an Emacs region much like a typical text selection outside of Emacs.
+
+#+begin_src emacs-lisp
+(setq delete-selection-mode t)
+#+end_src
+
+Set left and right margins for every window.
+
+#+begin_src emacs-lisp
+(setq-default
+ left-margin-width 1
+ right-margin-width 1)
+#+end_src
+
+*** Startup
+
+Start maximized (disabled).
+
+#+begin_src emacs-lisp :tangle no
+(toggle-frame-maximized)
+#+end_src
+
+*** Mode line
+
+Turn-off tooltips on cursor hover-over.
+
+#+begin_src emacs-lisp
+(setq mode-line-default-help-echo nil)
+#+end_src
+
+Display only line and column in a mode-line.
+
+#+begin_src emacs-lisp
+(setq
+ mode-line-position
+ '((line-number-mode ("%l" (column-number-mode ":%c")))))
+#+end_src
+
+*** Time
+
+#+begin_src emacs-lisp
+(use-package time
+  :ensure nil
+  :custom
+  (display-time-default-load-average nil)
+  (display-time-24hr-format t)
+  :config
+  (display-time-mode t))
+#+end_src
+
+*** Alert
+
+A Growl-like alerts notifier for Emacs.
+
+#+begin_src emacs-lisp
+(use-package alert)
+#+end_src
+** Editor
+*** Customizations
+
+I don't use the customizations UI. Anyway, I keep those automated
+customizations in a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Saving-Customizations.html][separate file]]. The ~'noerror~ argument passed to
+load prevents errors if the file doesn’t exist.
+
+#+begin_src emacs-lisp
+(setq custom-file (my/emacs-path "custom.el"))
+(load custom-file 'noerror)
+#+end_src
+*** Basics
+
+Some basic things.
+
+#+begin_src emacs-lisp
+(setq
+ ;; sentences should end in one space
+ sentence-end-double-space nil
+ ;; empty scratch buffer
+ initial-scratch-message nil
+ ;; show keystrokes right away,
+ ;; don't show the message in the scratch buffer
+ echo-keystrokes 0.1
+ ;; disable native fullscreen support
+ ns-use-native-fullscreen nil)
+#+end_src

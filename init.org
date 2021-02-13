@@ -91,7 +91,7 @@ collection. The default is 800 kilobytes. Measured in bytes.
 These are the first lines of the actual configuration.
 
 #+begin_src emacs-lisp
-(setq gc-cons-threshold (* 50 1000 1000))
+(setq gc-cons-threshold most-positive-fixnum)
 #+end_src
 
 ** Customization
@@ -895,7 +895,7 @@ Turn-off tooltips on cursor hover-over.
 ** Editor
 *** Customizations
 
-I don't use the customizations UI. Lets keep those automated
+I don't use the customizations UI. Anyway, I keep those automated
 customizations in a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Saving-Customizations.html][separate file]]. The ~'noerror~ argument passed to
 load prevents errors if the file doesn’t exist.
 
@@ -3845,7 +3845,7 @@ Package for selecting a link to jump to.
 
 Access your Firefox bookmarks and history in Emacs.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package counsel-ffdata
  :after (general)
  :config
@@ -4051,7 +4051,7 @@ Popup commit message for current line.
 
 *** Evil-Magit
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package evil-magit
   :after (evil magit fullframe)
   :init
@@ -5689,7 +5689,7 @@ I use =lsp-haskell= instead.
 
 The PureScript mode.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package purescript-mode
  :after (general files)
  :if (executable-find "purs")
