@@ -14,32 +14,38 @@ This config is not intended to be used by anyone other than me.
 I would not recommend using this configuration as-is.
 
 * Setup
-  ** Prerequisites
+** Prerequisites
 
-  Install =wordnet=, for example on Ubuntu:
+Install [[https://github.com/rizsotto/Bear][bear]]:
 
-  #+begin_src sh :tangle no
-  sudo apt install wordnet
-  #+end_src
+#+begin_src sh :tangle no
+sudo apt-get install bear
+#+end_src
 
-  Install [[https://github.com/mantoni/eslint_d.js/][eslint_d]] eslint server, it is used as
-  ~flycheck-javascript-eslint-executable~:
+Install =wordnet=, for example on Ubuntu:
 
-  #+begin_src sh :tangle no
-  npm i -g eslint_d
-  #+end_src
+#+begin_src sh :tangle no
+sudo apt install wordnet
+#+end_src
 
-  Install =pdf-tools=:
+Install [[https://github.com/mantoni/eslint_d.js/][eslint_d]] eslint server, it is used as
+~flycheck-javascript-eslint-executable~:
 
-  #+begin_src sh :tangle no
-  M-x pdf-tools-install RET
-  #+end_src
+#+begin_src sh :tangle no
+npm i -g eslint_d
+#+end_src
 
-  Check if =pdf-tools= are working:
+Install =pdf-tools=:
 
-  #+begin_src sh :tangle no
-  M-x pdf-info-check-epdfinfo RET
-  #+end_src
+#+begin_src sh :tangle no
+M-x pdf-tools-install RET
+#+end_src
+
+Check if =pdf-tools= are working:
+
+#+begin_src sh :tangle no
+M-x pdf-info-check-epdfinfo RET
+#+end_src
 
 Clone the repo:
 
@@ -83,11 +89,11 @@ When this configuration is loaded for the first time, the
 (require 'org)
 ;; Open the configuration
 (find-file (concat user-emacs-directory "init.org"))
-;; tangle it
+;; Tangle it
 (org-babel-tangle)
-;; load it
+;; Load it
 (load-file (concat user-emacs-directory "init.el"))
-;; finally byte-compile it
+;; Finally byte-compile it
 (byte-compile-file (concat user-emacs-directory "init.el"))
 #+end_src
 
@@ -924,6 +930,7 @@ Display only line and column in a mode-line.
 #+end_src
 
 *** Font
+**** Font faces
 
 Font faces configuration.
 
@@ -945,6 +952,528 @@ Font faces configuration.
    'cyrillic
    (font-spec :registry "iso10646-1" :script 'cyrillic)))
 #+end_src
+
+**** Font lock
+
+Try to speed-up =font-lock-mode=.
+
+#+begin_src emacs-lisp
+(setq
+ font-lock-maximum-decoration
+ '((c-mode . 2) (c++-mode . 1) (t . 1)))
+
+(setq font-lock-support-mode 'jit-lock-mode)
+(setq
+ jit-lock-stealth-time 16
+ jit-lock-defer-contextually t
+ jit-lock-stealth-nice 0.5)
+#+end_src
+
+** Editor
+*** Customizations
+
+I don't use the customizations UI. Anyway, I keep those automated
+customizations in a [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Saving-Customizations.html][separate file]]. The ~'noerror~ argument passed to
+load prevents errors if the file doesn’t exist.
+
+#+begin_src emacs-lisp
+(setq custom-file (my/emacs-path "custom.el"))
+(load custom-file 'noerror)
+#+end_src
+*** Basics
+
+Some basic things.
+
+#+begin_src emacs-lisp
+(setq
+ ;; sentences should end in one space
+ sentence-end-double-space nil
+ ;; empty scratch buffer
+ initial-scratch-message nil
+ ;; show keystrokes right away,
+ ;; don't show the message in the scratch buffer
+ echo-keystrokes 0.1
+ ;; disable native fullscreen support
+ ns-use-native-fullscreen nil)
+#+end_src
+*** Minibuffer
+
+Give some more room to the minibuffer.
+
+#+begin_src emacs-lisp
+(setq
+ max-mini-window-height 0.3
+ resize-mini-windows 'grow-only)
+#+end_src
+
+Enable recursive minibuffers and
+keep the point out of the minibuffer.
+
+#+begin_src emacs-lisp
+(setq
+ ;; allow minibuffer commands in the minibuffer
+ enable-recursive-minibuffers t
+ ;; keep the point out of the minibuffer
+ minibuffer-prompt-properties
+ '(read-only t point-entered minibuffer-avoid-prompt face minibuffer-prompt))
+#+end_src
+
+Auto executable scripts.
+
+#+begin_src emacs-lisp
+(add-hook 'after-save-hook #'executable-make-buffer-file-executable-if-script-p)
+#+end_src
+*** Tabs & spaces
+
+- Use spaces instead of tabs everywhere.
+- One tab is 2 spaces.
+
+#+begin_src emacs-lisp
+(setq-default
+ indent-tabs-mode nil
+ tab-width 2)
+#+end_src
+
+Display line and column numbers in the mode-line.
+
+#+begin_src emacs-lisp
+(setq
+  line-number-mode t
+  column-number-mode t)
+#+end_src
+
+*** Line wrapping
+
+Long lines will show a continuation character in the right
+margin at the window’s edge to indicate that one can scroll to
+see the rest.
+
+#+begin_src emacs-lisp
+(setq-default truncate-lines t)
+#+end_src
+
+Break line at ~N~ characters.
+
+#+begin_src emacs-lisp
+(setq-default fill-column 64)
+#+end_src
+
+Enable automatic line breaking for all text mode buffers.
+
+#+begin_src emacs-lisp
+(add-hook 'text-mode-hook 'turn-on-auto-fill)
+#+end_src
+
+Always wrap lines.
+
+#+begin_src emacs-lisp :tangle no
+;; (global-visual-line-mode)
+#+end_src
+
+** Benchmarking
+
+Usage:
+
+- ~M-x benchmark-init/show-durations-tabulated~
+– ~M-x benchmark-init/show-durations-tree~
+
+#+begin_src emacs-lisp
+(use-package benchmark-init
+ :hook
+ ;; To disable collection of benchmark data after init is done.
+ (after-init . benchmark-init/deactivate))
+#+end_src
+
+** Theme
+*** Base-16 themes
+
+#+begin_src emacs-lisp
+(use-package base16-theme
+  :config
+  ;; (load-theme 'base16-default-dark t)
+  (load-theme 'base16-grayscale-dark t)
+  ;; (load-theme 'base16-grayscale-light t)
+  ;; (load-theme 'base16-gruvbox-light-hard t)
+  ;; (load-theme 'base16-material-palenight t) ;; ****
+  ;; (load-theme 'base16-rebecca t)
+  ;; (load-theme 'base16-pop t)
+  ;; (load-theme 'base16-tomorrow-night t)
+  ;; (load-theme 'base16-twilight t)
+  ;; (load-theme 'base16-irblack t)
+#+end_src
+
+~base16-chalk~ + customizations.
+
+#+begin_src emacs-lisp :tangle no
+(load-theme 'base16-chalk t)
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(custom-set-faces
+ '(proof-queue-face ((t (:foreground "#eee"))))
+ '(proof-declaration-name-face ((t (:foreground "#55aaff"))))
+ '(company-coq-comment-h1-face ((t (:size 1.5))))
+ '(proof-locked-face ((t (:background "#252525"))))
+ '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
+#+end_src
+
+~base16-black-metal~ + customizations.
+
+#+begin_src emacs-lisp :tangle no
+(load-theme 'base16-black-metal t)
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(custom-set-faces
+ '(proof-queue-face ((t (:foreground "#eee"))))
+ '(company-coq-comment-h1-face ((t (:size 1.5))))
+ '(font-lock-comment-face ((t (:foreground "#999"))))
+ '(proof-locked-face ((t (:background "#151515"))))
+ '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
+#+end_src
+
+~base16-one-light~ + customizations.
+
+#+begin_src emacs-lisp :tangle no
+(load-theme 'base16-one-light t)
+(custom-set-faces
+ '(proof-queue-face ((t (:foreground "#f0f0f0"))))
+ '(proof-locked-face ((t (:background "#faebd7" :foreground "#4a473d"))))
+ '(proof-locked-face ((t (:background "#faebd7" ))))
+ '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
+#+end_src
+
+#+begin_src emacs-lisp
+)
+#+end_src
+
+Customizations for =vimish-fold= and =base16-grayscale-dark=
+theme.
+
+#+begin_src emacs-lisp :tangle no
+(eval-after-load 'vimish-fold
+ (custom-set-faces
+  '(vimish-fold-mouse-face ((t (:box (:line-width 1 :color "#555")))))
+  '(vimish-fold-overlay ((t (:box (:line-width 1 :color "#222")))))))
+#+end_src
+
+*** Doom themes
+
+See the [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][screenshots]].
+
+#+begin_src emacs-lisp :tangle no
+(use-package doom-themes
+ :init
+ (setq
+  doom-themes-enable-bold nil
+  doom-themes-enable-italic nil)
+ :config
+ (load-theme 'doom-dracula t)
+ (load-theme 'doom-challenger-deep t)
+ ;; Enable flashing mode-line on errors
+ (doom-themes-visual-bell-config)
+ (doom-themes-neotree-config)
+ ;; Corrects (and improves) org-mode's native fontification
+ (doom-themes-org-config)
+ (load-theme 'doom-moonlight)
+)
+#+end_src
+
+*** Apropospriate theme
+
+#+begin_src emacs-lisp :tangle no
+(use-package apropospriate-theme
+ :config
+ (load-theme 'apropospriate-dark))
+#+end_src
+
+*** Nord theme
+
+#+begin_src emacs-lisp :tangle no
+(use-package nord-theme)
+#+end_src
+
+*** Zero dark theme
+
+#+begin_src emacs-lisp :tangle no
+(use-package zerodark-theme
+  :config
+  (load-theme 'zerodark t nil)
+  (zerodark-setup-modeline-format)
+  ;; Customizations
+  (with-eval-after-load 'idle-highlight-mode
+    ;; (set-face-background 'idle-highlight "#c51060")
+    (set-face-foreground 'idle-highlight "#999")
+    (set-face-background 'idle-highlight "#222"))
+
+  (with-eval-after-load 'company))
+#+end_src
+
+#+begin_src emacs-lisp :tangle no
+(with-eval-after-load 'proof-general
+    (custom-set-faces
+     '(proof-queue-face ((t (:foreground "#eee"))))
+     '(proof-locked-face ((t (:background "#001800" :foreground "#aaccbb"))))
+     '(proof-locked-face ((t (:background "#0d3360" ))))
+     '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff"))))))
+#+end_src
+
+*** Lor theme
+
+Just another Tango theme based on =linux.org.ru= colors.
+
+#+begin_src emacs-lisp :tangle no
+(use-package lor-theme
+ :ensure nil
+ :custom-face
+ (variable-pitch ((t (:family "Serif"))))
+ (fixed-pitch ((t (:family "Monospace"))))
+ :config
+ (load-theme 'lor)
+ :quelpa
+ (lor-theme :repo "a13/lor-theme" :fetcher github :version original))
+#+end_src
+
+*** Sorcery
+
+#+begin_src emacs-lisp :tangle no
+(use-package sorcery-theme)
+#+end_src
+
+*** Other themes
+
+#+begin_src emacs-lisp :tangle no
+(use-package dracula-theme :defer t)
+(use-package gotham-theme :defer t)
+(use-package sublime-themes :defer t)
+(use-package color-theme-modern :defer t)
+(use-package twilight-theme :defer t)
+(use-package gruber-darker-theme :defer t)
+(use-package monokai-theme :defer t)
+(use-package faff-theme :defer t)
+(use-package badwolf-theme :defer t)
+(use-package boron-theme :defer t)
+(use-package bliss-theme :defer t)
+(use-package busybee-theme :defer t)
+(use-package color-theme-sanityinc-tomorrow :defer t)
+(use-package badger-theme :defer t)
+(use-package atom-one-dark-theme :defer t)
+(use-package zenburn-theme :defer t)
+(use-package hemisu-theme :defer t)
+(use-package paganini-theme :defer t)
+(use-package yoshi-theme :defer t)
+(use-package rebecca-theme :defer t) ;; *****
+(use-package moe-theme :defer t)
+(use-package arjen-grey-theme :defer t)
+(use-package darkmine-theme :defer t)
+(use-package flatland-theme :defer t)
+(use-package tao-theme :defer t)
+(use-package liso-theme :defer t)
+(use-package jazz-theme :defer t)
+(use-package material-theme :defer t)
+(use-package challenger-deep-theme :defer t) ;; ***
+(use-package ample-theme
+  :disabled
+  :init
+  (progn
+    (load-theme 'ample t t)
+    (load-theme 'ample-flat t t)
+    (load-theme 'ample-light t t)
+    (enable-theme 'ample-flat))
+  :defer t)
+(use-package cyberpunk-theme :defer t)
+(use-package phoenix-dark-mono-theme :defer t) ;; *** (like grayscale-dark)
+(use-package phoenix-dark-pink-theme :defer t) ;; **
+(use-package cyberpunk-theme :defer t)
+(use-package blackboard-theme :defer t) ;; ***
+(use-package mustard-theme :defer t) ;; ****
+(use-package labburn-theme :defer t) ;; *****
+(use-package green-phosphor-theme :defer t) ;; *****
+(use-package exotica-theme :defer t) ;; **
+(use-package lush-theme :defer t) ;; ****
+#+end_src
+
+*** Theme changer (disabled)
+
+Sunrise/sunset [[https://github.com/hadronzoo/theme-changer][theme changer]]. Given a location and day/night
+color themes, this file provides a change-theme function that
+selects the appropriate theme based on whether it is day or
+night. It will continue to change themes at sunrise and sunset.
+
+#+begin_src emacs-lisp :tangle no
+(use-package theme-changer
+  :config
+  (change-theme 'base16-gruvbox-light-hard 'labburn))
+#+end_src
+
+*** Kurecolor
+
+A collection of color tools aimed at those working with (normal
+6 digit) hex color codes, useful for CSS, Emacs themes, etc.
+etc.
+
+Features include interactive step modification of hue, sat, val
+on hex colors. Color conversion algorithms, for 6 digit hex
+colors, hsv, rgb, cssrgb. Get/set h s v values from/for a color.
+
+It's recommend you use this in conjunction with rainbow-mode,
+for instant feedback on color changes.
+
+See the [[https://github.com/emacsfodder/kurecolor][kurecolor github]] for more info.
+
+#+begin_src emacs-lisp
+(use-package kurecolor)
+#+end_src
+
+** Key bindings
+*** Variables
+
+Use =SPC= as a "leader" key and =C-SPC= as a second leader (I
+call it "leader+" here).
+
+#+begin_src emacs-lisp
+(defvar my/leader "SPC")
+(defvar my/leader+ "C-SPC")
+#+end_src
+
+*** General package
+
+#+begin_src emacs-lisp
+(use-package general
+ :config
+#+end_src
+
+*** Basic keybindings
+
+#+begin_src emacs-lisp
+(general-define-key
+ "C-h" 'windmove-left
+ "C-l" 'windmove-right
+ "C-k" 'windmove-up
+ "C-j" 'windmove-down
+ "C-c C-k" 'kill-region)
+#+end_src
+
+*** MacOS keybindings
+
+#+begin_src emacs-lisp
+(when (eq system-type 'darwin)
+  (general-define-key
+   "s-<backspace>" 'kill-whole-line
+   "M-S-<backspace>" 'kill-word
+   ;; Use Super for movement and selection just like in macOS
+   "s-<right>" (kbd "C-e")
+   "S-s-<right>" (kbd "C-S-e")
+   "s-<left>" (kbd "M-m")
+   "S-s-<left>" (kbd "M-S-m")
+   "s-<up>" 'beginning-of-buffer
+   "s-<down>" 'end-of-buffer
+   ;; Basic things you should expect from macOS
+   "s-a" 'mark-whole-buffer       ; select all
+   "s-s" 'save-buffer             ; save
+   "s-S" 'write-file              ; save as
+   "s-q" 'save-buffers-kill-emacs ; quit
+   ;; Go to other windows easily with one keystroke
+   ;; s-something instead of C-x something
+   "s-o" (kbd "C-x o")
+   "s-w" (kbd "C-x 0") ; just like close tab in a web browser
+   "s-W" (kbd "C-x 1") ; close others with shift
+   ;; Move between windows with Control-Command-Arrow and
+   ;; with Cmd just like in iTerm
+   "s-[" 'windmove-left   ; Cmd+[ go to left window
+   "s-]" 'windmove-right  ; Cmd+] go to right window
+   "s-{" 'windmove-up     ; Cmd+Shift+[ go to upper window
+   "<s-}>" 'windmove-down ; Ctrl+Shift+[ go to down window
+   ;; Prev/next buffer
+   "s-<" 'previous-buffer
+   "s->" 'next-buffer))
+#+end_src
+
+*** Evil keybindings
+**** Setup
+
+Set up some basic equivalents for vim mapping functions. This
+creates global key definition functions for the evil states.
+
+#+begin_src emacs-lisp
+(general-evil-setup t)
+#+end_src
+
+**** Basic
+
+Swap ~:~ and ~;~ to make colon commands easier to type in Emacs.
+
+#+begin_src emacs-lisp
+(nmap
+ ";" 'evil-ex
+ ":" 'evil-repeat-find-char)
+#+end_src
+
+Remap ~0~ for convenience.
+
+#+begin_src emacs-lisp
+(nmap 'messages-buffer-mode-map
+  "0" 'evil-digit-argument-or-evil-beginning-of-line)
+#+end_src
+
+**** Process menu
+
+#+begin_src emacs-lisp
+(nmap 'process-menu-mode-map
+  "M-d" 'process-menu-delete-process
+  "q" 'kill-buffer-and-window)
+#+end_src
+
+**** Leader-prefixed
+
+#+begin_src emacs-lisp
+(nmap
+  :prefix my/leader
+#+end_src
+
+Window splitting.
+
+#+begin_src emacs-lisp
+  "v" 'split-window-horizontally
+  "s" 'split-window-vertically
+#+end_src
+
+Evaluation.
+
+#+begin_src emacs-lisp
+  "E e" 'eval-expression
+  "E l" 'eval-last-sexp
+#+end_src
+
+Help.
+
+#+begin_src emacs-lisp
+  "h k" 'describe-key-briefly
+  "h K" 'describe-key
+  "h M" 'describe-mode
+  "h m" 'info-display-manual)
+#+end_src
+
+Profiling.
+
+#+begin_src emacs-lisp
+  "P s" 'profiler-start
+  "P S" 'profiler-stop
+  "P r" 'profiler-report
+#+end_src
+
+Others.
+
+#+begin_src emacs-lisp
+  "p" 'list-processes
+  "\\" 'widen
+#+end_src
+
+
+#+begin_src emacs-lisp
+)
+#+end_src
+
 
 *** Alert
 
@@ -1458,8 +1987,9 @@ Others.
 )
 #+end_src
 
+
 ** Behavior
-*** Garbage collection (disabled)
+*** Garbage collection
 
 Enforce a sneaky Garbage Collection strategy to minimize GC
 interference with the activity. During normal use a high GC
@@ -1469,7 +1999,7 @@ a low threshold is set.
 A more detailed explanation of the rationale behind this can be
 found at: http://akrl.sdf.org/.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package gcmh
   :config
   (gcmh-mode 1))
@@ -1763,7 +2293,7 @@ Key bindings are provided by =evil-collection=.
  :diminish which-key-mode
  :init
  (setq
-  which-key-idle-delay 0.5
+  which-key-idle-delay 1.0
   which-key-sort-order 'which-key-prefix-then-key-order-reverse
   ;; Hack to make this work with Evil
   which-key-show-operator-state-maps t
@@ -2283,8 +2813,8 @@ TODO: Fix [[https://github.com/hlissner/emacs-hide-mode-line/issues/4][this issu
 
 *** Beacon
 
-Visualizes cursor position. Might slow (or not so), but it works
-good without evil mode.
+Visualizes cursor position. Slows down =font-lock-mode=
+significanly.
 
 #+begin_src emacs-lisp
 (use-package beacon
@@ -2299,7 +2829,6 @@ good without evil mode.
  (beacon-blink-when-window-scrolls nil)
  (beacon-dont-blink-commands nil)
  :config
- (beacon-mode 1)
  (nmap
    :prefix my/leader
    "t b" 'beacon-mode)
@@ -4003,6 +4532,7 @@ Command execution status indicator in the fringe.
 
 #+begin_src emacs-lisp
 (use-package yasnippet
+  :demand t
   :init
   (setq
    yas-wrap-around-region t
@@ -4036,6 +4566,14 @@ Command execution status indicator in the fringe.
    "y c" 'aya-create
    "y e" 'aya-expand
    "y o" 'aya-open-line))
+#+end_src
+
+*** Yasnippet snippets
+
+A collection of yasnippet snippets for many languages.
+
+#+begin_src emacs-lisp
+(use-package yasnippet-snippets)
 #+end_src
 
 *** Yatemplate
@@ -4516,10 +5054,14 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   :commands (lsp)
   :hook
   (lsp-mode . lsp-lens-mode)
+  (lsp-mode . lsp-enable-which-key-integration)
+  (c-mode . lsp)
+  (c++-mode . lsp)
   :init
   ;; Uncomment to inspect communication between client and the server
   (setq lsp-print-io t)
   (setq lsp-prefer-flymake nil)
+  (setq lsp-headerline-breadcrumb-enable t)
   :config
   ;; Determines how often lsp-mode will refresh the highlights, lenses, links, etc while you type.
   (setq lsp-idle-delay 0.500)
@@ -5676,14 +6218,14 @@ https://github.com/diml/utop#integration-with-emacs
   ((tuareg-mode reason-mode) . utop-minor-mode))
 #+end_src
 
-**** Formatting
+**** Formatting (disabled)
 
 Auto-formatter for OCaml code.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package ocamlformat
   :after (tuareg)
-  ;; :load-path (lambda () (concat my/opam-config/share "emacs/site-lisp"))
+  :load-path (lambda () (concat my/opam-config/share "emacs/site-lisp"))
   :preface
   (defun my/deactivate-ocamlformat ()
     (interactive)
@@ -6775,6 +7317,28 @@ A JavaScript refactoring library.
 #+end_src
 
 *** C/C++
+**** Syntax highlighting
+
+Syntax highlighting support for "Modern C++" - until C++20 and
+Technical Specification. This package aims to provide a simple
+highlight of the C++ language without dependency.
+
+#+begin_src emacs-lisp
+(use-package modern-cpp-font-lock
+  :config
+  (modern-c++-font-lock-global-mode t))
+#+end_src
+
+**** Preprocessor highlighting (disabled)
+
+Highlight C-style preprocessor directives in Emacs.
+
+#+begin_src emacs-lisp :tangle no
+(use-package preproc-font-lock
+  :config
+  (preproc-font-lock-global-mode 1))
+#+end_src
+
 *** CMake
 *** GLSL
 
@@ -7055,6 +7619,7 @@ Use the Debug Adapter Protocol for running tests and debugging.
   (lsp-mode . dap-mode)
   (lsp-mode . dap-ui-mode)
   :config
+  (require 'dap-cpptools)
   (dap-mode 1)
   (dap-ui-mode 1)
   (add-hook 'dap-stopped-hook
