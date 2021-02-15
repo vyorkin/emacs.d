@@ -303,6 +303,7 @@ Advice setting ~:ensure nil~ for =use-package= + =quelpa=.
 #+begin_src emacs-lisp
 (quelpa-use-package-activate-advice)
 #+end_src
+
 *** Use-package plugins
 
 All credit to [[https://github.com/a13][a13]].
@@ -721,6 +722,20 @@ minibuffer.
    (let ((inhibit-message t))
      (apply orig-fun args))))
 #+end_src
+** Libraries
+*** async
+
+Simple library for asynchronous processing in Emacs.
+
+#+begin_src emacs-lisp
+(use-package async
+  :demand t
+  :config
+  (autoload 'dired-async-mode "dired-async.el" nil t)
+  (dired-async-mode 1)
+  (async-bytecomp-package-mode 1))
+#+end_src
+
 ** UI
 *** Basics
 
@@ -1986,7 +2001,6 @@ Others.
 #+begin_src emacs-lisp
 )
 #+end_src
-
 
 ** Behavior
 *** Garbage collection
@@ -5020,11 +5034,11 @@ transcoders for common =org= elements which outputs minimal =HTML=.
        (delete-window))))
 #+end_src
 
-*** Org Download
+*** Org Download (disabled)
 
 Drag and drop images to =org= files.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package org-download
   :config
   ;; Org-download creates links, but I need to change the path
