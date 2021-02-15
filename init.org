@@ -2456,12 +2456,14 @@ Rainbow identifier highlighting.
  :diminish rainbow-identifiers-mode)
 #+end_src
 
-*** Rainbow mode
+*** Rainbow mode (disabled)
 
 This minor mode sets background color to strings that match
 color.
 
-#+begin_src emacs-lisp
+Disabled because it highlights things like ~#define MACROS~.
+
+#+begin_src emacs-lisp :tangle no
 (use-package rainbow-mode
  :diminish rainbow-mode
  :hook prog-mode
