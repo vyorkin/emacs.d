@@ -736,6 +736,13 @@ Simple library for asynchronous processing in Emacs.
   (async-bytecomp-package-mode 1))
 #+end_src
 
+*** alert
+
+A Growl-like alerts notifier for Emacs.
+
+#+begin_src emacs-lisp
+(use-package alert)
+#+end_src
 ** UI
 *** Basics
 
@@ -1453,6 +1460,13 @@ Window splitting.
   "s" 'split-window-vertically
 #+end_src
 
+XRef.
+
+#+begin_src emacs-lisp
+  "@" 'xref-find-definitions
+  "#" 'xref-find-references
+#+end_src
+
 Evaluation.
 
 #+begin_src emacs-lisp
@@ -1484,19 +1498,10 @@ Others.
   "\\" 'widen
 #+end_src
 
-
 #+begin_src emacs-lisp
 )
 #+end_src
 
-
-*** Alert
-
-A Growl-like alerts notifier for Emacs.
-
-#+begin_src emacs-lisp
-(use-package alert)
-#+end_src
 ** Editor
 *** Customizations
 
@@ -1851,155 +1856,6 @@ See the [[https://github.com/emacsfodder/kurecolor][kurecolor github]] for more 
 
 #+begin_src emacs-lisp
 (use-package kurecolor)
-#+end_src
-
-** Key bindings
-*** Variables
-
-Use =SPC= as a "leader" key and =C-SPC= as a second leader (I
-call it "leader+" here).
-
-#+begin_src emacs-lisp
-(defvar my/leader "SPC")
-(defvar my/leader+ "C-SPC")
-#+end_src
-
-*** General package
-
-#+begin_src emacs-lisp
-(use-package general
- :config
-#+end_src
-
-*** Basic keybindings
-
-#+begin_src emacs-lisp
-(general-define-key
- "C-h" 'windmove-left
- "C-l" 'windmove-right
- "C-k" 'windmove-up
- "C-j" 'windmove-down
- "C-c C-k" 'kill-region)
-#+end_src
-
-*** MacOS keybindings
-
-#+begin_src emacs-lisp
-(when (eq system-type 'darwin)
-  (general-define-key
-   "s-<backspace>" 'kill-whole-line
-   "M-S-<backspace>" 'kill-word
-   ;; Use Super for movement and selection just like in macOS
-   "s-<right>" (kbd "C-e")
-   "S-s-<right>" (kbd "C-S-e")
-   "s-<left>" (kbd "M-m")
-   "S-s-<left>" (kbd "M-S-m")
-   "s-<up>" 'beginning-of-buffer
-   "s-<down>" 'end-of-buffer
-   ;; Basic things you should expect from macOS
-   "s-a" 'mark-whole-buffer       ; select all
-   "s-s" 'save-buffer             ; save
-   "s-S" 'write-file              ; save as
-   "s-q" 'save-buffers-kill-emacs ; quit
-   ;; Go to other windows easily with one keystroke
-   ;; s-something instead of C-x something
-   "s-o" (kbd "C-x o")
-   "s-w" (kbd "C-x 0") ; just like close tab in a web browser
-   "s-W" (kbd "C-x 1") ; close others with shift
-   ;; Move between windows with Control-Command-Arrow and
-   ;; with Cmd just like in iTerm
-   "s-[" 'windmove-left   ; Cmd+[ go to left window
-   "s-]" 'windmove-right  ; Cmd+] go to right window
-   "s-{" 'windmove-up     ; Cmd+Shift+[ go to upper window
-   "<s-}>" 'windmove-down ; Ctrl+Shift+[ go to down window
-   ;; Prev/next buffer
-   "s-<" 'previous-buffer
-   "s->" 'next-buffer))
-#+end_src
-
-*** Evil keybindings
-**** Setup
-
-Set up some basic equivalents for vim mapping functions. This
-creates global key definition functions for the evil states.
-
-#+begin_src emacs-lisp
-(general-evil-setup t)
-#+end_src
-
-**** Basic
-
-Swap ~:~ and ~;~ to make colon commands easier to type in Emacs.
-
-#+begin_src emacs-lisp
-(nmap
- ";" 'evil-ex
- ":" 'evil-repeat-find-char)
-#+end_src
-
-Remap ~0~ for convenience.
-
-#+begin_src emacs-lisp
-(nmap 'messages-buffer-mode-map
-  "0" 'evil-digit-argument-or-evil-beginning-of-line)
-#+end_src
-
-**** Process menu
-
-#+begin_src emacs-lisp
-(nmap 'process-menu-mode-map
-  "M-d" 'process-menu-delete-process
-  "q" 'kill-buffer-and-window)
-#+end_src
-
-**** Leader-prefixed
-
-#+begin_src emacs-lisp
-(nmap
-  :prefix my/leader
-#+end_src
-
-Window splitting.
-
-#+begin_src emacs-lisp
-  "v" 'split-window-horizontally
-  "s" 'split-window-vertically
-#+end_src
-
-Evaluation.
-
-#+begin_src emacs-lisp
-  "E e" 'eval-expression
-  "E l" 'eval-last-sexp
-#+end_src
-
-Help.
-
-#+begin_src emacs-lisp
-  "h k" 'describe-key-briefly
-  "h K" 'describe-key
-  "h M" 'describe-mode
-  "h m" 'info-display-manual)
-#+end_src
-
-Profiling.
-
-#+begin_src emacs-lisp
-  "P s" 'profiler-start
-  "P S" 'profiler-stop
-  "P r" 'profiler-report
-#+end_src
-
-Others.
-
-#+begin_src emacs-lisp
-  "p" 'list-processes
-  "\\" 'widen
-#+end_src
-
-
-#+begin_src emacs-lisp
-)
 #+end_src
 
 ** Behavior
@@ -2591,10 +2447,10 @@ See the [[https://github.com/antonj/Highlight-Indentation-for-Emacs][package rep
 #+begin_src emacs-lisp
 (use-package highlight-indentation
  :after general
- :hook
+ ;; :hook
  ;; (yaml-mode . highlight-indentation-mode)
  ;; (haskell-mode . highlight-indentation-mode)
- (prog-mode . highlight-indentation-current-column-mode)
+ ;; (prog-mode . highlight-indentation-current-column-mode)
  :config
  ;; theme: zerodark
  ;; (set-face-background 'highlight-indentation-face "#24282f")
@@ -2662,7 +2518,7 @@ I keep it disabled, because it is too slow.
  (setq fill-column 80))
 #+end_src
 
-*** All the icons (disabled)
+*** All the icons
 
 A utility [[https://github.com/domtronn/all-the-icons.el][package]] to collect various =Icon Fonts= and propertize
 them within Emacs.
@@ -2671,7 +2527,7 @@ Don't forget to run ~M-x all-the-icons-install-fonts~.
 
 Disabled, it slows down dired.
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package all-the-icons
  :config
  (setq
@@ -3754,12 +3610,88 @@ Peep at files in another window from dired buffers.
 
 *** Icons (disabled)
 
+Disabled, slows down dired.
+
 #+begin_src emacs-lisp :tangle no
 (use-package all-the-icons-dired
  :hook
  (dired-mode . all-the-icons-dired-mode))
 #+end_src
 ** Navigation
+*** Treemacs
+**** Mode
+
+A tree layout file explorer for Emacs.
+
+#+begin_src emacs-lisp
+(use-package treemacs
+  :defer t
+  :init
+  (with-eval-after-load 'winum
+    (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
+  :config
+  (progn
+    (setq treemacs-no-png-images t)
+
+    ;; The default width and height of the icons is 22 pixels.
+    (treemacs-resize-icons 14)
+
+    (treemacs-follow-mode t)
+    (treemacs-filewatch-mode t)
+    (treemacs-fringe-indicator-mode 'always)
+    (pcase (cons (not (null (executable-find "git")))
+                 (not (null treemacs-python-executable)))
+      (`(t . t)
+       (treemacs-git-mode 'deferred))
+      (`(t . _)
+       (treemacs-git-mode 'simple))))
+  (nmap
+    :prefix my/leader
+    "r" 'treemacs-select-window
+    "q" 'treemacs))
+#+end_src
+
+**** Evil
+
+Evil mode compatibility.
+
+#+begin_src emacs-lisp
+(use-package treemacs-evil
+  :after (treemacs evil))
+#+end_src
+
+**** Projectile
+
+#+begin_src emacs-lisp
+(use-package treemacs-projectile
+  :after (treemacs projectile))
+#+end_src
+
+**** Magit
+
+#+begin_src emacs-lisp
+(use-package treemacs-magit
+  :after (treemacs magit))
+#+end_src
+
+**** Icons (disabled)
+
+Treemacs icons for dired. Code is based on =all-the-icons-dired.el=.
+
+#+begin_src emacs-lisp :tangle no
+(use-package treemacs-icons-dired
+  :after (treemacs dired)
+  :config (treemacs-icons-dired-mode))
+#+end_src
+
+**** Persp (disabled)
+
+#+begin_src emacs-lisp :tangle no
+(use-package treemacs-persp    ;; treemacs-perspective if you use perspective.el vs. persp-mode
+  :after (treemacs persp-mode) ;; or perspective vs. persp-mode
+  :config (treemacs-set-scope-type 'Perspectives))
+#+end_src
+
 *** Ace window
 
 Quickly switch between windows (splits).
@@ -4008,10 +3940,19 @@ Here is the [[https://github.com/Yevgnen/ivy-rich][package repo]].
 
 **** Xref
 
+Use Ivy as the interface to select from xref candidates.
+
 #+begin_src emacs-lisp
 (use-package ivy-xref
- :custom
- (xref-show-xrefs-function 'ivy-xref-show-xrefs "Use Ivy to show xrefs"))
+ :init
+  ;; xref initialization is different in Emacs 27 - there are two different
+  ;; variables which can be set rather than just one
+  (when (>= emacs-major-version 27)
+    (setq xref-show-definitions-function #'ivy-xref-show-defs))
+  ;; Necessary in Emacs <27. In Emacs 27 it will affect all xref-based
+  ;; commands other than xref-find-definitions (e.g. project-find-regexp)
+  ;; as well
+  (setq xref-show-xrefs-function #'ivy-xref-show-xrefs))
 #+end_src
 
 **** Flyspell correct
@@ -4347,7 +4288,7 @@ Popup commit message for current line.
   :config
   (nmap
     :prefix my/leader
-    "g M" 'git-messenger:popup-message))
+    "g m" 'git-messenger:popup-message))
 #+end_src
 
 *** Magit
@@ -4361,8 +4302,21 @@ Popup commit message for current line.
   (magit-save-repository-buffers 'dontask)
   (git-messenger:use-magit-popup t)
   :config
-  ;; Unset pager as it is not supported properly inside emacs.
-  (setenv "GIT_PAGER" ""))
+  ;; Unset pager as it is not supported properly inside emacs
+  (setenv "GIT_PAGER" "")
+  (nmap
+    :prefix my/leader
+    "g s" 'magit-status
+    "g S" 'magit-stash
+    "g l" 'magit-log
+    "g p" 'magit-pull
+    "g P" 'magit-push
+    "g b c" 'magit-branch-checkout
+    "g b n" 'magit-branch-create
+    "g c c" 'magit-commit-create
+    "g c a" 'magit-commit-amend
+    "g d d" 'magit-diff
+    "g d f" 'magit-diff-buffer-file))
 #+end_src
 
 *** Magit todos (disabled)
@@ -4423,7 +4377,11 @@ See the [[https://emacsair.me/2018/12/19/forge-0.1/][announcement]] and the [[ht
 Step through historic versions of git controlled file.
 
 #+begin_src emacs-lisp
-(use-package git-timemachine)
+(use-package git-timemachine
+  :config
+  (nmap
+    :prefix my/leader
+    "g t" 'git-timemachine))
 #+end_src
 
 *** Syntactic modes
@@ -5087,7 +5045,8 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   (dolist (dir '("vendor")) (push dir lsp-file-watch-ignored))
   (nmap
     :prefix my/leader
-    "l r" 'lsp-restart-workspace)
+    "l r" 'lsp-restart-workspace
+    "l d" 'lsp-describe-thing-at-point)
   :delight "lsp")
 #+end_src
 
@@ -5155,6 +5114,26 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   company-lsp-enable-snippet t)
  :config
  (push 'company-lsp company-backends))
+#+end_src
+
+*** Treemacs
+
+#+begin_src emacs-lisp
+(use-package lsp-treemacs
+ :after (general)
+ :commands lsp-treemacs-errors-list
+ :config
+ ;; Enable bidirectional synchronization of lsp workspace
+ ;; folders and treemacs projects
+ (lsp-treemacs-sync-mode 1)
+ (nmap
+   :prefix my/leader
+   "m s" 'lsp-treemacs-symbols
+   "m r" 'lsp-treemacs-references
+   "m i" 'lsp-treemacs-implementations
+   "m c" 'lsp-treemacs-call-hierarchy
+   "m t" 'lsp-treemacs-type-hierarchy
+   "m e" 'lsp-treemacs-errors-list))
 #+end_src
 
 *** Ivy
