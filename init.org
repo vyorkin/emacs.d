@@ -2004,13 +2004,13 @@ Unobtrusively trim extraneous whitespace only in lines edited.
  :diminish ws-butler-mode)
 #+end_src
 
-*** Aggressive indent
+*** Aggressive indent (disabled)
 
 Emacs minor mode that keeps your code always indented. More
 reliable than =electric-indent-mode=. More info in the [[https://github.com/Malabarba/aggressive-indent-mode][package
 repository.]]
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package aggressive-indent
  :hook
  ((emacs-lisp-mode css-mode c++-mode) . aggressive-indent-mode)
@@ -3023,7 +3023,7 @@ Some of the key bindings are provided by the =evil-collection=.
 (defun my/company-mode/setup-faces ()
   (interactive)
   "Style company-mode nicely"
-  (let* ((bg (face-attribute 'default :background))
+  (let* ((bg (color-lighten-name bg 2))
          (bg-light (color-lighten-name bg 2))
          (bg-lighter (color-lighten-name bg 5))
          (bg-lightest (color-lighten-name bg 10))
@@ -4433,7 +4433,7 @@ default pager.
   )
 #+end_src
 
-*** EM-smart
+*** EM-smart (disabled)
 
 #+begin_src emacs-lisp :tangle no
 (use-package em-smart
@@ -4493,11 +4493,7 @@ Command execution status indicator in the fringe.
  :config
  (nmap
    :prefix my/leader
-   "`" 'eshell-toggle))
-#+end_src
-
-#+begin_src emacs-lisp
-
+   "\\" 'eshell-toggle))
 #+end_src
 
 ** SSH
