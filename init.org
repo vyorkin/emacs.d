@@ -3023,7 +3023,7 @@ Some of the key bindings are provided by the =evil-collection=.
 (defun my/company-mode/setup-faces ()
   (interactive)
   "Style company-mode nicely"
-  (let* ((bg (color-lighten-name bg 2))
+  (let* ((bg (face-attribute 'default :background))
          (bg-light (color-lighten-name bg 2))
          (bg-lighter (color-lighten-name bg 5))
          (bg-lightest (color-lighten-name bg 10))
@@ -4309,6 +4309,7 @@ Popup commit message for current line.
     "g s" 'magit-status
     "g S" 'magit-stash
     "g l" 'magit-log
+    "g B" 'magit-blame
     "g p" 'magit-pull
     "g P" 'magit-push
     "g b c" 'magit-branch-checkout
