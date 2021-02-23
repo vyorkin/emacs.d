@@ -5058,8 +5058,9 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
   (add-hook 'lsp-ui-doc-frame-hook
     (lambda (frame _w)
-      (set-face-attribute 'default frame :font "Hack" :height 100)))
+      (set-face-attribute 'default frame :font "JetBrains Mono" :height 14)))
   (setq
+   ;; Show side line (e.g. code actions hits)
    lsp-ui-sideline-enable t
    lsp-ui-sideline-delay 0.5
    ;; Show hover messages in sideline
