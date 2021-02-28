@@ -5043,6 +5043,7 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   (nmap
     :prefix my/leader
     "l r" 'lsp-restart-workspace
+    "l f" 'lsp-format-buffer
     "l d" 'lsp-describe-thing-at-point)
   :delight "lsp")
 #+end_src
