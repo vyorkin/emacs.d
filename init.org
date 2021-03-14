@@ -7139,6 +7139,12 @@ unicode symbols and latex tags.
   :delight "lb")
 #+end_src
 
+*** Forth
+
+#+begin_src emacs-lisp
+(use-package forth-mode)
+#+end_src
+
 *** Arduino
 
 #+begin_src emacs-lisp
