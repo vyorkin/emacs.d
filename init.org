@@ -967,7 +967,7 @@ Font faces configuration.
    'default nil
    :family (caar face-font-family-alternatives)
    :weight 'regular
-   :height 160
+   :height 120
    :width 'semi-condensed)
   (set-fontset-font
    "fontset-default"
@@ -1113,7 +1113,7 @@ Usage:
 (use-package base16-theme
   :config
   ;; (load-theme 'base16-default-dark t)
-  (load-theme 'base16-grayscale-dark t)
+  ;; (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
   ;; (load-theme 'base16-gruvbox-light-hard t)
   ;; (load-theme 'base16-material-palenight t) ;; ****
@@ -1121,7 +1121,7 @@ Usage:
   ;; (load-theme 'base16-pop t)
   ;; (load-theme 'base16-tomorrow-night t)
   ;; (load-theme 'base16-twilight t)
-  ;; (load-theme 'base16-irblack t)
+  (load-theme 'base16-irblack t)
 #+end_src
 
 ~base16-chalk~ + customizations.
@@ -1142,7 +1142,7 @@ Usage:
 ~base16-black-metal~ + customizations.
 
 #+begin_src emacs-lisp :tangle no
-(load-theme 'base16-black-metal t)
+(load-theme 'base16-black-metal-bathory t) ;; ***
 #+end_src
 
 #+begin_src emacs-lisp :tangle no
@@ -4819,6 +4819,14 @@ Emacs helpers to run things from makefiles.
 (use-package makefile-executor
   :config
   (add-hook 'makefile-mode-hook 'makefile-executor-mode))
+#+end_src
+
+** RFC
+
+#+begin_src emacs-lisp
+(use-package rfc-mode
+ :custom
+  rfc-mode-directory (my/emacs-path "rfc"))
 #+end_src
 
 ** Smartparens (disabled)
