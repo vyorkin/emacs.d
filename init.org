@@ -5940,7 +5940,7 @@ info.
   (proof-delete-empty-windows t)
   ;; (proof-three-window-mode-policy 'smart)
   ;; see: https://github.com/ProofGeneral/PG/issues/404
-  (proof-shrink-windows-tofit t)
+  (proof-shrink-windows-tofit nil)
   :delight "coq")
 #+end_src
 
@@ -5952,7 +5952,7 @@ info.
   :preface
   (defun my/company-coq/setup ()
     (interactive)
-    (setq buffer-face-mode-face '(:family "Fira Code"))
+    (setq buffer-face-mode-face '(:family "JetBrains Mono"))
     (setq-local
      prettify-symbols-alist
      '((":=" . ?≜)
@@ -7000,6 +7000,21 @@ Highlight C-style preprocessor directives in Emacs.
 (use-package glsl-mode)
 
 (use-package company-glsl)
+#+end_src
+
+*** Solidity
+
+A simple language mode for the Solidity language.
+
+#+begin_src emacs-lisp
+(use-package solidity-mode)
+
+(use-package solidity-flycheck
+ :custom
+ (solidity-solc-path "~/.npm-packages/bin/solcjs")
+ (solidity-solium-path "~/.npm-packages/bin/solium")
+ (solidity-flycheck-solc-checker-active nil)
+ (solidity-flycheck-solium-checker-active nil))
 #+end_src
 
 *** Kconfig
