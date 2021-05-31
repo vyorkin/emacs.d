@@ -4704,14 +4704,17 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   (add-hook 'lsp-ui-doc-frame-hook
     (lambda (frame _w)
       (set-face-attribute 'default frame :font "JetBrains Mono" :height 14)))
+  (set-face-attribute 'lsp-ui-sideline-global nil :font "JetBrains Mono" :height 0.8)
+  (set-face-attribute 'lsp-ui-sideline-code-action nil :font "JetBrains Mono" :height 0.8)
   (setq
    ;; Show side line (e.g. code actions hits)
    lsp-ui-sideline-enable t
    lsp-ui-sideline-delay 0.5
+   lsp-ui-sideline-actions-icon nil
    ;; Show hover messages in sideline
    lsp-ui-show-hover t
    ;; Show code actions in sideline
-   lsp-ui-show-code-actions t
+   lsp-ui-show-code-actions nil
    lsp-enable-completion-at-point t
    lsp-ui-doc-position 'at-point
    lsp-ui-doc-header nil
