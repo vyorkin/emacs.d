@@ -1099,7 +1099,8 @@ Usage:
 - ~M-x benchmark-init/show-durations-tabulated~
 – ~M-x benchmark-init/show-durations-tree~
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
+;; Disabled, see: https://github.com/dholm/benchmark-init-el/issues/15
 (use-package benchmark-init
  :hook
  ;; To disable collection of benchmark data after init is done.
@@ -1112,7 +1113,7 @@ Usage:
 #+begin_src emacs-lisp
 (use-package base16-theme
   :config
-  ;; (load-theme 'base16-default-dark t)
+  (load-theme 'base16-default-dark t)
   ;; (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
   ;; (load-theme 'base16-gruvbox-light-hard t)
@@ -1121,7 +1122,7 @@ Usage:
   ;; (load-theme 'base16-pop t)
   ;; (load-theme 'base16-tomorrow-night t)
   ;; (load-theme 'base16-twilight t)
-  (load-theme 'base16-irblack t)
+  ;; (load-theme 'base16-irblack t)
 #+end_src
 
 ~base16-chalk~ + customizations.
@@ -4032,13 +4033,7 @@ Step through historic versions of git controlled file.
 *** Syntactic modes
 
 #+begin_src emacs-lisp
-(use-package gitattributes-mode)
-
-(use-package gitignore-mode
-  :mode
-  ("/\\.dockerignore$" . gitignore-mode))
-
-(use-package gitconfig-mode)
+(use-package git-modes)
 #+end_src
 
 *** Gist
@@ -4496,6 +4491,9 @@ Supplemental =evil-mode= keybindings to emacs =org-mode=.
 See [[https://github.com/Somelauw/evil-org-mode#keybindings][the repo]] for keybindings cheatsheet.
 
 #+begin_src emacs-lisp
+;; See: https://github.com/Somelauw/evil-org-mode/issues/93#issuecomment-950306532
+(fset 'evil-redirect-digit-argument 'ignore)
+
 (use-package evil-org
  :after (general org)
  :commands
@@ -4505,7 +4503,7 @@ See [[https://github.com/Somelauw/evil-org-mode#keybindings][the repo]] for keyb
    (evil-org-set-key-theme)
    (evil-org-agenda-set-keys))
  :hook
- ((org-mode . evil-org-mode)
+ ((org-mode . (lambda () evil-org-mode))
   (evil-org-mode . my/evil-org/setup))
  :init
  (setq
@@ -4518,6 +4516,9 @@ See [[https://github.com/Somelauw/evil-org-mode#keybindings][the repo]] for keyb
     todo
     heading))
  :config
+ (add-to-list 'evil-digit-bound-motions 'evil-org-beginning-of-line)
+ (evil-define-key 'motion 'evil-org-mode
+   (kbd "0") 'evil-org-beginning-of-line)
  (require 'evil-org-agenda)
  :diminish evil-org-mode)
 #+end_src
@@ -4563,7 +4564,7 @@ Paste links from clipboard and automatically fetch title.
 
 *** Pandoc exporter
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package ox-pandoc)
 #+end_src
 
@@ -4683,6 +4684,9 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   ;; Make sure the logging is switched off
   (setq lsp-log-io nil)
   (setq lsp-completion-provider :capf)
+  ;; What to use when checking on-save: "check" is default, I prefer "clippy"
+  (setq lsp-rust-analyzer-cargo-watch-command "clippy")
+  (setq lsp-rust-analyzer-server-display-inlay-hints t)
   (dolist (dir '("vendor")) (push dir lsp-file-watch-ignored))
   (nmap
     :prefix my/leader
@@ -4707,7 +4711,9 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   (setq
    ;; Show side line (e.g. code actions hits)
    lsp-ui-sideline-enable t
+   lsp-ui-sideline-show-hover t
    lsp-ui-sideline-delay 0.5
+   lsp-ui-peek-always-show t
    ;; Show hover messages in sideline
    lsp-ui-show-hover t
    ;; Show code actions in sideline
@@ -5931,7 +5937,7 @@ OCaml support for Flycheck using Merlin.
 *** Coq
 
 This configuration relies on the Proof General to be cloned
-here: ~~/.emacs.d/lisp/PG~. See the [[https://github.com/ProofGeneral/PG#using-git-manual-compilation-procedure][Proof General docs]] for more
+here: ~/.emacs.d/lisp/PG~. See the [[https://github.com/ProofGeneral/PG#using-git-manual-compilation-procedure][Proof General docs]] for more
 info.
 
 #+begin_src emacs-lisp
@@ -5944,11 +5950,13 @@ info.
   :delight "coq")
 #+end_src
 
+IDE extensions for Proof General's Coq mode: prettification,
+autocompletion, snippets, outlines, code folding, jumping to
+definition, integrated help, etc.
+
 #+begin_src emacs-lisp
-(use-package coq-mode
+(use-package company-coq
   :after (proof-site)
-  :ensure nil
-  :commands (coq-mode)
   :preface
   (defun my/company-coq/setup ()
     (interactive)
@@ -5976,6 +5984,10 @@ info.
        ("tau" . ?τ) ("upsilon" . ?υ) ("phi" . ?φ)
        ("chi" . ?χ) ("psi" . ?ψ) ("omega" . ?ω)))
     (sp-local-pair 'coq-mode "'" nil :actions nil))
+  :commands (company-coq-mode)
+  :hook
+  (coq-mode . company-coq-mode)
+  (coq-mode . my/company-coq/setup)
   :init
   (setq
    ;; Enable autocompletion for theorem names and
@@ -5998,21 +6010,6 @@ info.
     "8" 'coq-About
     "9" 'coq-Show
     "0" 'coq-Check)
-  :hook
-  (coq-mode . my/company-coq/setup))
-#+end_src
-
-IDE extensions for Proof General's Coq mode: prettification,
-autocompletion, snippets, outlines, code folding, jumping to
-definition, integrated help, etc.
-
-#+begin_src emacs-lisp
-(use-package company-coq
-  :after (proof-site coq-mode)
-  :commands (company-coq-mode)
-  :hook
-  (coq-mode . company-coq-mode)
-  :config
   (nmap 'coq-mode-map
     "g d" 'company-coq-jump-to-definition))
 #+end_src
@@ -6028,7 +6025,7 @@ Keybindings: https://github.com/leanprover/lean-mode#key-bindings-and-commands
 
 *** Minizinc
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package minizinc-mode
   :mode
   ("\\.mzn\\'"))
@@ -6256,7 +6253,22 @@ Add metals backend for lsp-mode.
 Rust development environment for Emacs.
 
 #+begin_src emacs-lisp
-(use-package rustic)
+(use-package rustic
+ :preface
+ (defun my/rustic/setup ()
+  ;; So that run C-c C-c C-r works without having to confirm,
+  ;; but don't try to save rust buffers that are not file visiting.
+  ;; Once https://github.com/brotzeit/rustic/issues/253 has been
+  ;; resolved this should no longer be necessary
+  (when buffer-file-name
+    (setq-local buffer-save-without-query t)))
+ :config
+ (setq rustic-format-on-save t)
+ (nmap 'rustic-mode-map
+   "C-c R" 'rustic-cargo-fmt
+   "C-c r" 'rustic-format-buffer)
+ :hook
+ (rustic-mode . my/rustic/setup))
 #+end_src
 
 **** rust-mode (disabled)
