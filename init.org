@@ -3,6 +3,7 @@
 #+babel: :cache yes
 #+property: header-args :tangle yes
 #+startup: overview
+#+startup: noindent
 
 * Credits
 
@@ -1113,8 +1114,8 @@ Usage:
 #+begin_src emacs-lisp
 (use-package base16-theme
   :config
-  (load-theme 'base16-default-dark t)
-  ;; (load-theme 'base16-grayscale-dark t)
+  ;; (load-theme 'base16-default-dark t)
+  (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
   ;; (load-theme 'base16-gruvbox-light-hard t)
   ;; (load-theme 'base16-material-palenight t) ;; ****
@@ -4212,11 +4213,18 @@ Simple file templates for Emacs with =YASnippet=.
 **** Config
 
 Visually indent sections. This looks better for smaller files.
-Also, disallow editing invisible areas.
+Also, startup folded and disallow editing invisible areas.
 
 #+begin_src emacs-lisp
 (setq org-startup-indented t)
+(setq org-startup-folded t)
 (setq org-catch-invisible-edits 'error)
+#+end_src
+
+Show inline images when loading a new Org file.
+
+#+begin_src emacs-lisp
+(setq org-startup-with-inline-images t)
 #+end_src
 
 This feature came to Org in version 8. It lets you type “normal
@@ -4500,21 +4508,11 @@ See [[https://github.com/Somelauw/evil-org-mode#keybindings][the repo]] for keyb
  (evil-org-set-key-theme evil-org-agenda-set-keys)
  :preface
  (defun my/evil-org/setup ()
-   (evil-org-set-key-theme)
+   (evil-org-mode)
+   (evil-org-set-key-theme '(textobjects insert navigation additional shift todo heading calendar))
    (evil-org-agenda-set-keys))
  :hook
- ((org-mode . (lambda () evil-org-mode))
-  (evil-org-mode . my/evil-org/setup))
- :init
- (setq
-  evil-org-key-theme
-  '(textobjects
-    insert
-    navigation
-    additional
-    shift
-    todo
-    heading))
+ (org-mode . my/evil-org/setup)
  :config
  (add-to-list 'evil-digit-bound-motions 'evil-org-beginning-of-line)
  (evil-define-key 'motion 'evil-org-mode
@@ -4550,6 +4548,17 @@ I use =org-superstart= instead, so it is currently disabled.
  (org-mode . org-bullets-mode))
 #+end_src
 
+*** Sticky-header
+
+    Show off-screen Org heading at top of window.
+
+    #+begin_src emacs-lisp
+    (use-package org-sticky-header
+    :after (org)
+    :hook
+    (org-mode . org-sticky-header-mode))
+    #+end_src
+
 *** Cliplink
 
 Paste links from clipboard and automatically fetch title.
@@ -4560,6 +4569,74 @@ Paste links from clipboard and automatically fetch title.
   (nmap 'org-mode-map
     :prefix my/leader
     "L" 'org-cliplink))
+#+end_src
+
+*** Orgroam
+
+    A plain-text personal knowledge management system.
+
+#+begin_src emacs-lisp
+(use-package org-roam
+:after (general org)
+:preface
+(defun my/org-roam/node-insert-immediate (arg &rest args)
+  (interactive "P")
+  (let ((args (cons arg args))
+        (org-roam-capture-templates (list (append (car org-roam-capture-templates)
+                                                  '(:immediate-finish t)))))
+    (apply #'org-roam-node-insert args)))
+(defun my/org-roam/filter-by-tag (tag-name)
+  (lambda (node)
+    (member tag-name (org-roam-node-tags node))))
+(defun my/org-roam/list-notes-by-tag (tag-name)
+  (mapcar #'org-roam-node-file
+          (seq-filter
+           (my/org-roam/filter-by-tag tag-name)
+           (org-roam-node-list))))
+(defun my/org-roam/refresh-agenda-list ()
+  (interactive)
+  (setq org-agenda-files (my/org-roam/list-notes-by-tag "agenda")))
+(defun my/org-roam/setup ()
+ (my/org-roam/refresh-agenda-list))
+:custom
+(org-roam-directory "~/projects/personal/braindump/org")
+(org-roam-complete-everywhere t)
+(org-roam-capture-templates
+ '(("d" "default" plain
+    "%?"
+    :if-new (file-head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+    :unnarrowed t)
+   ("b" "book notes" plain
+    "\n* Source\n\nAuthor: %^{Author}\nTitle: ${title}\nYear: %^{Year}\n\n* Summary\n\n%?"
+    :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+    :unnarrowed t)
+   ("p" "project" plain "* Goals\n\n%?\n\n* Tasks\n\n** TODO Add initial tasks\n\n* Dates\n\n"
+    :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n#+category: ${title}\n#+filetags: project agenda")
+    :unnarrowed t)))
+:init
+(setq org-roam-v2-ack t)
+(setq org-roam-dailies-directory "journal/")
+:hook
+(org-mode . my/org-roam/setup)
+:config
+;; Ensure the keymap is available
+(require 'org-roam-dailies)
+(org-roam-setup)
+(org-roam-db-autosync-mode)
+(nmap
+  :prefix my/leader
+  "n l" 'org-roam-buffer-toggle
+  "n f" 'org-roam-node-find
+  "n i" 'org-roam-node-insert
+  "n j" 'org-roam-dailies-capture-today
+  "n k" 'org-roam-dailies-capture-tomorrow
+  "n h" 'org-roam-dailies-capture-yesterday
+  "n d" 'org-roam-dailies-goto-today
+  "n y" 'org-roam-dailies-goto-yesterday
+  "n t" 'org-roam-dailies-goto-tomorrow
+  "n D" 'org-roam-dailies-goto-date
+  "n ," 'org-roam-dailies-goto-previous-note
+  "n ." 'org-roam-dailies-goto-next-note))
 #+end_src
 
 *** Pandoc exporter
@@ -4707,9 +4784,9 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
   (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
   (add-hook 'lsp-ui-doc-frame-hook
     (lambda (frame _w)
-      (set-face-attribute 'default frame :font "JetBrains Mono" :height 14)))
-  (set-face-attribute 'lsp-ui-sideline-global nil :font "JetBrains Mono" :height 0.8)
-  (set-face-attribute 'lsp-ui-sideline-code-action nil :font "JetBrains Mono" :height 0.8)
+      (set-face-attribute 'default frame :font "JetBrains Mono" :height 12)))
+  (set-face-attribute 'lsp-ui-sideline-global nil :font "JetBrains Mono" :height 0.6)
+  (set-face-attribute 'lsp-ui-sideline-code-action nil :font "JetBrains Mono" :height 0.6)
   (setq
    ;; Show side line (e.g. code actions hits)
    lsp-ui-sideline-enable t
