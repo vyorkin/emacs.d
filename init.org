@@ -4578,6 +4578,7 @@ Paste links from clipboard and automatically fetch title.
 #+begin_src emacs-lisp
 (use-package org-roam
 :after (general org)
+:demand t
 :preface
 (defun my/org-roam/node-insert-immediate (arg &rest args)
   (interactive "P")
@@ -4600,12 +4601,10 @@ Paste links from clipboard and automatically fetch title.
  (my/org-roam/refresh-agenda-list))
 :custom
 (org-roam-directory "~/projects/personal/braindump/org")
-(org-roam-complete-everywhere t)
 (org-roam-capture-templates
- '(("d" "default" plain
-    "%?"
-    :if-new (file-head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
-    :unnarrowed t)
+ '(("d" "default" plain "%?"
+     :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+     :unnarrowed t)
    ("b" "book notes" plain
     "\n* Source\n\nAuthor: %^{Author}\nTitle: ${title}\nYear: %^{Year}\n\n* Summary\n\n%?"
     :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
@@ -4616,6 +4615,11 @@ Paste links from clipboard and automatically fetch title.
 :init
 (setq org-roam-v2-ack t)
 (setq org-roam-dailies-directory "journal/")
+(setq org-roam-dailies-capture-templates
+      '(("d" "default" entry
+         "* %<%H:%M> %?"
+         :target (file+head+olp "%<%Y-%m-%d>.org"
+                                "#+title: %<%Y-%m-%d>\n" ("Journal")))))
 :hook
 (org-mode . my/org-roam/setup)
 :config

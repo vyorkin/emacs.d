@@ -459,8 +459,8 @@
 
 (use-package base16-theme
   :config
-  (load-theme 'base16-default-dark t)
-  ;; (load-theme 'base16-grayscale-dark t)
+  ;; (load-theme 'base16-default-dark t)
+  (load-theme 'base16-grayscale-dark t)
   ;; (load-theme 'base16-grayscale-light t)
   ;; (load-theme 'base16-gruvbox-light-hard t)
   ;; (load-theme 'base16-material-palenight t) ;; ****
@@ -2081,7 +2081,10 @@
   :init
 
 (setq org-startup-indented t)
+(setq org-startup-folded t)
 (setq org-catch-invisible-edits 'error)
+
+(setq org-startup-with-inline-images t)
 
 (setq org-export-with-smart-quotes t)
 
@@ -2222,21 +2225,11 @@
  (evil-org-set-key-theme evil-org-agenda-set-keys)
  :preface
  (defun my/evil-org/setup ()
-   (evil-org-set-key-theme)
+   (evil-org-mode)
+   (evil-org-set-key-theme '(textobjects insert navigation additional shift todo heading calendar))
    (evil-org-agenda-set-keys))
  :hook
- ((org-mode . (lambda () evil-org-mode))
-  (evil-org-mode . my/evil-org/setup))
- :init
- (setq
-  evil-org-key-theme
-  '(textobjects
-    insert
-    navigation
-    additional
-    shift
-    todo
-    heading))
+ (org-mode . my/evil-org/setup)
  :config
  (add-to-list 'evil-digit-bound-motions 'evil-org-beginning-of-line)
  (evil-define-key 'motion 'evil-org-mode
@@ -2251,11 +2244,82 @@
  :hook
  (org-mode . org-superstar-mode))
 
+    (use-package org-sticky-header
+    :after (org)
+    :hook
+    (org-mode . org-sticky-header-mode))
+
 (use-package org-cliplink
   :config
   (nmap 'org-mode-map
     :prefix my/leader
     "L" 'org-cliplink))
+
+(use-package org-roam
+:after (general org)
+:demand t
+:preface
+(defun my/org-roam/node-insert-immediate (arg &rest args)
+  (interactive "P")
+  (let ((args (cons arg args))
+        (org-roam-capture-templates (list (append (car org-roam-capture-templates)
+                                                  '(:immediate-finish t)))))
+    (apply #'org-roam-node-insert args)))
+(defun my/org-roam/filter-by-tag (tag-name)
+  (lambda (node)
+    (member tag-name (org-roam-node-tags node))))
+(defun my/org-roam/list-notes-by-tag (tag-name)
+  (mapcar #'org-roam-node-file
+          (seq-filter
+           (my/org-roam/filter-by-tag tag-name)
+           (org-roam-node-list))))
+(defun my/org-roam/refresh-agenda-list ()
+  (interactive)
+  (setq org-agenda-files (my/org-roam/list-notes-by-tag "agenda")))
+(defun my/org-roam/setup ()
+ (my/org-roam/refresh-agenda-list))
+:custom
+(org-roam-directory "~/projects/personal/braindump/org")
+(org-roam-capture-templates
+ '(("d" "default" plain "%?"
+     :target (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+     :unnarrowed t)
+   ("b" "book notes" plain
+    "\n* Source\n\nAuthor: %^{Author}\nTitle: ${title}\nYear: %^{Year}\n\n* Summary\n\n%?"
+    :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n")
+    :unnarrowed t)
+   ("p" "project" plain "* Goals\n\n%?\n\n* Tasks\n\n** TODO Add initial tasks\n\n* Dates\n\n"
+    :if-new (file+head "%<%Y%m%d%H%M%S>-${slug}.org" "#+title: ${title}\n#+category: ${title}\n#+filetags: project agenda")
+    :unnarrowed t)))
+:init
+(setq org-roam-v2-ack t)
+(setq org-roam-dailies-directory "journal/")
+(setq org-roam-dailies-capture-templates
+      '(("d" "default" entry
+         "* %<%H:%M> %?"
+         :target (file+head+olp "%<%Y-%m-%d>.org"
+                                "#+title: %<%Y-%m-%d>\n" ("Journal")))))
+:hook
+(org-mode . my/org-roam/setup)
+:config
+;; Ensure the keymap is available
+(require 'org-roam-dailies)
+(org-roam-setup)
+(org-roam-db-autosync-mode)
+(nmap
+  :prefix my/leader
+  "n l" 'org-roam-buffer-toggle
+  "n f" 'org-roam-node-find
+  "n i" 'org-roam-node-insert
+  "n j" 'org-roam-dailies-capture-today
+  "n k" 'org-roam-dailies-capture-tomorrow
+  "n h" 'org-roam-dailies-capture-yesterday
+  "n d" 'org-roam-dailies-goto-today
+  "n y" 'org-roam-dailies-goto-yesterday
+  "n t" 'org-roam-dailies-goto-tomorrow
+  "n D" 'org-roam-dailies-goto-date
+  "n ," 'org-roam-dailies-goto-previous-note
+  "n ." 'org-roam-dailies-goto-next-note))
 
 (use-package ox-hugo
   :after (ox org-capture)
@@ -2330,17 +2394,20 @@
   (add-hook 'lsp-after-open-hook 'lsp-enable-imenu)
   (add-hook 'lsp-ui-doc-frame-hook
     (lambda (frame _w)
-      (set-face-attribute 'default frame :font "JetBrains Mono" :height 14)))
+      (set-face-attribute 'default frame :font "JetBrains Mono" :height 12)))
+  (set-face-attribute 'lsp-ui-sideline-global nil :font "JetBrains Mono" :height 0.6)
+  (set-face-attribute 'lsp-ui-sideline-code-action nil :font "JetBrains Mono" :height 0.6)
   (setq
    ;; Show side line (e.g. code actions hits)
    lsp-ui-sideline-enable t
    lsp-ui-sideline-show-hover t
    lsp-ui-sideline-delay 0.5
    lsp-ui-peek-always-show t
+   lsp-ui-sideline-actions-icon nil
    ;; Show hover messages in sideline
    lsp-ui-show-hover t
    ;; Show code actions in sideline
-   lsp-ui-show-code-actions t
+   lsp-ui-show-code-actions nil
    lsp-enable-completion-at-point t
    lsp-ui-doc-position 'at-point
    lsp-ui-doc-header nil
