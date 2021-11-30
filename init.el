@@ -457,19 +457,20 @@
 
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
-(use-package base16-theme
-  :config
-  ;; (load-theme 'base16-default-dark t)
-  (load-theme 'base16-grayscale-dark t)
-  ;; (load-theme 'base16-grayscale-light t)
-  ;; (load-theme 'base16-gruvbox-light-hard t)
-  ;; (load-theme 'base16-material-palenight t) ;; ****
-  ;; (load-theme 'base16-rebecca t)
-  ;; (load-theme 'base16-pop t)
-  ;; (load-theme 'base16-tomorrow-night t)
-  ;; (load-theme 'base16-twilight t)
-  ;; (load-theme 'base16-irblack t)
-
+(use-package doom-themes
+ :init
+ (setq
+  doom-themes-enable-bold nil
+  doom-themes-enable-italic nil)
+ :config
+ (load-theme 'doom-dracula t)
+ (load-theme 'doom-challenger-deep t)
+ ;; Enable flashing mode-line on errors
+ (doom-themes-visual-bell-config)
+ (doom-themes-neotree-config)
+ ;; Corrects (and improves) org-mode's native fontification
+ (doom-themes-org-config)
+ (load-theme 'doom-moonlight)
 )
 
 (use-package kurecolor)
@@ -1111,31 +1112,35 @@
     :prefix my/leader
     "b" 'bookmark-set))
 
-(defun my/company-mode/setup-faces ()
-  (interactive)
-  "Style company-mode nicely"
-  (let* ((bg (face-attribute 'default :background))
-         (bg-light (color-lighten-name bg 2))
-         (bg-lighter (color-lighten-name bg 5))
-         (bg-lightest (color-lighten-name bg 10))
-         (ac (face-attribute 'match :foreground)))
-    (custom-set-faces
-     `(company-tooltip
-       ((t (:inherit default :background ,bg-light))))
-     `(company-scrollbar-bg ((t (:background ,bg-lightest))))
-     `(company-scrollbar-fg ((t (:background ,bg-lighter))))
-     `(company-tooltip-selection
-       ((t (:inherit font-lock-function-name-face))))
-     `(company-tooltip-common
-       ((t (:inherit font-lock-constant-face))))
-     `(company-preview-common
-       ((t (:foreground ,ac :background ,bg-lightest)))))))
-
 (use-package company
+ :after (lsp-mode)
+ :preface
+ (defun my/company-mode/setup-faces ()
+   (interactive)
+   "Style company-mode nicely"
+   (let* ((bg (face-attribute 'default :background))
+          (bg-light (color-lighten-name bg 2))
+          (bg-lighter (color-lighten-name bg 5))
+          (bg-lightest (color-lighten-name bg 10))
+          (ac (face-attribute 'match :foreground)))
+     (custom-set-faces
+      `(company-tooltip
+        ((t (:inherit default :background ,bg-light))))
+      `(company-scrollbar-bg ((t (:background ,bg-lightest))))
+      `(company-scrollbar-fg ((t (:background ,bg-lighter))))
+      `(company-tooltip-selection
+        ((t (:inherit font-lock-function-name-face))))
+      `(company-tooltip-common
+        ((t (:inherit font-lock-constant-face))))
+      `(company-preview-common
+        ((t (:foreground ,ac :background ,bg-lightest)))))))
  :hook
- ;; Use company-mode in all buffers
- (after-init . global-company-mode)
+ ((lsp-mode org-mode) . company-mode)
+ ;; NOTE: Uncomment to use company-mode in all buffers
+ ;; (after-init . global-company-mode)
  :custom
+ ;; Disable in org
+ ;; (company-global-modes '(not org-mode))
  (company-dabbrev-ignore-case nil)
  (company-dabbrev-code-ignore-case nil)
  (company-dabbrev-downcase nil)
@@ -1143,8 +1148,6 @@
  (company-minimum-prefix-length 1)
  (company-tooltip-align-annotations t)
 
- ;; Disable in org
- (company-global-modes '(not org-mode))
  :config
  (my/company-mode/setup-faces)
  (unbind-key "C-SPC")
@@ -1523,6 +1526,7 @@
 
 (use-package treemacs
   :defer t
+  :after (general)
   :init
   (with-eval-after-load 'winum
     (define-key winum-keymap (kbd "M-0") #'treemacs-select-window))
@@ -2074,7 +2078,30 @@
   (yatemplate-fill-alist))
 
 (use-package org
-  :after (general counsel)
+  :after (general counsel visual-fill-column)
+  :preface
+  (defun my/org/setup ()
+    (interactive)
+    ;; Center content
+    (setq visual-fill-column-width 100
+          visual-fill-column-center-text t)
+    (visual-fill-column-mode 1)
+    ;; Wrap text
+    (visual-line-mode 1)
+    ;; Replace list hyphen with dot
+    (font-lock-add-keywords 'org-mode
+                            '(("^ *\\([-]\\) "
+                                (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+    ;; Use noticeable faces for heading levels
+    (dolist (face '((org-level-1 . 1.4)
+                    (org-level-2 . 1.2)
+                    (org-level-3 . 1.0)
+                    (org-level-4 . 1.0)
+                    (org-level-5 . 1.0)
+                    (org-level-6 . 1.0)
+                    (org-level-7 . 1.0)
+                    (org-level-8 . 1.0)))
+      (set-face-attribute (car face) nil :font "JetBrains Mono" :weight 'regular :height (cdr face))))
   :mode ("\\.org\\'" . org-mode)
   :commands
   (org-babel-do-load-languages)
@@ -2256,8 +2283,9 @@
     "L" 'org-cliplink))
 
 (use-package org-roam
-:after (general org)
+;; TODO: Why do we have to use "demand" here?
 :demand t
+:after (org general)
 :preface
 (defun my/org-roam/node-insert-immediate (arg &rest args)
   (interactive "P")
@@ -2299,9 +2327,8 @@
          "* %<%H:%M> %?"
          :target (file+head+olp "%<%Y-%m-%d>.org"
                                 "#+title: %<%Y-%m-%d>\n" ("Journal")))))
-:hook
-(org-mode . my/org-roam/setup)
 :config
+(my/org-roam/setup)
 ;; Ensure the keymap is available
 (require 'org-roam-dailies)
 (org-roam-setup)
@@ -2378,6 +2405,7 @@
   ;; What to use when checking on-save: "check" is default, I prefer "clippy"
   (setq lsp-rust-analyzer-cargo-watch-command "clippy")
   (setq lsp-rust-analyzer-server-display-inlay-hints t)
+  (setq lsp-rust-analyzer-diagnostics-disabled ["unresolved-proc-macro"])
   (dolist (dir '("vendor")) (push dir lsp-file-watch-ignored))
   (nmap
     :prefix my/leader
@@ -4225,13 +4253,14 @@ _G_: github         _p_: pursuit           _d_: duckduckgo
   ("g" engine/search-google)
   ("t" engine/search-google-translate)
   ("w" engine/search-wikipedia)
-  ("s" engine/search-stack-overflow)
+  ("S" engine/search-stack-overflow)
   ("G" engine/search-github)
   ("y" engine/search-youtube)
   ("u" engine/search-urban-dictionary)
   ("h" engine/search-hoogle)
   ("H" engine/search-hackage)
   ("p" engine/search-pursuit)
+  ("s" engine/search-substrate)
   ("m" engine/search-melpa)
   ("T" engine/search-twitter)
   ("M" engine/search-google-maps)
@@ -4306,6 +4335,8 @@ _G_: github         _p_: pursuit           _d_: duckduckgo
   :prefix "C-c"
   "t" 'google-translate-at-point
   "q" 'google-translate-query-translate))
+
+(use-package telega)
 
 (use-package net-utils
  :config
