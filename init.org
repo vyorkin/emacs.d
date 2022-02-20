@@ -1123,7 +1123,7 @@ Usage:
 ** Theme
 *** Base-16 themes
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package base16-theme
   :config
   ;; (load-theme 'base16-default-dark t)
@@ -1155,11 +1155,11 @@ Usage:
 
 ~base16-black-metal~ + customizations.
 
-#+begin_src emacs-lisp :tangle no
-(load-theme 'base16-black-metal-bathory t) ;; ***
+#+begin_src emacs-lisp
+(load-theme 'base16-black-metal t) ;; ***
 #+end_src
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (custom-set-faces
  '(proof-queue-face ((t (:foreground "#eee"))))
  '(company-coq-comment-h1-face ((t (:size 1.5))))
@@ -1179,7 +1179,7 @@ Usage:
  '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
 #+end_src
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 )
 #+end_src
 
@@ -1197,7 +1197,7 @@ theme.
 
 See the [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][screenshots]].
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package doom-themes
  :init
  (setq
@@ -1211,7 +1211,7 @@ See the [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][screen
  (doom-themes-neotree-config)
  ;; Corrects (and improves) org-mode's native fontification
  (doom-themes-org-config)
- (load-theme 'doom-moonlight)
+ (load-theme 'doom-dracula)
 )
 #+end_src
 
@@ -4054,7 +4054,9 @@ Step through historic versions of git controlled file.
 
 *** Gist
 
-#+begin_src emacs-lisp
+Broken
+
+#+begin_src emacs-lisp :tangle no
 (use-package gist
  :after general
  :config
@@ -4243,6 +4245,7 @@ Simple file templates for Emacs with =YASnippet=.
                     (org-level-8 . 1.0)))
       (set-face-attribute (car face) nil :font "JetBrains Mono" :weight 'regular :height (cdr face))))
   :mode ("\\.org\\'" . org-mode)
+  :hook (org-mode . my/org/setup)
   :commands
   (org-babel-do-load-languages)
   :init
@@ -4552,9 +4555,9 @@ See [[https://github.com/Somelauw/evil-org-mode#keybindings][the repo]] for keyb
  :hook
  (org-mode . my/evil-org/setup)
  :config
- (add-to-list 'evil-digit-bound-motions 'evil-org-beginning-of-line)
- (evil-define-key 'motion 'evil-org-mode
-   (kbd "0") 'evil-org-beginning-of-line)
+ ;; (add-to-list 'evil-digit-bound-motions 'evil-org-beginning-of-line)
+ ;; (evil-define-key 'motion 'evil-org-mode
+ ;;   (kbd "0") 'evil-org-beginning-of-line)
  (require 'evil-org-agenda)
  :diminish evil-org-mode)
 #+end_src
@@ -5633,7 +5636,7 @@ Currently disabled, too.
 
 Interface to the Stack Haskell development tool.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package hasky-stack
  :after (general haskell-mode)
  :config
@@ -5647,9 +5650,9 @@ Interface to the Stack Haskell development tool.
 
 Toggle Haskell language extensions from Emacs.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package hasky-extensions
- :after (general haskell-mode)
+ :after (general haskell-mode hasky-stack)
  :config
  (nmap 'haskell-mode-map
    :prefix my/leader
@@ -6891,8 +6894,6 @@ Display current path for HTML/XML/CSS.
   (go-mode . go-eldoc-setup))
 
 (use-package go-gopath)
-
-(use-package go-direx)
 
 (use-package gotest)
 
@@ -8139,8 +8140,12 @@ Provides [[https://direnv.net/][=direnv=]] integration for Emacs.
    "http://pretty-rfc.herokuapp.com/search?q=%s")
  (defengine stack-overflow
    "https://stackoverflow.com/search?q=%s"
-   :keybinding "s"
+   :keybinding "S"
    :docstring "Search Stack Overlow")
+ (defengine substrate
+   "https://paritytech.github.io/substrate/master/sc_service/index.html?search=%s"
+   :keybinding "s"
+   :docstring "Search Substrate")
  (defengine google-translate
    "https://translate.google.com/#view=home&op=translate&sl=en&tl=ru&text=%s"
    :keybinding "t")
@@ -8239,93 +8244,6 @@ I use =engine-mode= instead.
     (outline-minor-mode "outl" outline)
     ;; (hi-lock-mode "hi" hi-lock)
     (subword-mode "sw" subword))))
-#+end_src
-
-*** Engine mode
-
-#+begin_src emacs-lisp
-(use-package engine-mode
- :config
- (engine-mode t)
- (engine/set-keymap-prefix (kbd "C-SPC C-SPC"))
- (defengine amazon
-   "http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=%s")
- (defengine duckduckgo
-   "https://duckduckgo.com/?q=%s"
-   :keybinding "d")
- (defengine github
-   "https://github.com/search?q=%s&type=Code"
-   :keybinding "G")
- (defengine google
-   "http://www.google.com/search?ie=utf-8&oe=utf-8&q=%s"
-   :keybinding "g")
- (defengine google-images
-   "http://www.google.com/images?hl=en&source=hp&biw=1440&bih=795&gbv=2&aq=f&aqi=&aql=&oq=&q=%s"
-   :keybinding "i")
- (defengine google-maps
-   "http://maps.google.com/maps?q=%s"
-   :docstring "Mappin' it up."
-   :keybinding "M")
- (defengine melpa
-   "https://melpa.org/#/?q=%s"
-   :docstring "Searching on melpa"
-    :keybinding "m")
- (defengine project-gutenberg
-   "http://www.gutenberg.org/ebooks/search/?query=%s")
- (defengine rfcs
-   "http://pretty-rfc.herokuapp.com/search?q=%s")
- (defengine stack-overflow
-   "https://stackoverflow.com/search?q=%s"
-   :keybinding "s"
-   :docstring "Search Stack Overlow")
- (defengine google-translate
-   "https://translate.google.com/#view=home&op=translate&sl=en&tl=ru&text=%s"
-   :keybinding "t")
- (defengine twitter
-   "https://twitter.com/search?q=%s"
-   :keybinding "T")
- (defengine wikipedia
-   "http://www.wikipedia.org/search-redirect.php?language=en&go=Go&search=%s"
-   :keybinding "w"
-   :docstring "Searchin' the wikis.")
- (defengine pursuit
-   "https://pursuit.purescript.org/search?q=%s"
-   :keybinding "p")
- (defengine hoogle
-   "https://www.haskell.org/hoogle/?hoogle=%s"
-   :keybinding "h")
- (defengine hackage
-   "https://hackage.haskell.org/packages/search?terms=%s"
-   :keybinding "H")
- (defengine hayoo
-   "http://hayoo.fh-wedel.de/?query=%s")
- (defengine wiktionary
-   "https://www.wikipedia.org/search-redirect.php?family=wiktionary&language=en&go=Go&search=%s")
- (defengine wolfram-alpha
-   "http://www.wolframalpha.com/input/?i=%s")
- (defengine urban-dictionary
-   "https://www.urbandictionary.com/define.php?term=%s"
-   :keybinding "u")
- (defengine youtube
-   "http://www.youtube.com/results?aq=f&oq=&search_query=%s"
-   :keybinding "y"))
-#+end_src
-
-*** Counsel web
-
-#+begin_src emacs-lisp
-(use-package counsel-web
- :after (general)
- :quelpa
- (counsel-web :fetcher github :repo "mnewt/counsel-web")
- :custom
- (counsel-web-search-action 'browse-url)
- (counsel-web-suggest-function 'counsel-web-suggest--google)
- (counsel-web-search-function 'counsel-web-search--google)
- :config
- (nmap
-  :prefix my/leader
-  "S" 'counsel-web-suggest))
 #+end_src
 
 *** Google this

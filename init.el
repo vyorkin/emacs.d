@@ -457,20 +457,28 @@
 
 (add-hook 'text-mode-hook 'turn-on-auto-fill)
 
-(use-package doom-themes
- :init
- (setq
-  doom-themes-enable-bold nil
-  doom-themes-enable-italic nil)
- :config
- (load-theme 'doom-dracula t)
- (load-theme 'doom-challenger-deep t)
- ;; Enable flashing mode-line on errors
- (doom-themes-visual-bell-config)
- (doom-themes-neotree-config)
- ;; Corrects (and improves) org-mode's native fontification
- (doom-themes-org-config)
- (load-theme 'doom-moonlight)
+(use-package base16-theme
+  :config
+  ;; (load-theme 'base16-default-dark t)
+  ;; (load-theme 'base16-grayscale-dark t)
+  ;; (load-theme 'base16-grayscale-light t)
+  ;; (load-theme 'base16-gruvbox-light-hard t)
+  ;; (load-theme 'base16-material-palenight t) ;; ****
+  ;; (load-theme 'base16-rebecca t)
+  ;; (load-theme 'base16-pop t)
+  ;; (load-theme 'base16-tomorrow-night t)
+  ;; (load-theme 'base16-twilight t)
+  ;; (load-theme 'base16-irblack t)
+
+(load-theme 'base16-black-metal t) ;; ***
+
+(custom-set-faces
+ '(proof-queue-face ((t (:foreground "#eee"))))
+ '(company-coq-comment-h1-face ((t (:size 1.5))))
+ '(font-lock-comment-face ((t (:foreground "#999"))))
+ '(proof-locked-face ((t (:background "#151515"))))
+ '(proof-mouse-highlight-face  ((t (:background "#555" :foreground "#fff")))))
+
 )
 
 (use-package kurecolor)
@@ -535,26 +543,26 @@
 (nmap
   :prefix my/leader
 
-  "v" 'split-window-horizontally
-  "s" 'split-window-vertically
+"v" 'split-window-horizontally
+"s" 'split-window-vertically
 
-  "@" 'xref-find-definitions
-  "#" 'xref-find-references
+"@" 'xref-find-definitions
+"#" 'xref-find-references
 
-  "E e" 'eval-expression
-  "E l" 'eval-last-sexp
+"E e" 'eval-expression
+"E l" 'eval-last-sexp
 
-  "h k" 'describe-key-briefly
-  "h K" 'describe-key
-  "h M" 'describe-mode
-  "h m" 'info-display-manual)
+"h k" 'describe-key-briefly
+"h K" 'describe-key
+"h M" 'describe-mode
+"h m" 'info-display-manual)
 
-  "P s" 'profiler-start
-  "P S" 'profiler-stop
-  "P r" 'profiler-report
+"P s" 'profiler-start
+"P S" 'profiler-stop
+"P r" 'profiler-report
 
-  "p" 'list-processes
-  "\\" 'widen
+"p" 'list-processes
+"\\" 'widen
 
 )
 
@@ -898,138 +906,138 @@
    "t b" 'beacon-mode)
  :diminish beacon-mode)
 
-  (use-package evil
-   :preface
-   (defvar my/evil/esc-hook '(t)
-     "A hook run after ESC is pressed in normal mode
-     (invoked by `evil-force-normal-state').
-     If a hook returns non-nil, all hooks after it are ignored.")
-   (defun my/evil/attach-esc-hook ()
-     "Run all escape hooks, if any returns non-nil, then stop there"
-     (run-hook-with-args-until-success 'my/evil/esc-hook))
-   :init
-   (setq
-    ;; Undo system Evil should use. If equal to ‘undo-tree’ or
-    ;; ‘undo-fu’, those packages must be installed. If equal to
-    ;; ‘undo-tree’, ‘undo-tree-mode’ must also be activated. If
-    ;; equal to ‘undo-redo’, Evil uses commands natively available
-    ;; in Emacs 28
-    evil-undo-system 'undo-redo
-    ;; evil-collection assumes evil-want-keybinding is set to nil
-    ;; and evil-want-integration is set to t before loading evil
-    ;; and evil-collection
-    evil-want-keybinding nil
-    evil-want-integration t
-    ;; Restore missing C-u in evil so it scrolls up (like in Vim).
-    ;; Otherwise C-u applies a prefix argument.
-    evil-want-C-u-scroll t
-    ;; C-w deletes a word in Insert state.
-    evil-want-C-w-delete t
-    ;; All changes made during insert state, including a possible
-    ;; delete after a change operation, are collected in a single
-    ;; undo step
-    evil-want-fine-undo "no"
-    ;; Inclusive visual character selection which ends at the
-    ;; beginning or end of a line is turned into an exclusive
-    ;; selection. Thus if the selected (inclusive) range ends at
-    ;; the beginning of a line it is changed to not include the
-    ;; first character of that line, and if the selected range
-    ;; ends at the end of a line it is changed to not include the
-    ;; newline character of that line
-    evil-want-visual-char-semi-exclusive t
-    ;; ‘Y’ yanks to the end of the line
-    evil-want-Y-yank-to-eol t
-    ;; Meaning which characters in a pattern are magic.
-    ;; The meaning of those values is the same as in Vim
-    evil-magic t
-    ;; If non-nil abbrevs will be expanded when leaving insert
-    ;; state like in Vim, if ‘abbrev-mode’ is on
-    evil-want-abbrev-expand-on-insert-exit nil
-    ;; Signal the current state in the echo area
-    evil-echo-state t
-    ;; The = operator converts between leading tabs and spaces.
-    ;; Whether tabs are converted to spaces or vice versa depends
-    ;; on the value of ‘indent-tabs-mode’
-    evil-indent-convert-tabs t
-    ;; Vim-style backslash codes are supported in search patterns
-    evil-ex-search-vim-style-regexp t
-    ;; Substitute patterns are global by default
-    evil-ex-substitute-global t
-    ;; Column range for ex commands
-    evil-ex-visual-char-range t
-    ;; Use evil interactive search module instead of isearch
-    evil-search-module 'evil-search
-    ;; If nil then * and # search for words otherwise for symbols
-    evil-symbol-word-search t
-    ;; Don't use emacs mode for ibuffer
-    ;; evil-emacs-state-modes (delq 'ibuffer-mode evil-emacs-state-modes)
-    ;; Cursors
-    evil-default-cursor (face-background 'cursor nil t)
-    evil-normal-state-cursor 'box
-    evil-emacs-state-cursor `(,(face-foreground 'warning) box)
-    evil-insert-state-cursor 'bar
-    evil-visual-state-cursor 'box)
-   :config
-   ;; Enable evil-mode globally,
-   ;; good for ex-vimmers like me
-   (evil-mode t)
-   ;; Special
-   (evil-make-overriding-map special-mode-map 'normal)
-   ;; Compilation
-   (evil-set-initial-state 'compilation-mode 'normal)
-   ;; Occur
-   (evil-make-overriding-map occur-mode-map 'normal)
-   (evil-set-initial-state 'occur-mode 'normal)
-   (advice-add 'evil-force-normal-state :after 'my/evil/attach-esc-hook)
-   ;; Unbind  evil-paste-pop and evil-paste-pop-next
-   ;; which breaks evil-mc
-   (with-eval-after-load 'evil-maps
-     (define-key evil-normal-state-map (kbd "C-n") nil)
-     (define-key evil-normal-state-map (kbd "C-p") nil)))
+(use-package evil
+ :preface
+ (defvar my/evil/esc-hook '(t)
+   "A hook run after ESC is pressed in normal mode
+   (invoked by `evil-force-normal-state').
+   If a hook returns non-nil, all hooks after it are ignored.")
+ (defun my/evil/attach-esc-hook ()
+   "Run all escape hooks, if any returns non-nil, then stop there"
+   (run-hook-with-args-until-success 'my/evil/esc-hook))
+ :init
+ (setq
+  ;; Undo system Evil should use. If equal to ‘undo-tree’ or
+  ;; ‘undo-fu’, those packages must be installed. If equal to
+  ;; ‘undo-tree’, ‘undo-tree-mode’ must also be activated. If
+  ;; equal to ‘undo-redo’, Evil uses commands natively available
+  ;; in Emacs 28
+  evil-undo-system 'undo-redo
+  ;; evil-collection assumes evil-want-keybinding is set to nil
+  ;; and evil-want-integration is set to t before loading evil
+  ;; and evil-collection
+  evil-want-keybinding nil
+  evil-want-integration t
+  ;; Restore missing C-u in evil so it scrolls up (like in Vim).
+  ;; Otherwise C-u applies a prefix argument.
+  evil-want-C-u-scroll t
+  ;; C-w deletes a word in Insert state.
+  evil-want-C-w-delete t
+  ;; All changes made during insert state, including a possible
+  ;; delete after a change operation, are collected in a single
+  ;; undo step
+  evil-want-fine-undo "no"
+  ;; Inclusive visual character selection which ends at the
+  ;; beginning or end of a line is turned into an exclusive
+  ;; selection. Thus if the selected (inclusive) range ends at
+  ;; the beginning of a line it is changed to not include the
+  ;; first character of that line, and if the selected range
+  ;; ends at the end of a line it is changed to not include the
+  ;; newline character of that line
+  evil-want-visual-char-semi-exclusive t
+  ;; ‘Y’ yanks to the end of the line
+  evil-want-Y-yank-to-eol t
+  ;; Meaning which characters in a pattern are magic.
+  ;; The meaning of those values is the same as in Vim
+  evil-magic t
+  ;; If non-nil abbrevs will be expanded when leaving insert
+  ;; state like in Vim, if ‘abbrev-mode’ is on
+  evil-want-abbrev-expand-on-insert-exit nil
+  ;; Signal the current state in the echo area
+  evil-echo-state t
+  ;; The = operator converts between leading tabs and spaces.
+  ;; Whether tabs are converted to spaces or vice versa depends
+  ;; on the value of ‘indent-tabs-mode’
+  evil-indent-convert-tabs t
+  ;; Vim-style backslash codes are supported in search patterns
+  evil-ex-search-vim-style-regexp t
+  ;; Substitute patterns are global by default
+  evil-ex-substitute-global t
+  ;; Column range for ex commands
+  evil-ex-visual-char-range t
+  ;; Use evil interactive search module instead of isearch
+  evil-search-module 'evil-search
+  ;; If nil then * and # search for words otherwise for symbols
+  evil-symbol-word-search t
+  ;; Don't use emacs mode for ibuffer
+  ;; evil-emacs-state-modes (delq 'ibuffer-mode evil-emacs-state-modes)
+  ;; Cursors
+  evil-default-cursor (face-background 'cursor nil t)
+  evil-normal-state-cursor 'box
+  evil-emacs-state-cursor `(,(face-foreground 'warning) box)
+  evil-insert-state-cursor 'bar
+  evil-visual-state-cursor 'box)
+ :config
+ ;; Enable evil-mode globally,
+ ;; good for ex-vimmers like me
+ (evil-mode t)
+ ;; Special
+ (evil-make-overriding-map special-mode-map 'normal)
+ ;; Compilation
+ (evil-set-initial-state 'compilation-mode 'normal)
+ ;; Occur
+ (evil-make-overriding-map occur-mode-map 'normal)
+ (evil-set-initial-state 'occur-mode 'normal)
+ (advice-add 'evil-force-normal-state :after 'my/evil/attach-esc-hook)
+ ;; Unbind  evil-paste-pop and evil-paste-pop-next
+ ;; which breaks evil-mc
+ (with-eval-after-load 'evil-maps
+   (define-key evil-normal-state-map (kbd "C-n") nil)
+   (define-key evil-normal-state-map (kbd "C-p") nil)))
 
-  (use-package evil-collection
-    :init
-    (setq
-     ;; If you don't need everything - uncomment and add everything you want
-     ;; evil-collection-mode-list '()
+(use-package evil-collection
+  :init
+  (setq
+   ;; If you don't need everything - uncomment and add everything you want
+   ;; evil-collection-mode-list '()
 
-     ;; Don't enable vim key bindings in minibuffer
-     ;; its a default setting, just want it to be explicitly stated here
-     evil-collection-setup-minibuffer nil)
-    :config
-    (evil-collection-init)
-    (nmap
-      "C-M-l" 'evil-window-increase-width
-      "C-M-h" 'evil-window-decrease-width
-      "C-M-k" 'evil-window-increase-height
-      "C-M-j" 'evil-window-decrease-height))
+   ;; Don't enable vim key bindings in minibuffer
+   ;; its a default setting, just want it to be explicitly stated here
+   evil-collection-setup-minibuffer nil)
+  :config
+  (evil-collection-init)
+  (nmap
+    "C-M-l" 'evil-window-increase-width
+    "C-M-h" 'evil-window-decrease-width
+    "C-M-k" 'evil-window-increase-height
+    "C-M-j" 'evil-window-decrease-height))
 
-  (use-package evil-mc
-   :after (general evil)
-   :demand t
-   :commands
-   ;; Enable evil-mc mode for all buffers
-   (global-evil-mc-mode)
-   :preface
-   (defun my/evil-mc/esc ()
-     "Clear evil-mc cursors and restore state."
-     (when (evil-mc-has-cursors-p)
-       (evil-mc-undo-all-cursors)
-       (evil-mc-resume-cursors)
-       t))
-   :config
-   (global-evil-mc-mode 1)
-   (add-hook 'my/evil/esc-hook 'my/evil-mc/esc)
+(use-package evil-mc
+ :after (general evil)
+ :demand t
+ :commands
+ ;; Enable evil-mc mode for all buffers
+ (global-evil-mc-mode)
+ :preface
+ (defun my/evil-mc/esc ()
+   "Clear evil-mc cursors and restore state."
+   (when (evil-mc-has-cursors-p)
+     (evil-mc-undo-all-cursors)
+     (evil-mc-resume-cursors)
+     t))
+ :config
+ (global-evil-mc-mode 1)
+ (add-hook 'my/evil/esc-hook 'my/evil-mc/esc)
+ (mmap
+   "C-n" 'evil-mc-make-and-goto-next-match)
+ (when (eq system-type 'darwin)
+   ;; Unbind isearch commands
+   (unbind-key "s-d")
+   (unbind-key "s-g")
    (mmap
-     "C-n" 'evil-mc-make-and-goto-next-match)
-   (when (eq system-type 'darwin)
-     ;; Unbind isearch commands
-     (unbind-key "s-d")
-     (unbind-key "s-g")
-     (mmap
-       "s-d" 'evil-mc-make-and-goto-next-match
-       "s-D" 'evil-mc-make-all-cursors))
-   :diminish evil-mc-mode)
+     "s-d" 'evil-mc-make-and-goto-next-match
+     "s-D" 'evil-mc-make-all-cursors))
+ :diminish evil-mc-mode)
 
 (use-package evil-matchit
  :after evil
@@ -1988,26 +1996,15 @@
 
 (use-package git-modes)
 
-(use-package gist
- :after general
- :config
- (nmap
-   :prefix my/leader
-   "G l" 'gist-list
-   "G b" 'gist-buffer
-   "G B" 'gist-buffer-private
-   "G r" 'gist-region
-   "G R" 'gist-region-private))
-
 (setenv "LESS" "--dumb --prompt=s")
 (setenv "PAGER" "")
 
-  (use-package eshell
-    :ensure nil
-    ;; :config
-    ;; (unbind-key "C-j" eshell-mode-map)
-    ;; (unbind-key "C-k" eshell-mode-map)
-  )
+(use-package eshell
+  :ensure nil
+  ;; :config
+  ;; (unbind-key "C-j" eshell-mode-map)
+  ;; (unbind-key "C-k" eshell-mode-map)
+)
 
 (use-package esh-help
  :commands
@@ -2103,6 +2100,7 @@
                     (org-level-8 . 1.0)))
       (set-face-attribute (car face) nil :font "JetBrains Mono" :weight 'regular :height (cdr face))))
   :mode ("\\.org\\'" . org-mode)
+  :hook (org-mode . my/org/setup)
   :commands
   (org-babel-do-load-languages)
   :init
@@ -2160,14 +2158,14 @@
    ("n" "note" entry (file "notes.org") "* %^{heading} %t %^g\n  %?\n")
    ("j" "journal" entry (file "journal.org") "* %U - %^{heading}\n  %?")))
 
-  (defun org-mode-export-links ()
-    "Export links document to HTML automatically when 'links.org' is changed"
-    (when (equal (buffer-file-name) "~/Dropbox/org/links.org")
-      (progn
-        (org-html-export-to-html)
-        (alert "HTML exported" :severity 'trivial :title "ORG"))))
+(defun org-mode-export-links ()
+  "Export links document to HTML automatically when 'links.org' is changed"
+  (when (equal (buffer-file-name) "~/Dropbox/org/links.org")
+    (progn
+      (org-html-export-to-html)
+      (alert "HTML exported" :severity 'trivial :title "ORG"))))
 
-  (add-hook 'after-save-hook 'org-mode-export-links)
+(add-hook 'after-save-hook 'org-mode-export-links)
 
 (setq
  org-highest-priority ?A
@@ -2258,9 +2256,9 @@
  :hook
  (org-mode . my/evil-org/setup)
  :config
- (add-to-list 'evil-digit-bound-motions 'evil-org-beginning-of-line)
- (evil-define-key 'motion 'evil-org-mode
-   (kbd "0") 'evil-org-beginning-of-line)
+ ;; (add-to-list 'evil-digit-bound-motions 'evil-org-beginning-of-line)
+ ;; (evil-define-key 'motion 'evil-org-mode
+ ;;   (kbd "0") 'evil-org-beginning-of-line)
  (require 'evil-org-agenda)
  :diminish evil-org-mode)
 
@@ -2271,10 +2269,10 @@
  :hook
  (org-mode . org-superstar-mode))
 
-    (use-package org-sticky-header
-    :after (org)
-    :hook
-    (org-mode . org-sticky-header-mode))
+(use-package org-sticky-header
+:after (org)
+:hook
+(org-mode . org-sticky-header-mode))
 
 (use-package org-cliplink
   :config
@@ -2871,22 +2869,6 @@
  :config
  (add-to-list 'company-backends 'company-cabal))
 
-(use-package hasky-stack
- :after (general haskell-mode)
- :config
- (nmap 'haskell-mode-map
-   :prefix my/leader
-   "h s" 'hasky-stack-execute
-   "h n" 'hasky-stack-new))
-
-(use-package hasky-extensions
- :after (general haskell-mode)
- :config
- (nmap 'haskell-mode-map
-   :prefix my/leader
-   "h e" 'hasky-extensions
-   "h d" 'hasky-extensions-browse-docs))
-
 (use-package purescript-mode
  :after (general files)
  :if (executable-find "purs")
@@ -3310,15 +3292,15 @@
  (dhall-format-at-save t)
  :mode "\\.dhall\\'")
 
- (use-package terraform-mode
-  :hook (terraform-mode . terraform-format-on-save-mode))
+(use-package terraform-mode
+ :hook (terraform-mode . terraform-format-on-save-mode))
 
- (use-package company-terraform
-  :after (terraform company)
-  :commands
-  (company-terraform-init)
-  :config
-  (company-terraform-init))
+(use-package company-terraform
+ :after (terraform company)
+ :commands
+ (company-terraform-init)
+ :config
+ (company-terraform-init))
 
 (use-package format-sql
  :after (general)
@@ -3586,8 +3568,6 @@
   (go-mode . go-eldoc-setup))
 
 (use-package go-gopath)
-
-(use-package go-direx)
 
 (use-package gotest)
 
@@ -4405,8 +4385,12 @@ _G_: github         _p_: pursuit           _d_: duckduckgo
    "http://pretty-rfc.herokuapp.com/search?q=%s")
  (defengine stack-overflow
    "https://stackoverflow.com/search?q=%s"
-   :keybinding "s"
+   :keybinding "S"
    :docstring "Search Stack Overlow")
+ (defengine substrate
+   "https://paritytech.github.io/substrate/master/sc_service/index.html?search=%s"
+   :keybinding "s"
+   :docstring "Search Substrate")
  (defengine google-translate
    "https://translate.google.com/#view=home&op=translate&sl=en&tl=ru&text=%s"
    :keybinding "t")
@@ -4452,16 +4436,16 @@ _G_: github         _p_: pursuit           _d_: duckduckgo
   :prefix my/leader
   "S" 'counsel-web-suggest))
 
- (use-package sx
-  :config
-  (nmap
-    :prefix my/leader
-    "' q" 'sx-tab-all-questions
-    "' i" 'sx-inbox
-    "' o" 'sx-open-link
-    "' u" 'sx-tab-unanswered-my-tags
-    "' a" 'sx-ask
-    "' s" 'sx-search))
+(use-package sx
+ :config
+ (nmap
+   :prefix my/leader
+   "' q" 'sx-tab-all-questions
+   "' i" 'sx-inbox
+   "' o" 'sx-open-link
+   "' u" 'sx-tab-unanswered-my-tags
+   "' a" 'sx-ask
+   "' s" 'sx-search))
 
 (use-package delight
  :config
@@ -4480,95 +4464,16 @@ _G_: github         _p_: pursuit           _d_: duckduckgo
     ;; (hi-lock-mode "hi" hi-lock)
     (subword-mode "sw" subword))))
 
-(use-package engine-mode
- :config
- (engine-mode t)
- (engine/set-keymap-prefix (kbd "C-SPC C-SPC"))
- (defengine amazon
-   "http://www.amazon.com/s/ref=nb_sb_noss?url=search-alias%3Daps&field-keywords=%s")
- (defengine duckduckgo
-   "https://duckduckgo.com/?q=%s"
-   :keybinding "d")
- (defengine github
-   "https://github.com/search?q=%s&type=Code"
-   :keybinding "G")
- (defengine google
-   "http://www.google.com/search?ie=utf-8&oe=utf-8&q=%s"
-   :keybinding "g")
- (defengine google-images
-   "http://www.google.com/images?hl=en&source=hp&biw=1440&bih=795&gbv=2&aq=f&aqi=&aql=&oq=&q=%s"
-   :keybinding "i")
- (defengine google-maps
-   "http://maps.google.com/maps?q=%s"
-   :docstring "Mappin' it up."
-   :keybinding "M")
- (defengine melpa
-   "https://melpa.org/#/?q=%s"
-   :docstring "Searching on melpa"
-    :keybinding "m")
- (defengine project-gutenberg
-   "http://www.gutenberg.org/ebooks/search/?query=%s")
- (defengine rfcs
-   "http://pretty-rfc.herokuapp.com/search?q=%s")
- (defengine stack-overflow
-   "https://stackoverflow.com/search?q=%s"
-   :keybinding "s"
-   :docstring "Search Stack Overlow")
- (defengine google-translate
-   "https://translate.google.com/#view=home&op=translate&sl=en&tl=ru&text=%s"
-   :keybinding "t")
- (defengine twitter
-   "https://twitter.com/search?q=%s"
-   :keybinding "T")
- (defengine wikipedia
-   "http://www.wikipedia.org/search-redirect.php?language=en&go=Go&search=%s"
-   :keybinding "w"
-   :docstring "Searchin' the wikis.")
- (defengine pursuit
-   "https://pursuit.purescript.org/search?q=%s"
-   :keybinding "p")
- (defengine hoogle
-   "https://www.haskell.org/hoogle/?hoogle=%s"
-   :keybinding "h")
- (defengine hackage
-   "https://hackage.haskell.org/packages/search?terms=%s"
-   :keybinding "H")
- (defengine hayoo
-   "http://hayoo.fh-wedel.de/?query=%s")
- (defengine wiktionary
-   "https://www.wikipedia.org/search-redirect.php?family=wiktionary&language=en&go=Go&search=%s")
- (defengine wolfram-alpha
-   "http://www.wolframalpha.com/input/?i=%s")
- (defengine urban-dictionary
-   "https://www.urbandictionary.com/define.php?term=%s"
-   :keybinding "u")
- (defengine youtube
-   "http://www.youtube.com/results?aq=f&oq=&search_query=%s"
-   :keybinding "y"))
-
-(use-package counsel-web
- :after (general)
- :quelpa
- (counsel-web :fetcher github :repo "mnewt/counsel-web")
- :custom
- (counsel-web-search-action 'browse-url)
- (counsel-web-suggest-function 'counsel-web-suggest--google)
- (counsel-web-search-function 'counsel-web-search--google)
+(use-package sx
  :config
  (nmap
-  :prefix my/leader
-  "S" 'counsel-web-suggest))
-
- (use-package sx
-  :config
-  (nmap
-    :prefix my/leader
-    "' q" 'sx-tab-all-questions
-    "' i" 'sx-inbox
-    "' o" 'sx-open-link
-    "' u" 'sx-tab-unanswered-my-tags
-    "' a" 'sx-ask
-    "' s" 'sx-search))
+   :prefix my/leader
+   "' q" 'sx-tab-all-questions
+   "' i" 'sx-inbox
+   "' o" 'sx-open-link
+   "' u" 'sx-tab-unanswered-my-tags
+   "' a" 'sx-ask
+   "' s" 'sx-search))
 
 (use-package diminish
  :config
