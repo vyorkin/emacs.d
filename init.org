@@ -1211,7 +1211,7 @@ See the [[https://github.com/hlissner/emacs-doom-themes/tree/screenshots][screen
  (doom-themes-neotree-config)
  ;; Corrects (and improves) org-mode's native fontification
  (doom-themes-org-config)
- (load-theme 'doom-moonlight)
+ (load-theme 'doom-molokai)
 )
 #+end_src
 
@@ -2221,10 +2221,16 @@ Add emoji support. This is useful when working with =HTML=.
   :hook (after-init . simple-modeline-mode))
 #+end_src
 
-**** Telephone-line (disabled)
+**** Telephone-line (macos-only)
 
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package telephone-line
+  :if (eq system-type 'darwin)
+  :custom
+  (telephone-line-primary-left-separator 'telephone-line-flat)
+  (telephone-line-primary-right-separator 'telephone-line-flat)
+  (telephone-line-secondary-left-separator 'telephone-line-flat)
+  (telephone-line-secondary-right-separator 'telephone-line-flat)
   :init
   (setq
    telephone-line-lhs
@@ -2295,7 +2301,7 @@ Display information about the current indentation settings.
   (global-indent-info-mode 1))
 #+end_src
 
-**** Moody + minions
+**** Moody + minions (gnu/linux-only)
 
 Another option is =moody= + =minions= as an attractive
 minimalist mode line replacement.
@@ -2307,6 +2313,7 @@ default.
 
 #+begin_src emacs-lisp
 (use-package minions
+ :if (eq system-type 'gnu/linux)
  :config
  (setq minions-mode-line-lighter "[+]")
  (minions-mode 1))
@@ -2318,6 +2325,7 @@ built-in elements.
 
 #+begin_src emacs-lisp
 (use-package moody
+ :if (eq system-type 'gnu/linux)
  :config
  (moody-replace-mode-line-buffer-identification)
  (moody-replace-vc-mode)
@@ -4552,9 +4560,6 @@ See [[https://github.com/Somelauw/evil-org-mode#keybindings][the repo]] for keyb
  :hook
  (org-mode . my/evil-org/setup)
  :config
- (add-to-list 'evil-digit-bound-motions 'evil-org-beginning-of-line)
- (evil-define-key 'motion 'evil-org-mode
-   (kbd "0") 'evil-org-beginning-of-line)
  (require 'evil-org-agenda)
  :diminish evil-org-mode)
 #+end_src
@@ -4725,7 +4730,10 @@ Install =ox-hugo= and enable auto export.
      "blog post"
      entry
      (file "~/projects/personal/blog/content-org/posts.org")
-     (function my/org-hugo/new-subtree-post))))
+     (function my/org-hugo/new-subtree-post)))
+
+  (with-eval-after-load 'ox-hugo
+   (add-to-list 'org-hugo-special-block-raw-content-types '("mermaid" . (:raw t)))))
 #+end_src
 
 *** Slim HTML export (disabled)
@@ -5633,7 +5641,7 @@ Currently disabled, too.
 
 Interface to the Stack Haskell development tool.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package hasky-stack
  :after (general haskell-mode)
  :config
@@ -5647,7 +5655,7 @@ Interface to the Stack Haskell development tool.
 
 Toggle Haskell language extensions from Emacs.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package hasky-extensions
  :after (general haskell-mode)
  :config
