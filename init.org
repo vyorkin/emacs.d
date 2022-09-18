@@ -4163,6 +4163,15 @@ Command execution status indicator in the fringe.
 #+end_src
 
 ** SSH
+** Formatting
+*** Prettier
+
+#+begin_src emacs-lisp
+(use-package prettier
+:config
+(add-hook 'after-init-hook #'global-prettier-mode))
+#+end_src
+
 ** Snippets
 *** Yasnippet
 
@@ -4739,7 +4748,7 @@ Install =ox-hugo= and enable auto export.
      (function my/org-hugo/new-subtree-post)))
 
   (with-eval-after-load 'ox-hugo
-   (add-to-list 'org-hugo-special-block-raw-content-types '("mermaid" . (:raw t)))))
+   (add-to-list 'org-hugo-special-block-type-properties '("mermaid" . (:raw t)))))
 #+end_src
 
 *** Slim HTML export (disabled)
@@ -4801,32 +4810,46 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
 (use-package lsp-mode
   :after (general projectile)
   :commands (lsp)
-  :hook
-  (lsp-mode . lsp-lens-mode)
-  (lsp-mode . lsp-enable-which-key-integration)
-  (c-mode . lsp)
-  (c++-mode . lsp)
-  :init
+  :custom
   ;; Uncomment to inspect communication between client and the server
-  (setq lsp-print-io t)
-  (setq lsp-prefer-flymake nil)
+  (lsp-print-io t)
+  (lsp-prefer-flymake nil)
   (setq lsp-headerline-breadcrumb-enable t)
-  :config
   ;; Determines how often lsp-mode will refresh the highlights, lenses, links, etc while you type.
-  (setq lsp-idle-delay 0.500)
+  (lsp-idle-delay 0.5)
   ;; Make sure the logging is switched off
-  (setq lsp-log-io nil)
-  (setq lsp-completion-provider :capf)
+  (lsp-log-io nil)
+  (lsp-completion-provider :capf)
+
+  ;; Display all of the info returned by document/onHover.
+  (lsp-eldoc-render-all nil)
+
   ;; What to use when checking on-save: "check" is default, I prefer "clippy"
-  (setq lsp-rust-analyzer-cargo-watch-command "clippy")
-  (setq lsp-rust-analyzer-server-display-inlay-hints t)
-  (setq lsp-rust-analyzer-diagnostics-disabled ["unresolved-proc-macro"])
+  (lsp-rust-analyzer-cargo-watch-command "clippy")
+  (lsp-rust-analyzer-diagnostics-disabled ["unresolved-proc-macro"])
+
+  ;; enable / disable the hints as you prefer:
+  (lsp-rust-analyzer-server-display-inlay-hints nil)
+  (lsp-rust-analyzer-display-lifetime-elision-hints-enable "skip_trivial")
+  (lsp-rust-analyzer-display-chaining-hints t)
+  (lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil)
+  (lsp-rust-analyzer-display-closure-return-type-hints t)
+  (lsp-rust-analyzer-display-parameter-hints nil)
+  (lsp-rust-analyzer-display-reborrow-hints nil)
+  :config
   (dolist (dir '("vendor")) (push dir lsp-file-watch-ignored))
   (nmap
     :prefix my/leader
     "l r" 'lsp-restart-workspace
     "l f" 'lsp-format-buffer
+    "l l" 'lsp-execute-code-action
+    "l s" 'lsp-rust-analyzer-status
     "l d" 'lsp-describe-thing-at-point)
+  :hook
+  (lsp-mode . lsp-lens-mode)
+  (lsp-mode . lsp-enable-which-key-integration)
+  (c-mode . lsp)
+  (c++-mode . lsp)
   :delight "lsp")
 #+end_src
 
@@ -4854,7 +4877,7 @@ Setup [[https://github.com/emacs-lsp/lsp-mode][lsp-mode]].
    ;; Show hover messages in sideline
    lsp-ui-show-hover t
    ;; Show code actions in sideline
-   lsp-ui-show-code-actions nil
+   lsp-ui-show-code-actions t
    lsp-enable-completion-at-point t
    lsp-ui-doc-position 'at-point
    lsp-ui-doc-header nil
@@ -6391,6 +6414,7 @@ Rust development environment for Emacs.
 
 #+begin_src emacs-lisp
 (use-package rustic
+ :after (lsp-mode)
  :preface
  (defun my/rustic/setup ()
   ;; So that run C-c C-c C-r works without having to confirm,
@@ -6398,14 +6422,21 @@ Rust development environment for Emacs.
   ;; Once https://github.com/brotzeit/rustic/issues/253 has been
   ;; resolved this should no longer be necessary
   (when buffer-file-name
-    (setq-local buffer-save-without-query t)))
- :config
- (setq rustic-format-on-save t)
- (nmap 'rustic-mode-map
+    (setq-local buffer-save-without-query t))
+  (setq lsp-ui-sideline-enable nil))
+  :config
+  (setq rustic-format-on-save t)
+
+  ;; uncomment for less flashiness
+  ;; (setq lsp-eldoc-hook nil)
+  ;; (setq lsp-enable-symbol-highlighting nil)
+  ;; (setq lsp-signature-auto-activate nil)
+
+  (nmap 'rustic-mode-map
    "C-c R" 'rustic-cargo-fmt
    "C-c r" 'rustic-format-buffer)
- :hook
- (rustic-mode . my/rustic/setup))
+  :hook
+  (rustic-mode . my/rustic/setup))
 #+end_src
 
 **** rust-mode (disabled)
@@ -7154,7 +7185,9 @@ Highlight C-style preprocessor directives in Emacs.
 A simple language mode for the Solidity language.
 
 #+begin_src emacs-lisp
-(use-package solidity-mode)
+(use-package solidity-mode
+ :custom
+ (solidity-comment-style 'slash))
 
 (use-package solidity-flycheck
  :custom
@@ -7206,9 +7239,10 @@ Conflicts with =happy-mode=, so make sure to manually enable the
 
 *** Latex
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package tex
  :demand t
+ ; Issues with aucstex in MacOs
  :ensure auctex
  :config
  (setq-default TeX-engine 'luatex)
@@ -7437,15 +7471,15 @@ Use the Debug Adapter Protocol for running tests and debugging.
 
 #+begin_src emacs-lisp
 (use-package dap-mode
-  :hook
-  (lsp-mode . dap-mode)
-  (lsp-mode . dap-ui-mode)
   :config
   (require 'dap-cpptools)
   (dap-mode 1)
   (dap-ui-mode 1)
   (add-hook 'dap-stopped-hook
-    (lambda (arg) (call-interactively #'dap-hydra))))
+    (lambda (arg) (call-interactively #'dap-hydra)))
+  :hook
+  (lsp-mode . dap-mode)
+  (lsp-mode . dap-ui-mode))
 #+end_src
 
 ** GDB
@@ -7933,6 +7967,7 @@ _G_: github         _p_: pursuit           _d_: duckduckgo
   ("h" engine/search-hoogle)
   ("H" engine/search-hackage)
   ("p" engine/search-pursuit)
+  ("r" engine/search-rust-docs)
   ("s" engine/search-substrate)
   ("m" engine/search-melpa)
   ("T" engine/search-twitter)
@@ -8157,6 +8192,10 @@ Provides [[https://direnv.net/][=direnv=]] integration for Emacs.
    "https://paritytech.github.io/substrate/master/sc_service/index.html?search=%s"
    :keybinding "s"
    :docstring "Search Substrate")
+ (defengine rust-docs
+   "https://doc.rust-lang.org/nightly/core/index.html?search=%s"
+   :keybinding "r"
+   :docstring "Search Rust docs")
  (defengine google-translate
    "https://translate.google.com/#view=home&op=translate&sl=en&tl=ru&text=%s"
    :keybinding "t")

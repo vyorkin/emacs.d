@@ -543,26 +543,26 @@
 (nmap
   :prefix my/leader
 
-"v" 'split-window-horizontally
-"s" 'split-window-vertically
+  "v" 'split-window-horizontally
+  "s" 'split-window-vertically
 
-"@" 'xref-find-definitions
-"#" 'xref-find-references
+  "@" 'xref-find-definitions
+  "#" 'xref-find-references
 
-"E e" 'eval-expression
-"E l" 'eval-last-sexp
+  "E e" 'eval-expression
+  "E l" 'eval-last-sexp
 
-"h k" 'describe-key-briefly
-"h K" 'describe-key
-"h M" 'describe-mode
-"h m" 'info-display-manual)
+  "h k" 'describe-key-briefly
+  "h K" 'describe-key
+  "h M" 'describe-mode
+  "h m" 'info-display-manual)
 
-"P s" 'profiler-start
-"P S" 'profiler-stop
-"P r" 'profiler-report
+  "P s" 'profiler-start
+  "P S" 'profiler-stop
+  "P r" 'profiler-report
 
-"p" 'list-processes
-"\\" 'widen
+  "p" 'list-processes
+  "\\" 'widen
 
 )
 
@@ -869,12 +869,38 @@
                        :face all-the-icons-blue-alt)
      (telega-root-mode all-the-icons-material "contacts" :v-adjust 0.0))))
 
+(use-package telephone-line
+  :if (eq system-type 'darwin)
+  :custom
+  (telephone-line-primary-left-separator 'telephone-line-flat)
+  (telephone-line-primary-right-separator 'telephone-line-flat)
+  (telephone-line-secondary-left-separator 'telephone-line-flat)
+  (telephone-line-secondary-right-separator 'telephone-line-flat)
+  :init
+  (setq
+   telephone-line-lhs
+   '((evil . (telephone-line-evil-tag-segment))
+     (accent . (telephone-line-vc-segment
+                telephone-line-erc-modified-channels-segment
+                telephone-line-process-segment))
+     (nil . (telephone-line-minor-mode-segment
+             telephone-line-buffer-segment))))
+  (setq
+   telephone-line-rhs
+   '((nil . (telephone-line-misc-info-segment))
+     (accent . (telephone-line-major-mode-segment))
+     (evil . (telephone-line-airline-position-segment))))
+  :config
+  :hook (after-init . telephone-line-mode))
+
 (use-package minions
+ :if (eq system-type 'gnu/linux)
  :config
  (setq minions-mode-line-lighter "[+]")
  (minions-mode 1))
 
 (use-package moody
+ :if (eq system-type 'gnu/linux)
  :config
  (moody-replace-mode-line-buffer-identification)
  (moody-replace-vc-mode)
@@ -906,138 +932,138 @@
    "t b" 'beacon-mode)
  :diminish beacon-mode)
 
-(use-package evil
- :preface
- (defvar my/evil/esc-hook '(t)
-   "A hook run after ESC is pressed in normal mode
-   (invoked by `evil-force-normal-state').
-   If a hook returns non-nil, all hooks after it are ignored.")
- (defun my/evil/attach-esc-hook ()
-   "Run all escape hooks, if any returns non-nil, then stop there"
-   (run-hook-with-args-until-success 'my/evil/esc-hook))
- :init
- (setq
-  ;; Undo system Evil should use. If equal to ‘undo-tree’ or
-  ;; ‘undo-fu’, those packages must be installed. If equal to
-  ;; ‘undo-tree’, ‘undo-tree-mode’ must also be activated. If
-  ;; equal to ‘undo-redo’, Evil uses commands natively available
-  ;; in Emacs 28
-  evil-undo-system 'undo-redo
-  ;; evil-collection assumes evil-want-keybinding is set to nil
-  ;; and evil-want-integration is set to t before loading evil
-  ;; and evil-collection
-  evil-want-keybinding nil
-  evil-want-integration t
-  ;; Restore missing C-u in evil so it scrolls up (like in Vim).
-  ;; Otherwise C-u applies a prefix argument.
-  evil-want-C-u-scroll t
-  ;; C-w deletes a word in Insert state.
-  evil-want-C-w-delete t
-  ;; All changes made during insert state, including a possible
-  ;; delete after a change operation, are collected in a single
-  ;; undo step
-  evil-want-fine-undo "no"
-  ;; Inclusive visual character selection which ends at the
-  ;; beginning or end of a line is turned into an exclusive
-  ;; selection. Thus if the selected (inclusive) range ends at
-  ;; the beginning of a line it is changed to not include the
-  ;; first character of that line, and if the selected range
-  ;; ends at the end of a line it is changed to not include the
-  ;; newline character of that line
-  evil-want-visual-char-semi-exclusive t
-  ;; ‘Y’ yanks to the end of the line
-  evil-want-Y-yank-to-eol t
-  ;; Meaning which characters in a pattern are magic.
-  ;; The meaning of those values is the same as in Vim
-  evil-magic t
-  ;; If non-nil abbrevs will be expanded when leaving insert
-  ;; state like in Vim, if ‘abbrev-mode’ is on
-  evil-want-abbrev-expand-on-insert-exit nil
-  ;; Signal the current state in the echo area
-  evil-echo-state t
-  ;; The = operator converts between leading tabs and spaces.
-  ;; Whether tabs are converted to spaces or vice versa depends
-  ;; on the value of ‘indent-tabs-mode’
-  evil-indent-convert-tabs t
-  ;; Vim-style backslash codes are supported in search patterns
-  evil-ex-search-vim-style-regexp t
-  ;; Substitute patterns are global by default
-  evil-ex-substitute-global t
-  ;; Column range for ex commands
-  evil-ex-visual-char-range t
-  ;; Use evil interactive search module instead of isearch
-  evil-search-module 'evil-search
-  ;; If nil then * and # search for words otherwise for symbols
-  evil-symbol-word-search t
-  ;; Don't use emacs mode for ibuffer
-  ;; evil-emacs-state-modes (delq 'ibuffer-mode evil-emacs-state-modes)
-  ;; Cursors
-  evil-default-cursor (face-background 'cursor nil t)
-  evil-normal-state-cursor 'box
-  evil-emacs-state-cursor `(,(face-foreground 'warning) box)
-  evil-insert-state-cursor 'bar
-  evil-visual-state-cursor 'box)
- :config
- ;; Enable evil-mode globally,
- ;; good for ex-vimmers like me
- (evil-mode t)
- ;; Special
- (evil-make-overriding-map special-mode-map 'normal)
- ;; Compilation
- (evil-set-initial-state 'compilation-mode 'normal)
- ;; Occur
- (evil-make-overriding-map occur-mode-map 'normal)
- (evil-set-initial-state 'occur-mode 'normal)
- (advice-add 'evil-force-normal-state :after 'my/evil/attach-esc-hook)
- ;; Unbind  evil-paste-pop and evil-paste-pop-next
- ;; which breaks evil-mc
- (with-eval-after-load 'evil-maps
-   (define-key evil-normal-state-map (kbd "C-n") nil)
-   (define-key evil-normal-state-map (kbd "C-p") nil)))
+  (use-package evil
+   :preface
+   (defvar my/evil/esc-hook '(t)
+     "A hook run after ESC is pressed in normal mode
+     (invoked by `evil-force-normal-state').
+     If a hook returns non-nil, all hooks after it are ignored.")
+   (defun my/evil/attach-esc-hook ()
+     "Run all escape hooks, if any returns non-nil, then stop there"
+     (run-hook-with-args-until-success 'my/evil/esc-hook))
+   :init
+   (setq
+    ;; Undo system Evil should use. If equal to ‘undo-tree’ or
+    ;; ‘undo-fu’, those packages must be installed. If equal to
+    ;; ‘undo-tree’, ‘undo-tree-mode’ must also be activated. If
+    ;; equal to ‘undo-redo’, Evil uses commands natively available
+    ;; in Emacs 28
+    evil-undo-system 'undo-redo
+    ;; evil-collection assumes evil-want-keybinding is set to nil
+    ;; and evil-want-integration is set to t before loading evil
+    ;; and evil-collection
+    evil-want-keybinding nil
+    evil-want-integration t
+    ;; Restore missing C-u in evil so it scrolls up (like in Vim).
+    ;; Otherwise C-u applies a prefix argument.
+    evil-want-C-u-scroll t
+    ;; C-w deletes a word in Insert state.
+    evil-want-C-w-delete t
+    ;; All changes made during insert state, including a possible
+    ;; delete after a change operation, are collected in a single
+    ;; undo step
+    evil-want-fine-undo "no"
+    ;; Inclusive visual character selection which ends at the
+    ;; beginning or end of a line is turned into an exclusive
+    ;; selection. Thus if the selected (inclusive) range ends at
+    ;; the beginning of a line it is changed to not include the
+    ;; first character of that line, and if the selected range
+    ;; ends at the end of a line it is changed to not include the
+    ;; newline character of that line
+    evil-want-visual-char-semi-exclusive t
+    ;; ‘Y’ yanks to the end of the line
+    evil-want-Y-yank-to-eol t
+    ;; Meaning which characters in a pattern are magic.
+    ;; The meaning of those values is the same as in Vim
+    evil-magic t
+    ;; If non-nil abbrevs will be expanded when leaving insert
+    ;; state like in Vim, if ‘abbrev-mode’ is on
+    evil-want-abbrev-expand-on-insert-exit nil
+    ;; Signal the current state in the echo area
+    evil-echo-state t
+    ;; The = operator converts between leading tabs and spaces.
+    ;; Whether tabs are converted to spaces or vice versa depends
+    ;; on the value of ‘indent-tabs-mode’
+    evil-indent-convert-tabs t
+    ;; Vim-style backslash codes are supported in search patterns
+    evil-ex-search-vim-style-regexp t
+    ;; Substitute patterns are global by default
+    evil-ex-substitute-global t
+    ;; Column range for ex commands
+    evil-ex-visual-char-range t
+    ;; Use evil interactive search module instead of isearch
+    evil-search-module 'evil-search
+    ;; If nil then * and # search for words otherwise for symbols
+    evil-symbol-word-search t
+    ;; Don't use emacs mode for ibuffer
+    ;; evil-emacs-state-modes (delq 'ibuffer-mode evil-emacs-state-modes)
+    ;; Cursors
+    evil-default-cursor (face-background 'cursor nil t)
+    evil-normal-state-cursor 'box
+    evil-emacs-state-cursor `(,(face-foreground 'warning) box)
+    evil-insert-state-cursor 'bar
+    evil-visual-state-cursor 'box)
+   :config
+   ;; Enable evil-mode globally,
+   ;; good for ex-vimmers like me
+   (evil-mode t)
+   ;; Special
+   (evil-make-overriding-map special-mode-map 'normal)
+   ;; Compilation
+   (evil-set-initial-state 'compilation-mode 'normal)
+   ;; Occur
+   (evil-make-overriding-map occur-mode-map 'normal)
+   (evil-set-initial-state 'occur-mode 'normal)
+   (advice-add 'evil-force-normal-state :after 'my/evil/attach-esc-hook)
+   ;; Unbind  evil-paste-pop and evil-paste-pop-next
+   ;; which breaks evil-mc
+   (with-eval-after-load 'evil-maps
+     (define-key evil-normal-state-map (kbd "C-n") nil)
+     (define-key evil-normal-state-map (kbd "C-p") nil)))
 
-(use-package evil-collection
-  :init
-  (setq
-   ;; If you don't need everything - uncomment and add everything you want
-   ;; evil-collection-mode-list '()
+  (use-package evil-collection
+    :init
+    (setq
+     ;; If you don't need everything - uncomment and add everything you want
+     ;; evil-collection-mode-list '()
 
-   ;; Don't enable vim key bindings in minibuffer
-   ;; its a default setting, just want it to be explicitly stated here
-   evil-collection-setup-minibuffer nil)
-  :config
-  (evil-collection-init)
-  (nmap
-    "C-M-l" 'evil-window-increase-width
-    "C-M-h" 'evil-window-decrease-width
-    "C-M-k" 'evil-window-increase-height
-    "C-M-j" 'evil-window-decrease-height))
+     ;; Don't enable vim key bindings in minibuffer
+     ;; its a default setting, just want it to be explicitly stated here
+     evil-collection-setup-minibuffer nil)
+    :config
+    (evil-collection-init)
+    (nmap
+      "C-M-l" 'evil-window-increase-width
+      "C-M-h" 'evil-window-decrease-width
+      "C-M-k" 'evil-window-increase-height
+      "C-M-j" 'evil-window-decrease-height))
 
-(use-package evil-mc
- :after (general evil)
- :demand t
- :commands
- ;; Enable evil-mc mode for all buffers
- (global-evil-mc-mode)
- :preface
- (defun my/evil-mc/esc ()
-   "Clear evil-mc cursors and restore state."
-   (when (evil-mc-has-cursors-p)
-     (evil-mc-undo-all-cursors)
-     (evil-mc-resume-cursors)
-     t))
- :config
- (global-evil-mc-mode 1)
- (add-hook 'my/evil/esc-hook 'my/evil-mc/esc)
- (mmap
-   "C-n" 'evil-mc-make-and-goto-next-match)
- (when (eq system-type 'darwin)
-   ;; Unbind isearch commands
-   (unbind-key "s-d")
-   (unbind-key "s-g")
+  (use-package evil-mc
+   :after (general evil)
+   :demand t
+   :commands
+   ;; Enable evil-mc mode for all buffers
+   (global-evil-mc-mode)
+   :preface
+   (defun my/evil-mc/esc ()
+     "Clear evil-mc cursors and restore state."
+     (when (evil-mc-has-cursors-p)
+       (evil-mc-undo-all-cursors)
+       (evil-mc-resume-cursors)
+       t))
+   :config
+   (global-evil-mc-mode 1)
+   (add-hook 'my/evil/esc-hook 'my/evil-mc/esc)
    (mmap
-     "s-d" 'evil-mc-make-and-goto-next-match
-     "s-D" 'evil-mc-make-all-cursors))
- :diminish evil-mc-mode)
+     "C-n" 'evil-mc-make-and-goto-next-match)
+   (when (eq system-type 'darwin)
+     ;; Unbind isearch commands
+     (unbind-key "s-d")
+     (unbind-key "s-g")
+     (mmap
+       "s-d" 'evil-mc-make-and-goto-next-match
+       "s-D" 'evil-mc-make-all-cursors))
+   :diminish evil-mc-mode)
 
 (use-package evil-matchit
  :after evil
@@ -1999,12 +2025,12 @@
 (setenv "LESS" "--dumb --prompt=s")
 (setenv "PAGER" "")
 
-(use-package eshell
-  :ensure nil
-  ;; :config
-  ;; (unbind-key "C-j" eshell-mode-map)
-  ;; (unbind-key "C-k" eshell-mode-map)
-)
+  (use-package eshell
+    :ensure nil
+    ;; :config
+    ;; (unbind-key "C-j" eshell-mode-map)
+    ;; (unbind-key "C-k" eshell-mode-map)
+  )
 
 (use-package esh-help
  :commands
@@ -2035,6 +2061,10 @@
  (nmap
    :prefix my/leader
    "\\" 'eshell-toggle))
+
+(use-package prettier
+:config
+(add-hook 'after-init-hook #'global-prettier-mode))
 
 (use-package yasnippet
   :demand t
@@ -2158,14 +2188,14 @@
    ("n" "note" entry (file "notes.org") "* %^{heading} %t %^g\n  %?\n")
    ("j" "journal" entry (file "journal.org") "* %U - %^{heading}\n  %?")))
 
-(defun org-mode-export-links ()
-  "Export links document to HTML automatically when 'links.org' is changed"
-  (when (equal (buffer-file-name) "~/Dropbox/org/links.org")
-    (progn
-      (org-html-export-to-html)
-      (alert "HTML exported" :severity 'trivial :title "ORG"))))
+  (defun org-mode-export-links ()
+    "Export links document to HTML automatically when 'links.org' is changed"
+    (when (equal (buffer-file-name) "~/Dropbox/org/links.org")
+      (progn
+        (org-html-export-to-html)
+        (alert "HTML exported" :severity 'trivial :title "ORG"))))
 
-(add-hook 'after-save-hook 'org-mode-export-links)
+  (add-hook 'after-save-hook 'org-mode-export-links)
 
 (setq
  org-highest-priority ?A
@@ -2269,10 +2299,10 @@
  :hook
  (org-mode . org-superstar-mode))
 
-(use-package org-sticky-header
-:after (org)
-:hook
-(org-mode . org-sticky-header-mode))
+    (use-package org-sticky-header
+    :after (org)
+    :hook
+    (org-mode . org-sticky-header-mode))
 
 (use-package org-cliplink
   :config
@@ -2379,37 +2409,54 @@
      "blog post"
      entry
      (file "~/projects/personal/blog/content-org/posts.org")
-     (function my/org-hugo/new-subtree-post))))
+     (function my/org-hugo/new-subtree-post)))
+
+  (with-eval-after-load 'ox-hugo
+   (add-to-list 'org-hugo-special-block-type-properties '("mermaid" . (:raw t)))))
 
 (use-package lsp-mode
   :after (general projectile)
   :commands (lsp)
-  :hook
-  (lsp-mode . lsp-lens-mode)
-  (lsp-mode . lsp-enable-which-key-integration)
-  (c-mode . lsp)
-  (c++-mode . lsp)
-  :init
+  :custom
   ;; Uncomment to inspect communication between client and the server
-  (setq lsp-print-io t)
-  (setq lsp-prefer-flymake nil)
+  (lsp-print-io t)
+  (lsp-prefer-flymake nil)
   (setq lsp-headerline-breadcrumb-enable t)
-  :config
   ;; Determines how often lsp-mode will refresh the highlights, lenses, links, etc while you type.
-  (setq lsp-idle-delay 0.500)
+  (lsp-idle-delay 0.5)
   ;; Make sure the logging is switched off
-  (setq lsp-log-io nil)
-  (setq lsp-completion-provider :capf)
+  (lsp-log-io nil)
+  (lsp-completion-provider :capf)
+
+  ;; Display all of the info returned by document/onHover.
+  (lsp-eldoc-render-all nil)
+
   ;; What to use when checking on-save: "check" is default, I prefer "clippy"
-  (setq lsp-rust-analyzer-cargo-watch-command "clippy")
-  (setq lsp-rust-analyzer-server-display-inlay-hints t)
-  (setq lsp-rust-analyzer-diagnostics-disabled ["unresolved-proc-macro"])
+  (lsp-rust-analyzer-cargo-watch-command "clippy")
+  (lsp-rust-analyzer-diagnostics-disabled ["unresolved-proc-macro"])
+
+  ;; enable / disable the hints as you prefer:
+  (lsp-rust-analyzer-server-display-inlay-hints nil)
+  (lsp-rust-analyzer-display-lifetime-elision-hints-enable "skip_trivial")
+  (lsp-rust-analyzer-display-chaining-hints t)
+  (lsp-rust-analyzer-display-lifetime-elision-hints-use-parameter-names nil)
+  (lsp-rust-analyzer-display-closure-return-type-hints t)
+  (lsp-rust-analyzer-display-parameter-hints nil)
+  (lsp-rust-analyzer-display-reborrow-hints nil)
+  :config
   (dolist (dir '("vendor")) (push dir lsp-file-watch-ignored))
   (nmap
     :prefix my/leader
     "l r" 'lsp-restart-workspace
     "l f" 'lsp-format-buffer
+    "l l" 'lsp-execute-code-action
+    "l s" 'lsp-rust-analyzer-status
     "l d" 'lsp-describe-thing-at-point)
+  :hook
+  (lsp-mode . lsp-lens-mode)
+  (lsp-mode . lsp-enable-which-key-integration)
+  (c-mode . lsp)
+  (c++-mode . lsp)
   :delight "lsp")
 
 (use-package lsp-ui
@@ -2433,7 +2480,7 @@
    ;; Show hover messages in sideline
    lsp-ui-show-hover t
    ;; Show code actions in sideline
-   lsp-ui-show-code-actions nil
+   lsp-ui-show-code-actions t
    lsp-enable-completion-at-point t
    lsp-ui-doc-position 'at-point
    lsp-ui-doc-header nil
@@ -3256,6 +3303,7 @@
  (flycheck-kotlin-setup))
 
 (use-package rustic
+ :after (lsp-mode)
  :preface
  (defun my/rustic/setup ()
   ;; So that run C-c C-c C-r works without having to confirm,
@@ -3263,14 +3311,21 @@
   ;; Once https://github.com/brotzeit/rustic/issues/253 has been
   ;; resolved this should no longer be necessary
   (when buffer-file-name
-    (setq-local buffer-save-without-query t)))
- :config
- (setq rustic-format-on-save t)
- (nmap 'rustic-mode-map
+    (setq-local buffer-save-without-query t))
+  (setq lsp-ui-sideline-enable nil))
+  :config
+  (setq rustic-format-on-save t)
+
+  ;; uncomment for less flashiness
+  ;; (setq lsp-eldoc-hook nil)
+  ;; (setq lsp-enable-symbol-highlighting nil)
+  ;; (setq lsp-signature-auto-activate nil)
+
+  (nmap 'rustic-mode-map
    "C-c R" 'rustic-cargo-fmt
    "C-c r" 'rustic-format-buffer)
- :hook
- (rustic-mode . my/rustic/setup))
+  :hook
+  (rustic-mode . my/rustic/setup))
 
 (use-package prolog
  :ensure nil
@@ -3292,15 +3347,15 @@
  (dhall-format-at-save t)
  :mode "\\.dhall\\'")
 
-(use-package terraform-mode
- :hook (terraform-mode . terraform-format-on-save-mode))
+ (use-package terraform-mode
+  :hook (terraform-mode . terraform-format-on-save-mode))
 
-(use-package company-terraform
- :after (terraform company)
- :commands
- (company-terraform-init)
- :config
- (company-terraform-init))
+ (use-package company-terraform
+  :after (terraform company)
+  :commands
+  (company-terraform-init)
+  :config
+  (company-terraform-init))
 
 (use-package format-sql
  :after (general)
@@ -3715,7 +3770,9 @@
 
 (use-package company-glsl)
 
-(use-package solidity-mode)
+(use-package solidity-mode
+ :custom
+ (solidity-comment-style 'slash))
 
 (use-package solidity-flycheck
  :custom
@@ -3743,35 +3800,6 @@
 
 (use-package eldoc-cmake
   :hook (cmake-mode . eldoc-cmake-enable))
-
-(use-package tex
- :demand t
- :ensure auctex
- :config
- (setq-default TeX-engine 'luatex)
- (setq-default TeX-PDF-mode t)
- (setq-default TeX-master nil)
- (setq TeX-view-program-selection '((output-pdf "PDF Tools")))
- (setq reftex-plug-into-AUCTeX t)
- (setq reftex-bibliography-commands '("bibliography" "nobibliography" "addbibresource"))
- (setq reftex-use-external-file-finders t)
- (setq reftex-external-file-finders
-       '(("tex" . "kpsewhich -format=.tex %f")
-         ("bib" . "kpsewhich -format=.bib %f")))
- (setq reftex-insert-label-flags '("s" "sft" "e"))
- (setq TeX-electric-sub-and-superscrip t)
- (setq TeX-electric-math (cons "\\(" "\\)"))
- :hook
- ((LaTeX-mode . visual-line-mode)
-  (LaTeX-mode . turn-on-auto-fill)
-  (LaTeX-mode . flyspell-mode)
-  (LaTeX-mode . LaTeX-math-mode)
-  (LaTeX-mode . turn-on-reftex)
-  (TeX-after-compilation-finished-functions
-    . TeX-revert-document-buffer)))
-
-(use-package auctex-latexmk
-  :hook (LaTeX-mode . auctex-latexmk-setup))
 
 (use-package company-math
  :config
@@ -3893,15 +3921,15 @@
 (use-package ansible)
 
 (use-package dap-mode
-  :hook
-  (lsp-mode . dap-mode)
-  (lsp-mode . dap-ui-mode)
   :config
   (require 'dap-cpptools)
   (dap-mode 1)
   (dap-ui-mode 1)
   (add-hook 'dap-stopped-hook
-    (lambda (arg) (call-interactively #'dap-hydra))))
+    (lambda (arg) (call-interactively #'dap-hydra)))
+  :hook
+  (lsp-mode . dap-mode)
+  (lsp-mode . dap-ui-mode))
 
 (use-package gdb-mi
   :ensure nil
@@ -4240,6 +4268,7 @@ _G_: github         _p_: pursuit           _d_: duckduckgo
   ("h" engine/search-hoogle)
   ("H" engine/search-hackage)
   ("p" engine/search-pursuit)
+  ("r" engine/search-rust-docs)
   ("s" engine/search-substrate)
   ("m" engine/search-melpa)
   ("T" engine/search-twitter)
@@ -4391,6 +4420,10 @@ _G_: github         _p_: pursuit           _d_: duckduckgo
    "https://paritytech.github.io/substrate/master/sc_service/index.html?search=%s"
    :keybinding "s"
    :docstring "Search Substrate")
+ (defengine rust-docs
+   "https://doc.rust-lang.org/nightly/core/index.html?search=%s"
+   :keybinding "r"
+   :docstring "Search Rust docs")
  (defengine google-translate
    "https://translate.google.com/#view=home&op=translate&sl=en&tl=ru&text=%s"
    :keybinding "t")
@@ -4436,16 +4469,16 @@ _G_: github         _p_: pursuit           _d_: duckduckgo
   :prefix my/leader
   "S" 'counsel-web-suggest))
 
-(use-package sx
- :config
- (nmap
-   :prefix my/leader
-   "' q" 'sx-tab-all-questions
-   "' i" 'sx-inbox
-   "' o" 'sx-open-link
-   "' u" 'sx-tab-unanswered-my-tags
-   "' a" 'sx-ask
-   "' s" 'sx-search))
+ (use-package sx
+  :config
+  (nmap
+    :prefix my/leader
+    "' q" 'sx-tab-all-questions
+    "' i" 'sx-inbox
+    "' o" 'sx-open-link
+    "' u" 'sx-tab-unanswered-my-tags
+    "' a" 'sx-ask
+    "' s" 'sx-search))
 
 (use-package delight
  :config
@@ -4464,16 +4497,16 @@ _G_: github         _p_: pursuit           _d_: duckduckgo
     ;; (hi-lock-mode "hi" hi-lock)
     (subword-mode "sw" subword))))
 
-(use-package sx
- :config
- (nmap
-   :prefix my/leader
-   "' q" 'sx-tab-all-questions
-   "' i" 'sx-inbox
-   "' o" 'sx-open-link
-   "' u" 'sx-tab-unanswered-my-tags
-   "' a" 'sx-ask
-   "' s" 'sx-search))
+ (use-package sx
+  :config
+  (nmap
+    :prefix my/leader
+    "' q" 'sx-tab-all-questions
+    "' i" 'sx-inbox
+    "' o" 'sx-open-link
+    "' u" 'sx-tab-unanswered-my-tags
+    "' a" 'sx-ask
+    "' s" 'sx-search))
 
 (use-package diminish
  :config
