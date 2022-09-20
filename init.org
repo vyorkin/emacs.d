@@ -1909,7 +1909,8 @@ Define an interactive function for customizing appearance.
   ;; set the highlight color and foreground color for matching search results:
 
   ;; (set-face-attribute 'lazy-highlight nil :foreground "black" :background "#ffd700")
-  )
+
+  (my/company-mode/setup-faces))
 #+end_src
 
 Required for =emacsclient=.
