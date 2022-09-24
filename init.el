@@ -1150,8 +1150,8 @@
  :after (lsp-mode)
  :preface
  (defun my/company-mode/setup-faces ()
-   (interactive)
    "Style company-mode nicely"
+   (interactive)
    (let* ((bg (face-attribute 'default :background))
           (bg-light (color-lighten-name bg 2))
           (bg-lighter (color-lighten-name bg 5))
@@ -2063,8 +2063,8 @@
    "\\" 'eshell-toggle))
 
 (use-package prettier
-:config
-(add-hook 'after-init-hook #'global-prettier-mode))
+ :config
+ (add-hook 'after-init-hook #'global-prettier-mode))
 
 (use-package yasnippet
   :demand t
@@ -2189,7 +2189,7 @@
    ("j" "journal" entry (file "journal.org") "* %U - %^{heading}\n  %?")))
 
   (defun org-mode-export-links ()
-    "Export links document to HTML automatically when 'links.org' is changed"
+    "Export links document to HTML automatically when links.org is changed"
     (when (equal (buffer-file-name) "~/Dropbox/org/links.org")
       (progn
         (org-html-export-to-html)
