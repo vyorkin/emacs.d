@@ -101,8 +101,7 @@ When this configuration is loaded for the first time, the
 Check this =init.org= and run ~M-x all-the-icons-install-fonts~
 if [[https://github.com/domtronn/all-the-icons.el][all-the-icons]] package is enabled.
 
-* Known issues
-
+#+begin_src emacs-lisp
 This is a known issue with emacs 28:
 
 #+begin_src emacs-lisp :tangle no
@@ -768,7 +767,7 @@ A Growl-like alerts notifier for Emacs.
 
 Make titlebar transparent.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (when (memq window-system '(mac ns))
   (add-to-list 'default-frame-alist '(ns-appearance . dark)) ;; {light, dark}
   (add-to-list 'default-frame-alist '(ns-transparent-titlebar . t)))
@@ -972,7 +971,7 @@ Font faces configuration.
   :ensure nil
   :custom
   (face-font-family-alternatives
-   '(("JetBrains Mono" "Hack" "Consolas" "Monaco" "Monospace")))
+   '(("GohuFont 14 Nerd Font Mono" "JetBrainsMono Nerd Font Mono" "Hack Nerd Font Mono")))
   :init
   (set-face-attribute
    'default nil
@@ -4241,6 +4240,7 @@ Simple file templates for Emacs with =YASnippet=.
   :preface
   (defun my/org/setup ()
     (interactive)
+    (setq org-element-use-cache nil)
     ;; Center content
     (setq visual-fill-column-width 100
           visual-fill-column-center-text t)
@@ -4633,10 +4633,9 @@ Paste links from clipboard and automatically fetch title.
 
     A plain-text personal knowledge management system.
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
 (use-package org-roam
 ;; TODO: Why do we have to use "demand" here?
-:demand t
 :after (org general)
 :preface
 (defun my/org-roam/node-insert-immediate (arg &rest args)
