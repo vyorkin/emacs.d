@@ -1909,8 +1909,7 @@ Define an interactive function for customizing appearance.
   ;; set the highlight color and foreground color for matching search results:
 
   ;; (set-face-attribute 'lazy-highlight nil :foreground "black" :background "#ffd700")
-
-  (my/company-mode/setup-faces))
+  )
 #+end_src
 
 Required for =emacsclient=.
@@ -2711,7 +2710,7 @@ Some of the key bindings are provided by the =evil-collection=.
       `(company-preview-common
         ((t (:foreground ,ac :background ,bg-lightest)))))))
  :hook
- ((lsp-mode org-mode) . company-mode)
+ ((lsp-mode org-mode merlin-mode) . company-mode)
  ;; NOTE: Uncomment to use company-mode in all buffers
  ;; (after-init . global-company-mode)
  :custom
@@ -5950,8 +5949,6 @@ See the [[https://github.com/ocaml/merlin][package repo]] for more info.
 
 #+begin_src emacs-lisp
 (use-package merlin
-  :after (company tuareg)
-  :demand t
   :init
   ;; Disable merlin's own error checking
   ;; We'll use flycheck-ocaml for that
@@ -6077,6 +6074,14 @@ A [[https://github.com/ocaml/dune][composable build system]] for OCaml.
 
 #+begin_src emacs-lisp
 (use-package dune)
+#+end_src
+
+Provides commands and a minor mode for easily reformatting dune files using dune's built-in format command.
+
+#+begin_src emacs-lisp
+(use-package dune-format
+  :config
+  (add-hook 'dune-mode-hook 'dune-format-on-save-mode))
 #+end_src
 
 **** Flycheck
